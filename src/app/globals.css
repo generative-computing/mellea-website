@@ -216,12 +216,12 @@ a {
   top: 48px;
   left: 0;
   right: 0;
-  bottom: 0;
   flex-direction: column;
   align-items: stretch;
   padding: 1rem 0;
   background: var(--bg-primary);
   border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   overflow-y: auto;
   z-index: 9999;
 }
