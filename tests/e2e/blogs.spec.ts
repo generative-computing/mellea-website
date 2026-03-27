@@ -7,13 +7,13 @@ test('blogs page renders post listing', async ({ page }) => {
 
 test('both existing posts are listed', async ({ page }) => {
   await page.goto('/blogs/');
-  await expect(page.getByText("We're thinking about AI all wrong")).toBeVisible();
-  await expect(page.getByText('Outside-In and Inside-Out')).toBeVisible();
+  await expect(page.getByText(/thinking about AI all wrong/i)).toBeVisible();
+  await expect(page.getByText(/Outside-In and Inside-Out/i)).toBeVisible();
 });
 
 test('clicking a post navigates to post page', async ({ page }) => {
   await page.goto('/blogs/');
-  await page.getByText("We're thinking about AI all wrong").click();
+  await page.getByText(/thinking about AI all wrong/i).first().click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.getByText('← Back to all posts')).toBeVisible();
 });

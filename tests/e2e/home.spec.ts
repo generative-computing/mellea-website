@@ -17,8 +17,9 @@ test('install command is visible', async ({ page }) => {
 
 test('nav links are present', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('link', { name: 'Blogs' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'GitHub' })).toBeVisible();
+  const header = page.getByRole('banner');
+  await expect(header.getByRole('link', { name: 'Blogs' })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'GitHub' })).toBeVisible();
 });
 
 test('recent blog posts section is visible', async ({ page }) => {
