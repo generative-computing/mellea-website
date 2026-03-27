@@ -60,7 +60,7 @@ const jsonLd = {
   url: siteConfig.url,
   applicationCategory: 'DeveloperApplication',
   operatingSystem: 'Any',
-  license: 'https://www.apache.org/licenses/LICENSE-2.0',
+  license: 'https://creativecommons.org/licenses/by/4.0/',
   programmingLanguage: 'Python',
   codeRepository: siteConfig.githubUrl,
   offers: {

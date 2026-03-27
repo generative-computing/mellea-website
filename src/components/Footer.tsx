@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer-inner">
-        <span className="footer-brand">© {new Date().getFullYear()} Mellea — Apache 2.0</span>
+        <span className="footer-brand">© {new Date().getFullYear()} Mellea · Documentation distributed under CC BY 4.0</span>
         <nav className="footer-links">
           <Link href="/blogs">Blog</Link>
           <Link href={siteConfig.docsUrl} target="_blank" rel="noopener noreferrer">Docs</Link>
