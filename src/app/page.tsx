@@ -83,7 +83,7 @@ export default function HomePage() {
 
           <div className="how-it-works-body">
             <p className="how-it-works-description">
-              Replace flaky agents and brittle prompts with structured, testable Python.
+              Structured, testable Python for every LLM call — no more flaky agents or brittle prompts.
               Mellea lets you instruct LLMs, validate outputs against your requirements,
               and recover from failures automatically. Works across{' '}
               <span className="how-it-works-providers">
