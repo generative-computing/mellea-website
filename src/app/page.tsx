@@ -52,16 +52,16 @@ export default function HomePage() {
 
           <div className="feature-strip">
             <div className="feature-item">
-              <span className="feature-number">More</span>
-              <span className="feature-label">Predictable agents</span>
+              <span className="feature-number">Unit</span>
+              <span className="feature-label">testable</span>
             </div>
             <div className="feature-item">
               <span className="feature-number">100%</span>
-              <span className="feature-label">OpenTelemetry compatible</span>
+              <span className="feature-label">Open source</span>
             </div>
             <div className="feature-item">
-              <span className="feature-number">Zero</span>
-              <span className="feature-label">Vendor lock-in</span>
+              <span className="feature-number">Token-level</span>
+              <span className="feature-label">constrained decoding</span>
             </div>
             <div className="feature-item">
               <span className="feature-number">Any</span>
