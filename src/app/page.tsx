@@ -150,6 +150,17 @@ export default function HomePage() {
               <p className="feature-card-body">Expose any Mellea program as an MCP tool. The calling agent gets validated output — requirements checked, retries run — not raw LLM responses.</p>
               <Link href="https://docs.mellea.ai/integrations/mcp" target="_blank" className="feature-card-link">Learn more →</Link>
             </div>
+            <div className="feature-card">
+              {/* Shield with eye — safety */}
+              <svg className="feature-card-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6l-8-4z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+                <path d="M8 12c0-2.21 1.79-4 4-4s4 1.79 4 4" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"/>
+              </svg>
+              <h3 className="feature-card-title">Safety &amp; Guardrails</h3>
+              <p className="feature-card-body">Built-in Granite Guardian integration detects harmful outputs, hallucinations, and jailbreak attempts before they reach your users — no external service required.</p>
+              <Link href="https://docs.mellea.ai/how-to/safety-guardrails" target="_blank" className="feature-card-link">Learn more →</Link>
+            </div>
           </div>
         </div>
       </section>
