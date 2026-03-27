@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteConfig } from '@/config/site';
@@ -8,31 +9,31 @@ import { siteConfig } from '@/config/site';
 export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const closeMenu = () => setMenuOpen(false);
 
-  // Prevent body scroll when menu is open.
-  // iOS Safari breaks position:fixed children when overflow:hidden is set on body,
-  // so we use position:fixed on the body itself with a scroll-position restore instead.
-  useEffect(() => {
-    if (menuOpen) {
-      const scrollY = window.scrollY;
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-    } else {
-      const scrollY = parseInt(document.body.style.top || '0', 10);
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-      window.scrollTo(0, -scrollY);
-    }
-    return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.width = '';
-    };
-  }, [menuOpen]);
+  useEffect(() => { setMounted(true); }, []);
+
+  const navLinks = (
+    <>
+      <Link href={siteConfig.docsUrl} target="_blank" rel="noopener noreferrer" className="nav-link" onClick={closeMenu}>
+        Docs
+      </Link>
+      <Link href="/blogs" className={`nav-link ${pathname.startsWith('/blogs') ? 'active' : ''}`} onClick={closeMenu}>
+        Blog
+      </Link>
+      <Link href={siteConfig.discussionsUrl} target="_blank" rel="noopener noreferrer" className="nav-link" onClick={closeMenu}>
+        Community
+      </Link>
+      <Link href={siteConfig.githubUrl} target="_blank" rel="noopener noreferrer" className="nav-link" onClick={closeMenu}>
+        GitHub
+      </Link>
+      <Link href={siteConfig.docsUrl} target="_blank" rel="noopener noreferrer" className="nav-cta" onClick={closeMenu}>
+        Get Started →
+      </Link>
+    </>
+  );
 
   return (
     <header className="header">
@@ -60,52 +61,23 @@ export default function Header() {
           )}
         </button>
 
-        <nav className={`header-nav${menuOpen ? ' header-nav--open' : ''}`}>
-          <Link
-            href={siteConfig.docsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-link"
-            onClick={closeMenu}
-          >
-            Docs
-          </Link>
-          <Link
-            href="/blogs"
-            className={`nav-link ${pathname.startsWith('/blogs') ? 'active' : ''}`}
-            onClick={closeMenu}
-          >
-            Blog
-          </Link>
-          <Link
-            href={siteConfig.discussionsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-link"
-            onClick={closeMenu}
-          >
-            Community
-          </Link>
-          <Link
-            href={siteConfig.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-link"
-            onClick={closeMenu}
-          >
-            GitHub
-          </Link>
-          <Link
-            href={siteConfig.docsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-cta"
-            onClick={closeMenu}
-          >
-            Get Started →
-          </Link>
+        {/* Desktop nav — inline in header */}
+        <nav className="header-nav">
+          {navLinks}
         </nav>
       </div>
+
+      {/* Mobile nav overlay — portaled to <body> so position:fixed is viewport-relative,
+          not relative to the sticky header ancestor (iOS Safari limitation). */}
+      {mounted && createPortal(
+        <nav
+          className={`mobile-nav-overlay${menuOpen ? ' mobile-nav-overlay--open' : ''}`}
+          aria-hidden={!menuOpen}
+        >
+          {navLinks}
+        </nav>,
+        document.body
+      )}
     </header>
   );
 }
