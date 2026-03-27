@@ -65,24 +65,22 @@ def write_email_with_strategy(m: mellea.MelleaSession, name: str, notes: str) ->
   {
     title: 'Safety & Guardrails',
     description:
-      'Detect harmful outputs, hallucinations, and jailbreak attempts before they reach your users — using built-in Granite Guardian integration, with no external service required.',
+      'Detect harmful outputs, social bias, and jailbreak attempts before they reach your users — using built-in Granite Guardian integration, with no external service required.',
     learnMore: 'https://docs.mellea.ai/how-to/safety-guardrails',
     code: `import mellea
-from mellea.stdlib.checks.guardian import GuardianCheck
+from mellea.stdlib.requirements.safety.guardian import (
+    GuardianCheck, GuardianRisk,
+)
 
 m = mellea.start_session()
 
-@generative
-def draft_response(user_message: str) -> str:
-    """Write a helpful customer support response."""
-    ...
-
 response = m.instruct(
-    draft_response,
-    user_message="How do I reset my password?",
+    "Write a helpful customer support response to: "
+    "How do I reset my password?",
     requirements=[
-        GuardianCheck.no_harmful_content(),
-        GuardianCheck.no_hallucination(),
+        "Be concise and professional.",
+        GuardianCheck(GuardianRisk.HARM),
+        GuardianCheck(GuardianRisk.SOCIAL_BIAS),
     ],
 )
 
