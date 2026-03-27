@@ -11,10 +11,27 @@ export default function Header() {
 
   const closeMenu = () => setMenuOpen(false);
 
-  // Prevent body scroll when menu is open
+  // Prevent body scroll when menu is open.
+  // iOS Safari breaks position:fixed children when overflow:hidden is set on body,
+  // so we use position:fixed on the body itself with a scroll-position restore instead.
   useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
+    if (menuOpen) {
+      const scrollY = window.scrollY;
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+    } else {
+      const scrollY = parseInt(document.body.style.top || '0', 10);
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+      window.scrollTo(0, -scrollY);
+    }
+    return () => {
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.width = '';
+    };
   }, [menuOpen]);
 
   return (
