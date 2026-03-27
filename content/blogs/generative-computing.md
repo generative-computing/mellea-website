@@ -7,7 +7,7 @@ tags: ["engineering", "reliability"]
 coverImage: "/images/mellea-logo.svg"
 ---
 
-### Back to Basics: Imperative, Inductive and Generative Computing
+## Back to Basics: Imperative, Inductive and Generative Computing
 
 What is “generative computing,” and is it different enough from other things to deserve a name? A reasonable place to start in defining generative computing is to contrast it to other kinds of computing.  The everyday computing that we know and love arguably can be labeled as “imperative” computing[^1]. In imperative computing, you write a program composed of well-defined instructions (code) that tell the computer what to do, which is usually some variant of transforming input data into desired outputs. When you visit your bank’s website, a program retrieves data about your account from a database, and it systematically performs operations that calculate your balances and formats the results into HTML that renders in your web browser. Our digital world today is built on a foundation of imperative computing.
 
@@ -33,7 +33,6 @@ It should be said that we’re already moving in the direction that I am describ
 
 Frameworks like Langchain also rose to prominence because they allowed a developer to somewhat more easily extract what they needed to get out of a model response to integrate it into the software that calls the LLM.  There are also libraries like DSPy that take a more aggressive programming-first approach to LLM application development, very much in line with the spirit of generative computing. Our efforts are heavily influenced by these frameworks, but we think there are even bolder places we can go. Some of the best software libraries are “opinionated” (which generally has a positive connotation in the world of software) in that they focus on a limited set of key patterns and ideas, and free developers from uncertainty about choices that aren’t important (Ruby on Rails, the LAMP stack, and much of the Python programming language would all count as exemplars of “opinionated” designs). The Mellea library embodies our opinions on generative computing.
 
-
-[^1]: We're eliding here a bit over some common terminology. Imperative _programming_ refers to a programming paradigm, and their alternatives, such as declarative programming. We're sort of splitting hairs with our distinction of programming vs. computing, but for the sake of this discussion, declarative, functional, object-oriented etc. programming all arguably belong to the same category.
-[^2]: https://en.wikipedia.org/wiki/List_of_software_bugs
+[^1]: We're eliding here a bit over some common terminology. Imperative *programming* refers to a programming paradigm, and their *alternatives*, such as declarative programming. We're sort of splitting hairs with our distinction of programming vs. computing, but for the sake of this discussion, declarative, functional, object-oriented etc. programming all arguably belong to the same category.
+[^2]: <https://en.wikipedia.org/wiki/List_of_software_bugs>
 [^3]: We will reserve discussion of “vibe coding” for another post.

@@ -18,7 +18,8 @@ Along the way, we will also introduce **Mellea**, an open-source python library 
 
 With our goals defined, let’s get started. In the next few posts, we’ll take a brief look at where the synthesis of generative AI and computing stands today, and we’ll lay out some of the challenges in current practice that led us to our current agenda. The purpose of these critiques is not to tear down or dismiss any of the amazing progress we’ve seen in AI. We’re optimistic about the potential and future of AI. Our goal is to identify problems so that we can fix them, and we’ll present one vision for what those fixes could look like, synthesizing some of our own ideas with a rich body of work from the field at large.
 
-> #### Up next:
+> **Up next:**
+>
 > 1. [**Outside-In and Inside-Out**: Imperative, Inductive, and Generative Computing](https://generative-computing.github.io/blog/2025/09/23/generative-computing.html)
 > 2. **Unreliably Amazing**: Dealing with Unpredictability as a first-class principle in generative computing
 > 3. **The problem with prompting**: Bringing composability and portability to generative AI

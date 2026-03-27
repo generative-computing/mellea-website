@@ -1,0 +1,12 @@
+{
+  // markdownlint-cli2 configuration
+  // Targets: content/blogs/**/*.md and *.md docs files (README, CONTRIBUTING, etc.)
+  "config": {
+    // MD013: line-length — disable for prose; no one wraps blog posts at 80 chars
+    "MD013": false,
+    // MD033: inline HTML — allow for occasional <details>, <sup> etc. in posts
+    "MD033": false,
+    // MD041: first line top-level heading — not applicable to frontmatter files
+    "MD041": false
+  }
+}
