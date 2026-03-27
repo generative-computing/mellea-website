@@ -1,12 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { siteConfig } from '@/config/site';
 
 const CMD = 'uv pip install mellea';
 
 export default function InstallCommand() {
   const [copied, setCopied] = useState(false);
+  const [version, setVersion] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('https://pypi.org/pypi/mellea/json')
+      .then((r) => r.json())
+      .then((data) => setVersion(data.info?.version ?? null))
+      .catch(() => null);
+  }, []);
 
   function copy() {
     navigator.clipboard.writeText(CMD).then(() => {
@@ -19,6 +28,7 @@ export default function InstallCommand() {
     <div className="install-cmd-row">
       <div className="install-cmd">
         <code className="install-cmd-text">{CMD}</code>
+        {version && <span className="install-cmd-version">v{version}</span>}
         <button className="install-cmd-copy" onClick={copy} aria-label="Copy install command">
           {copied ? (
             <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -32,7 +42,7 @@ export default function InstallCommand() {
           )}
         </button>
       </div>
-      <Link href="#" className="btn-primary">Get Started →</Link>
+      <Link href={siteConfig.docsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">Get Started →</Link>
       <Link href="/blogs" className="btn-secondary">Read the blog</Link>
     </div>
   );

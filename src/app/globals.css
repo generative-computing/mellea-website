@@ -325,6 +325,15 @@ a {
   user-select: all;
 }
 
+.install-cmd-version {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  padding: 0.1rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
 .install-cmd-copy {
   background: none;
   border: none;
