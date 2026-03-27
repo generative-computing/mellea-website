@@ -1,5 +1,5 @@
 /* IBM Plex + developer theme — light/dark via prefers-color-scheme */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap');
+/* Fonts loaded via next/font in layout.tsx — CSS vars set on <body> */
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -80,6 +80,24 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* ── Skip link (a11y) ── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 200;
+  padding: 0.5rem 1rem;
+  background: var(--accent-blue);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 0 0 4px 4px;
+}
+
+.skip-link:focus {
+  top: 0;
 }
 
 /* ── Layout ── */
@@ -175,6 +193,68 @@ a {
 .nav-cta:hover {
   background: var(--accent-blue-hover);
   color: #ffffff;
+}
+
+/* ── Mobile menu toggle ── */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .header-nav {
+    display: none;
+    position: fixed;
+    top: 48px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg-primary);
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem 0;
+    z-index: 99;
+    border-top: 1px solid var(--border);
+    overflow-y: auto;
+  }
+
+  .header-nav--open {
+    display: flex;
+  }
+
+  .nav-link {
+    height: auto;
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    border-bottom: none;
+  }
+
+  .nav-link:hover {
+    border-bottom-color: transparent;
+    background: var(--bg-card);
+  }
+
+  .nav-link.active {
+    border-bottom-color: transparent;
+    color: var(--accent-blue);
+  }
+
+  .nav-cta {
+    margin: 1rem 2rem 0;
+    text-align: center;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
 }
 
 /* ── Footer ── */
@@ -1106,6 +1186,35 @@ a {
   }
 }
 
+/* ── Vision / closing CTA ── */
+.vision-section {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.vision-inner {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.vision-text {
+  font-size: 1.15rem;
+  font-weight: 300;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.vision-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 /* ── GitHub Stats ── */
 .gh-stats {
   background: var(--bg-card);
@@ -1293,4 +1402,5 @@ a {
   .blog-grid { grid-template-columns: 1fr; }
   .section-header { flex-direction: column; gap: 0.5rem; }
   .footer-inner { flex-direction: column; }
+  .gh-avatars { display: none; }
 }

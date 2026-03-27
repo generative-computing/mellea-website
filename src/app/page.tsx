@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { siteConfig } from '@/config/site';
 import BlogCard from '@/components/BlogCard';
 import GitHubStats from '@/components/GitHubStats';
 import ImageCompare from '@/components/ImageCompare';
@@ -60,8 +61,8 @@ export default function HomePage() {
               <span className="feature-label">Open source</span>
             </div>
             <div className="feature-item">
-              <span className="feature-number">Token-level</span>
-              <span className="feature-label">constrained decoding</span>
+              <span className="feature-number">Typed</span>
+              <span className="feature-label">constrained output</span>
             </div>
             <div className="feature-item">
               <span className="feature-number">Any</span>
@@ -195,6 +196,27 @@ export default function HomePage() {
             {recent.map((blog) => (
               <BlogCard key={blog.slug} blog={blog} />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Vision / closing CTA ── */}
+      <section className="section vision-section">
+        <div className="container">
+          <div className="vision-inner">
+            <p className="vision-text">
+              The next era of software requires moving past &ldquo;agent soup&rdquo; and opaque prompting.
+              Mellea brings the rigor of traditional software engineering to generative AI &mdash;
+              decomposed, verifiable, composable tasks that you can test, debug, and trust.
+            </p>
+            <div className="vision-actions">
+              <Link href={siteConfig.docsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">
+                Get Started →
+              </Link>
+              <Link href={siteConfig.githubUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+                View on GitHub
+              </Link>
+            </div>
           </div>
         </div>
       </section>

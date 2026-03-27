@@ -112,12 +112,27 @@ export default function CodeShowcase() {
   return (
     <div className="showcase">
       {/* Left: accordion */}
-      <div className="showcase-accordion">
+      <div className="showcase-accordion" role="tablist" aria-label="Code examples">
         {ITEMS.map((item, i) => (
           <div
-            key={i}
+            key={item.title}
+            role="tab"
+            tabIndex={0}
+            aria-selected={active === i}
             className={`showcase-item${active === i ? ' showcase-item--active' : ''}`}
             onClick={() => setActive(i)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setActive(i);
+              } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setActive(Math.min(i + 1, ITEMS.length - 1));
+              } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setActive(Math.max(i - 1, 0));
+              }
+            }}
           >
             <div className="showcase-item-header">
               <span className="showcase-item-indicator" />
@@ -141,7 +156,7 @@ export default function CodeShowcase() {
       </div>
 
       {/* Right: code block */}
-      <div className="showcase-code-wrap">
+      <div className="showcase-code-wrap" role="tabpanel" aria-label={ITEMS[active].title}>
         <div className="showcase-code-header">
           <span className="showcase-code-lang">python</span>
           <button className="showcase-code-copy" onClick={copy} aria-label="Copy code">

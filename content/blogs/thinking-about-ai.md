@@ -20,7 +20,7 @@ With our goals defined, let’s get started. In the next few posts, we’ll take
 
 > **Up next:**
 >
-> 1. [**Outside-In and Inside-Out**: Imperative, Inductive, and Generative Computing](https://generative-computing.github.io/blog/2025/09/23/generative-computing.html)
+> 1. [**Outside-In and Inside-Out**: Imperative, Inductive, and Generative Computing](/blogs/generative-computing/)
 > 2. **Unreliably Amazing**: Dealing with Unpredictability as a first-class principle in generative computing
 > 3. **The problem with prompting**: Bringing composability and portability to generative AI
 > 4. **Everything is data. Everything is also instructions**: examining the curious implicit execution and memory model of LLMs.

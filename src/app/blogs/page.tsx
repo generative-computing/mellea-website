@@ -1,5 +1,15 @@
+import type { Metadata } from 'next';
 import BlogCard from '@/components/BlogCard';
 import { getAllBlogs } from '@/lib/blogs';
+
+export const metadata: Metadata = {
+  title: 'Blog',
+  description:
+    'Deep-dives on agentic systems, generative computing, and the ideas behind Mellea.',
+  alternates: {
+    canonical: '/blogs/',
+  },
+};
 
 export default function BlogsPage() {
   const blogs = getAllBlogs();
