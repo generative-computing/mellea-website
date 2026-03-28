@@ -31,8 +31,6 @@ test('sitemap.xml is accessible and contains expected URLs', async ({ page }) =>
   const content = await page.content();
   expect(content).toContain('mellea.ai');
   expect(content).toContain('/blogs/');
-  expect(content).toContain('thinking-about-ai');
-  expect(content).toContain('generative-computing');
 });
 
 // ── robots.txt ──

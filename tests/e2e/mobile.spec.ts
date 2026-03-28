@@ -34,6 +34,8 @@ test('hamburger menu closes on link click', async ({ page }) => {
   await expect(nav).toBeVisible();
 
   await nav.getByRole('link', { name: 'Blog' }).click();
+  // Menu must close — the overlay should no longer be visible
+  await expect(nav).not.toBeVisible();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
@@ -77,4 +79,12 @@ test('contributor avatars are hidden on mobile', async ({ page }) => {
 test('footer renders on mobile', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('contentinfo')).toBeVisible();
+});
+
+test('mobile menu toggle reflects open/closed state via aria-expanded', async ({ page }) => {
+  await page.goto('/');
+  const toggle = page.getByLabel(/Open menu/i);
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await toggle.click();
+  await expect(page.getByLabel(/Close menu/i)).toHaveAttribute('aria-expanded', 'true');
 });

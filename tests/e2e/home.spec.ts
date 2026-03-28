@@ -10,7 +10,7 @@ test('homepage has Mellea title', async ({ page }) => {
 test('homepage has meta description', async ({ page }) => {
   await page.goto('/');
   const desc = page.locator('meta[name="description"]');
-  await expect(desc).toHaveAttribute('content', /.+/);
+  await expect(desc).toHaveAttribute('content', /.{20,}/);
 });
 
 test('homepage has canonical URL', async ({ page }) => {
@@ -68,16 +68,21 @@ test('hero has Get Started CTA', async ({ page }) => {
 
 test('GitHub stats section renders', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('link', { name: /View on GitHub/ }).first()).toBeVisible();
+  // Stats are rendered inside the hero — verify the key labels are visible
+  const hero = page.getByRole('region', { name: /Hero/i });
+  await expect(hero.getByText('Stars')).toBeVisible();
+  await expect(hero.getByText('Forks')).toBeVisible();
 });
 
 // ── Feature Strip ──
 
-test('feature strip has multiple items', async ({ page }) => {
+test('feature strip shows key attributes', async ({ page }) => {
   await page.goto('/');
-  const items = page.locator('.feature-item');
-  const count = await items.count();
-  expect(count).toBeGreaterThanOrEqual(3);
+  const hero = page.getByRole('region', { name: /Hero/i });
+  // Use text unique to the feature strip (not shared with eyebrow or body copy)
+  await expect(hero.getByText('100%')).toBeVisible();
+  await expect(hero.getByText(/constrained output/i)).toBeVisible();
+  await expect(hero.getByText(/LLM provider/i)).toBeVisible();
 });
 
 // ── How It Works Section ──
@@ -141,7 +146,8 @@ test('active tab shows description and learn more link', async ({ page }) => {
 test('recent blog posts section has heading and cards', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('From the blog')).toBeVisible();
-  const cards = page.locator('a[href^="/blogs/"]');
+  // Scope to main and exclude the /blogs/ index link to count actual post cards
+  const cards = page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])');
   const count = await cards.count();
   expect(count).toBeGreaterThanOrEqual(1);
 });

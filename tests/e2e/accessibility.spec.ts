@@ -74,9 +74,3 @@ test('code showcase uses proper ARIA roles', async ({ page }) => {
   await expect(page.locator('[role="tab"][aria-selected="true"]')).toHaveCount(1);
 });
 
-test('mobile menu toggle has aria-expanded', async ({ page }) => {
-  await page.goto('/');
-  // Use attribute selector — toggle is display:none on desktop but exists in DOM
-  const toggle = page.locator('[aria-label="Open menu"]');
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-});
