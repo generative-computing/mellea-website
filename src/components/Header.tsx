@@ -73,6 +73,7 @@ export default function Header() {
       {mounted && createPortal(
         <nav
           className={`mobile-nav-overlay${menuOpen ? ' mobile-nav-overlay--open' : ''}`}
+          aria-label="Mobile navigation"
           aria-hidden={!menuOpen}
         >
           {navLinks}
