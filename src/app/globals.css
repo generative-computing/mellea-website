@@ -205,6 +205,27 @@ a {
   color: var(--text-primary);
 }
 
+/* ── Mobile nav overlay (portaled to <body>, separate from desktop .header-nav) ── */
+.mobile-nav-overlay {
+  display: none;
+}
+
+.mobile-nav-overlay--open {
+  display: flex;
+  position: fixed;
+  top: 48px;
+  left: 0;
+  right: 0;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 1rem 0;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  overflow-y: auto;
+  z-index: 9999;
+}
+
 @media (max-width: 768px) {
   .mobile-menu-toggle {
     display: flex;
@@ -214,22 +235,6 @@ a {
 
   .header-nav {
     display: none;
-    position: fixed;
-    top: 48px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--bg-primary);
-    flex-direction: column;
-    align-items: stretch;
-    padding: 1rem 0;
-    z-index: 99;
-    border-top: 1px solid var(--border);
-    overflow-y: auto;
-  }
-
-  .header-nav--open {
-    display: flex;
   }
 
   .nav-link {

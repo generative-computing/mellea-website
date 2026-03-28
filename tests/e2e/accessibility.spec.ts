@@ -24,7 +24,7 @@ test('blog index has exactly one h1', async ({ page }) => {
 test('blog post has exactly one h1', async ({ page }) => {
   // Navigate to first available post
   await page.goto('/blogs/');
-  const href = await page.locator('a.blog-card').first().getAttribute('href');
+  const href = await page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])').first().getAttribute('href');
   await page.goto(href!);
   await expect(page.locator('h1')).toHaveCount(1);
 });
@@ -74,8 +74,3 @@ test('code showcase uses proper ARIA roles', async ({ page }) => {
   await expect(page.locator('[role="tab"][aria-selected="true"]')).toHaveCount(1);
 });
 
-test('mobile menu toggle has aria-expanded', async ({ page }) => {
-  await page.goto('/');
-  const toggle = page.locator('.mobile-menu-toggle');
-  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
-});

@@ -1,21 +1,40 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteConfig } from '@/config/site';
 
+const emptySubscribe = () => () => {};
+
 export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  // useSyncExternalStore returns false on server, true on client — no setState-in-effect needed.
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const closeMenu = () => setMenuOpen(false);
 
-  // Prevent body scroll when menu is open
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [menuOpen]);
+  const navLinks = (
+    <>
+      <Link href={siteConfig.docsUrl} target="_blank" rel="noopener noreferrer" className="nav-link" onClick={closeMenu}>
+        Docs
+      </Link>
+      <Link href="/blogs" className={`nav-link ${pathname.startsWith('/blogs') ? 'active' : ''}`} onClick={closeMenu}>
+        Blog
+      </Link>
+      <Link href={siteConfig.discussionsUrl} target="_blank" rel="noopener noreferrer" className="nav-link" onClick={closeMenu}>
+        Community
+      </Link>
+      <Link href={siteConfig.githubUrl} target="_blank" rel="noopener noreferrer" className="nav-link" onClick={closeMenu}>
+        GitHub
+      </Link>
+      <Link href={siteConfig.docsUrl} target="_blank" rel="noopener noreferrer" className="nav-cta" onClick={closeMenu}>
+        Get Started →
+      </Link>
+    </>
+  );
 
   return (
     <header className="header">
@@ -43,52 +62,24 @@ export default function Header() {
           )}
         </button>
 
-        <nav className={`header-nav${menuOpen ? ' header-nav--open' : ''}`}>
-          <Link
-            href={siteConfig.docsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-link"
-            onClick={closeMenu}
-          >
-            Docs
-          </Link>
-          <Link
-            href="/blogs"
-            className={`nav-link ${pathname.startsWith('/blogs') ? 'active' : ''}`}
-            onClick={closeMenu}
-          >
-            Blog
-          </Link>
-          <Link
-            href={siteConfig.discussionsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-link"
-            onClick={closeMenu}
-          >
-            Community
-          </Link>
-          <Link
-            href={siteConfig.githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-link"
-            onClick={closeMenu}
-          >
-            GitHub
-          </Link>
-          <Link
-            href={siteConfig.docsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="nav-cta"
-            onClick={closeMenu}
-          >
-            Get Started →
-          </Link>
+        {/* Desktop nav — inline in header */}
+        <nav className="header-nav">
+          {navLinks}
         </nav>
       </div>
+
+      {/* Mobile nav overlay — portaled to <body> so position:fixed is viewport-relative,
+          not relative to the sticky header ancestor (iOS Safari limitation). */}
+      {mounted && createPortal(
+        <nav
+          className={`mobile-nav-overlay${menuOpen ? ' mobile-nav-overlay--open' : ''}`}
+          aria-label="Mobile navigation"
+          aria-hidden={!menuOpen}
+        >
+          {navLinks}
+        </nav>,
+        document.body
+      )}
     </header>
   );
 }

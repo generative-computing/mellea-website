@@ -12,14 +12,14 @@ test('hamburger menu button is visible on mobile', async ({ page }) => {
 
 test('desktop nav is hidden on mobile', async ({ page }) => {
   await page.goto('/');
-  const nav = page.locator('.header-nav:not(.header-nav--open)');
+  const nav = page.locator('header').getByRole('navigation');
   await expect(nav).not.toBeVisible();
 });
 
 test('hamburger menu opens and shows nav links', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel(/Open menu/i).click();
-  const nav = page.locator('.header-nav--open');
+  const nav = page.getByRole('navigation', { name: /Mobile navigation/i });
   await expect(nav).toBeVisible();
   // Should have multiple nav links
   const links = nav.getByRole('link');
@@ -30,20 +30,23 @@ test('hamburger menu opens and shows nav links', async ({ page }) => {
 test('hamburger menu closes on link click', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel(/Open menu/i).click();
-  const nav = page.locator('.header-nav--open');
+  const nav = page.getByRole('navigation', { name: /Mobile navigation/i });
   await expect(nav).toBeVisible();
 
-  await nav.getByRole('link', { name: 'Blog' }).click();
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  // Click an external link (target="_blank") — opens new tab but stays on this page,
+  // so we can assert the menu actually closed on the current page rather than
+  // trivially passing because a new page was loaded.
+  await nav.getByRole('link', { name: 'Docs' }).click();
+  await expect(nav).not.toBeVisible();
 });
 
 test('hamburger menu closes on close button', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel(/Open menu/i).click();
-  await expect(page.locator('.header-nav--open')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: /Mobile navigation/i })).toBeVisible();
 
   await page.getByLabel(/Close menu/i).click();
-  await expect(page.locator('.header-nav--open')).not.toBeVisible();
+  await expect(page.getByRole('navigation', { name: /Mobile navigation/i })).not.toBeVisible();
 });
 
 // ── Mobile Layout ──
@@ -56,7 +59,7 @@ test('hero renders on mobile', async ({ page }) => {
 
 test('feature cards visible on mobile', async ({ page }) => {
   await page.goto('/');
-  const cards = page.locator('.feature-card');
+  const cards = page.getByRole('article');
   const count = await cards.count();
   expect(count).toBeGreaterThanOrEqual(4);
   await expect(cards.first()).toBeVisible();
@@ -70,11 +73,19 @@ test('code showcase tabs visible on mobile', async ({ page }) => {
 
 test('contributor avatars are hidden on mobile', async ({ page }) => {
   await page.goto('/');
-  const avatars = page.locator('.gh-avatars');
+  const avatars = page.getByTestId('contributor-avatars');
   await expect(avatars).toBeHidden();
 });
 
 test('footer renders on mobile', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('contentinfo')).toBeVisible();
+});
+
+test('mobile menu toggle reflects open/closed state via aria-expanded', async ({ page }) => {
+  await page.goto('/');
+  const toggle = page.getByLabel(/Open menu/i);
+  await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  await toggle.click();
+  await expect(page.getByLabel(/Close menu/i)).toHaveAttribute('aria-expanded', 'true');
 });
