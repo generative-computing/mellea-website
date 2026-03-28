@@ -33,10 +33,11 @@ test('hamburger menu closes on link click', async ({ page }) => {
   const nav = page.getByRole('navigation', { name: /Mobile navigation/i });
   await expect(nav).toBeVisible();
 
-  await nav.getByRole('link', { name: 'Blog' }).click();
-  // Menu must close — the overlay should no longer be visible
+  // Click an external link (target="_blank") — opens new tab but stays on this page,
+  // so we can assert the menu actually closed on the current page rather than
+  // trivially passing because a new page was loaded.
+  await nav.getByRole('link', { name: 'Docs' }).click();
   await expect(nav).not.toBeVisible();
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 
 test('hamburger menu closes on close button', async ({ page }) => {
