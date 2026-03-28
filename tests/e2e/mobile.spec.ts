@@ -12,14 +12,14 @@ test('hamburger menu button is visible on mobile', async ({ page }) => {
 
 test('desktop nav is hidden on mobile', async ({ page }) => {
   await page.goto('/');
-  const nav = page.locator('.header-nav:not(.header-nav--open)');
+  const nav = page.locator('.header-nav');
   await expect(nav).not.toBeVisible();
 });
 
 test('hamburger menu opens and shows nav links', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel(/Open menu/i).click();
-  const nav = page.locator('.header-nav--open');
+  const nav = page.locator('.mobile-nav-overlay--open');
   await expect(nav).toBeVisible();
   // Should have multiple nav links
   const links = nav.getByRole('link');
@@ -30,7 +30,7 @@ test('hamburger menu opens and shows nav links', async ({ page }) => {
 test('hamburger menu closes on link click', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel(/Open menu/i).click();
-  const nav = page.locator('.header-nav--open');
+  const nav = page.locator('.mobile-nav-overlay--open');
   await expect(nav).toBeVisible();
 
   await nav.getByRole('link', { name: 'Blog' }).click();
@@ -40,10 +40,10 @@ test('hamburger menu closes on link click', async ({ page }) => {
 test('hamburger menu closes on close button', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel(/Open menu/i).click();
-  await expect(page.locator('.header-nav--open')).toBeVisible();
+  await expect(page.locator('.mobile-nav-overlay--open')).toBeVisible();
 
   await page.getByLabel(/Close menu/i).click();
-  await expect(page.locator('.header-nav--open')).not.toBeVisible();
+  await expect(page.locator('.mobile-nav-overlay--open')).not.toBeVisible();
 });
 
 // ── Mobile Layout ──
