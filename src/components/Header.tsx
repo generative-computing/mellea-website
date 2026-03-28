@@ -1,19 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { siteConfig } from '@/config/site';
 
+const emptySubscribe = () => () => {};
+
 export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  // useSyncExternalStore returns false on server, true on client — no setState-in-effect needed.
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
 
   const closeMenu = () => setMenuOpen(false);
-
-  useEffect(() => { setMounted(true); }, []);
 
   const navLinks = (
     <>
