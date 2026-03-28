@@ -20,6 +20,7 @@ This is the **Next.js website** for Mellea — the landing page and developer bl
 npm install
 npm run dev           # http://localhost:4000
 npm run lint          # ESLint
+npm run lint:md       # Markdown lint (content files)
 npm run typecheck     # tsc --noEmit
 npm run test:unit     # Vitest (no browser required)
 npm run test:e2e      # Playwright (auto-starts dev server)
@@ -61,16 +62,34 @@ Plain descriptive messages: `fix: nav link selector in E2E tests`, `feat: add ta
 
 No Angular-style mandatory types required, but keep messages short and imperative.
 
-## 6. Self-Review (before notifying user)
+## 6. Pre-commit Checklist (mandatory — do not skip)
 
-1. `npm run lint` clean?
-2. `npm run typecheck` clean?
-3. `npm run test:unit` passes?
-4. `npm run test:e2e` passes?
-5. `npm run build` succeeds?
-6. No new `any` types introduced without justification?
-7. No hardcoded URLs that should be in `src/config/site.ts`?
-8. Added or edited Markdown with external links? CI will run lychee — broken links block deploy.
+Run the appropriate checks **before every commit**. CI will reject failures; fixing them after the fact wastes pipeline time.
+
+### Code changes (any `.ts`, `.tsx`, `.css`, `.mjs`, or config file)
+
+```bash
+npm run lint          # must be clean
+npm run typecheck     # must be clean
+npm run test:unit     # must pass
+npm run test:e2e      # must pass
+```
+
+If you rename or remove a CSS class, check `tests/e2e/` for selectors that reference it and update them in the same commit.
+
+### Content-only changes (`.md` files in `content/blogs/` only, no code touched)
+
+```bash
+npm run lint:md       # must be clean
+```
+
+No build or E2E run required for content-only changes.
+
+### Additional checks (code changes)
+
+- No new `any` types without a comment explaining why
+- No hardcoded URLs — use `src/config/site.ts`
+- External links in Markdown? CI runs lychee — broken links block deploy
 
 ## 7. Architecture
 
