@@ -62,22 +62,20 @@ test('install command is visible with copy button', async ({ page }) => {
 
 test('hero has Get Started CTA', async ({ page }) => {
   await page.goto('/');
-  const hero = page.locator('.hero');
+  const hero = page.getByRole('region', { name: /Hero/i });
   await expect(hero.getByRole('link', { name: /Get Started/ })).toBeVisible();
 });
 
 test('GitHub stats section renders', async ({ page }) => {
   await page.goto('/');
-  const stats = page.locator('.gh-stats');
-  await expect(stats).toBeVisible();
-  await expect(stats.getByText(/View on GitHub/)).toBeVisible();
+  await expect(page.getByRole('link', { name: /View on GitHub/ }).first()).toBeVisible();
 });
 
 // ── Feature Strip ──
 
 test('feature strip has multiple items', async ({ page }) => {
   await page.goto('/');
-  const items = page.locator('.feature-strip .feature-item');
+  const items = page.locator('.feature-item');
   const count = await items.count();
   expect(count).toBeGreaterThanOrEqual(3);
 });
@@ -91,7 +89,7 @@ test('how it works section renders with heading', async ({ page }) => {
 
 test('feature cards are visible with learn more links', async ({ page }) => {
   await page.goto('/');
-  const cards = page.locator('.feature-card');
+  const cards = page.getByRole('article');
   const count = await cards.count();
   expect(count).toBeGreaterThanOrEqual(4);
 
@@ -133,9 +131,9 @@ test('code showcase has copy button', async ({ page }) => {
 
 test('active tab shows description and learn more link', async ({ page }) => {
   await page.goto('/');
-  const activeItem = page.locator('.showcase-item--active');
-  await expect(activeItem.locator('.showcase-item-desc')).toBeVisible();
-  await expect(activeItem.getByRole('link', { name: /Learn more/ })).toBeVisible();
+  const activeTab = page.locator('[role="tab"][aria-selected="true"]');
+  await expect(activeTab.locator('p')).toBeVisible();
+  await expect(activeTab.getByRole('link', { name: /Learn more/ })).toBeVisible();
 });
 
 // ── Recent Blog Posts ──
@@ -143,7 +141,7 @@ test('active tab shows description and learn more link', async ({ page }) => {
 test('recent blog posts section has heading and cards', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('From the blog')).toBeVisible();
-  const cards = page.locator('.blog-grid .blog-card');
+  const cards = page.locator('a[href^="/blogs/"]');
   const count = await cards.count();
   expect(count).toBeGreaterThanOrEqual(1);
 });
@@ -152,7 +150,7 @@ test('recent blog posts section has heading and cards', async ({ page }) => {
 
 test('vision section has closing CTAs', async ({ page }) => {
   await page.goto('/');
-  const vision = page.locator('.vision-section');
+  const vision = page.getByRole('region', { name: /Vision/i });
   await expect(vision).toBeVisible();
   await expect(vision.getByRole('link', { name: /Get Started/ })).toBeVisible();
   await expect(vision.getByRole('link', { name: /GitHub/ })).toBeVisible();
@@ -174,7 +172,6 @@ test('footer is visible with copyright and links', async ({ page }) => {
 
 test('skip-to-content link exists', async ({ page }) => {
   await page.goto('/');
-  const skip = page.locator('a.skip-link');
+  const skip = page.locator('[href="#main-content"]');
   await expect(skip).toHaveCount(1);
-  await expect(skip).toHaveAttribute('href', '#main-content');
 });

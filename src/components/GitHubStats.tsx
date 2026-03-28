@@ -122,7 +122,7 @@ export default function GitHubStats() {
       </div>
       <div className="gh-stats-footer">
         {state.status === 'success' && state.data.contributorAvatars.length > 0 && (
-          <div className="gh-avatars">
+          <div className="gh-avatars" data-testid="contributor-avatars">
             {state.data.contributorAvatars.map((c) => (
               <a
                 key={c.login}

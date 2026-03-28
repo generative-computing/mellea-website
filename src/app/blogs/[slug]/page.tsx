@@ -68,7 +68,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           <h1 className="blog-post-title">{blog.title}</h1>
 
           {blog.tags.length > 0 && (
-            <div className="blog-post-tags">
+            <div className="blog-post-tags" aria-label="Tags">
               {blog.tags.map((tag) => (
                 <span key={tag} className="tag">{tag}</span>
               ))}
