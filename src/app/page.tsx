@@ -217,6 +217,7 @@ export default function HomePage() {
                 View on GitHub
               </Link>
             </div>
+            <p className="vision-subtext">IBM ❤️ Open Source AI</p>
           </div>
         </div>
       </section>

@@ -1215,6 +1215,13 @@ a {
   flex-wrap: wrap;
 }
 
+.vision-subtext {
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  margin-top: 2rem;
+}
+
 /* ── GitHub Stats ── */
 .gh-stats {
   background: var(--bg-card);
