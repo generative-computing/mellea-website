@@ -1,9 +1,14 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import {
-  ReactCompareSlider,
   ReactCompareSliderImage,
 } from 'react-compare-slider';
+
+const ReactCompareSlider = dynamic(
+  () => import('react-compare-slider').then((mod) => mod.ReactCompareSlider),
+  { ssr: false },
+);
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
