@@ -22,7 +22,11 @@ There are two distinct ways to contribute — pick the one that applies:
 
 ### Writing a blog post
 
-No development environment needed. Just drop a Markdown file in `content/blogs/` and run `npm run build` to verify. See [CONTRIBUTING.md § Adding a blog post](CONTRIBUTING.md#adding-a-blog-post) for the frontmatter reference.
+No development environment needed. Copy [`templates/blog-post.md`](templates/blog-post.md) to
+`content/blogs/your-slug.md`, fill in the front matter, and open a PR against `main`. A maintainer
+will review and merge it — the post goes live automatically on merge.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full submission steps and front matter reference.
 
 ### Changing the site (UI, CI, dependencies)
 

@@ -2,37 +2,50 @@
 
 There are two distinct ways to contribute:
 
-- **Writing a blog post** — no dev environment needed. Just Markdown. [Jump to that section.](#adding-a-blog-post)
+- **Writing a blog post** — add a Markdown file and verify it renders. [Jump to that section.](#adding-a-blog-post)
 - **Changing the site** — UI, CI, or dependencies. Requires a full dev setup. [Jump to that section.](#development-setup)
 
 ---
 
 ## Adding a blog post
 
-1. Create a `.md` file in `content/blogs/`. The filename becomes the URL slug:
+### Submission steps
 
-   ```text
-   content/blogs/my-post.md  →  /blogs/my-post
-   ```
+1. Fork or create a branch from `main`.
 
-2. Add YAML frontmatter:
+2. Copy `templates/blog-post.md` to `content/blogs/your-slug.md`.
+   The filename becomes the URL slug: `content/blogs/my-post.md` → `/blogs/my-post`.
+
+3. Fill in the YAML front matter at the top of the file:
 
    ```md
    ---
    title: "Your Post Title"
-   date: "2026-03-27"
+   date: "YYYY-MM-DD"
    author: "Your Name"
    excerpt: "One sentence shown on the blog listing and cards."
    tags: ["tag1", "tag2"]
-   coverImage: "/images/blog/my-post.png"  # optional
+   coverImage: "/images/mellea-logo.svg"
    ---
 
    Your Markdown content starts here.
    ```
 
-3. Run `npm run build` to verify the post renders correctly.
+4. Install dependencies and verify your post locally:
 
-### Frontmatter fields
+   ```bash
+   npm install
+   npm run lint:md   # Markdown style check — must pass
+   npm run dev       # preview at http://localhost:4000/blogs/your-slug
+   ```
+
+5. Open a PR against `main` on this repository. A member of the
+   **mellea-maintainers** team must approve the PR before it can be merged.
+
+6. Once merged, the CI pipeline builds and deploys the site automatically —
+   your post will be live at `mellea.ai/blogs/your-slug` within a few minutes.
+
+### Front matter fields
 
 | Field         | Required | Description                                          |
 | ------------- | -------- | ---------------------------------------------------- |
@@ -43,7 +56,17 @@ There are two distinct ways to contribute:
 | `tags`        | No       | Array of tag strings                                 |
 | `coverImage`  | No       | Path to cover image (relative to `public/`)          |
 
-That's it — no config changes, no code edits required.
+### Adding images
+
+Place image files in `public/images/` and reference them with an absolute path from the site root:
+
+```md
+![Alt text](/images/my-image.png)
+```
+
+The same path format applies to `coverImage` in the post header.
+
+No config changes or code edits are needed — just the Markdown file and any images.
 
 ---
 
