@@ -4,7 +4,6 @@ date: "2025-08-14"
 author: "David Cox"
 excerpt: "Presenting an opinionated view on generative AI."
 tags: ["engineering", "reliability"]
-coverImage: "/images/mellea-logo.svg"
 ---
 
 So, I recognize that the title of this post may seem a bit provocative, and that’s on purpose. We’ll be presenting an opinionated view on generative AI, in the software engineering sense of the word “opinionated.” It would be difficult to overstate how much of our collective discourse and mental space is occupied by AI today. AI permeates almost every conversation—about business, about society, about geopolitics. Progress in AI technology has been moving at breakneck speed. However, building AI agents and solutions that reliably do what they need to is a lot harder than it should be, and I would argue that there is some real trouble brewing as the world begins to build AI agents to automate mission-critical work.

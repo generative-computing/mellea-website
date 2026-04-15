@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       siteName: siteConfig.name,
       publishedTime: blog.date,
       authors: [blog.author],
-      ...(blog.coverImage ? { images: [{ url: blog.coverImage }] } : {}),
+      images: [{ url: siteConfig.ogImage }],
     },
     twitter: {
       card: 'summary_large_image',

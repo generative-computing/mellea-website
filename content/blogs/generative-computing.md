@@ -4,7 +4,6 @@ date: "2025-09-23"
 author: "David Cox"
 excerpt: "What is “generative computing,” and is it different enough from other things to deserve a name?"
 tags: ["engineering", "reliability"]
-coverImage: "/images/mellea-logo.svg"
 ---
 
 ## Back to Basics: Imperative, Inductive and Generative Computing

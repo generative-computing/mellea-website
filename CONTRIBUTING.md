@@ -11,7 +11,7 @@ There are two distinct ways to contribute:
 
 ### Submission steps
 
-1. Fork or create a branch from `main`.
+1. Fork the repository.
 
 2. Copy `templates/blog-post.md` to `content/blogs/your-slug.md`.
    The filename becomes the URL slug: `content/blogs/my-post.md` → `/blogs/my-post`.
@@ -24,8 +24,7 @@ There are two distinct ways to contribute:
    date: "YYYY-MM-DD"
    author: "Your Name"
    excerpt: "One sentence shown on the blog listing and cards."
-   tags: ["tag1", "tag2"]
-   coverImage: "/images/mellea-logo.svg"
+   tags: ["tag1", "tag2", "etc"]
    ---
 
    Your Markdown content starts here.
@@ -54,7 +53,6 @@ There are two distinct ways to contribute:
 | `author`      | Yes      | Author display name                                  |
 | `excerpt`     | Yes      | Short summary shown on cards and the listing page    |
 | `tags`        | No       | Array of tag strings                                 |
-| `coverImage`  | No       | Path to cover image (relative to `public/`)          |
 
 ### Adding images
 
@@ -63,8 +61,6 @@ Place image files in `public/images/` and reference them with an absolute path f
 ```md
 ![Alt text](/images/my-image.png)
 ```
-
-The same path format applies to `coverImage` in the post header.
 
 No config changes or code edits are needed — just the Markdown file and any images.
 

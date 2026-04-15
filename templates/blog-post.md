@@ -3,8 +3,7 @@ title: "Your Post Title"
 date: "YYYY-MM-DD"
 author: "Your Name"
 excerpt: "One sentence shown on the blog listing and cards."
-tags: ["engineering", "reliability"]
-coverImage: "/images/mellea-logo.svg"
+tags: ["tag1", "tag2", "etc"]
 ---
 
 Update the fields above with your own values, then write your post here.

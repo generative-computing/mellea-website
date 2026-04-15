@@ -11,7 +11,6 @@ export interface BlogMeta {
   author: string;
   excerpt: string;
   tags: string[];
-  coverImage?: string;
 }
 
 export interface Blog extends BlogMeta {
@@ -34,7 +33,6 @@ export function getAllBlogs(): BlogMeta[] {
       author: data.author ?? 'Unknown',
       excerpt: data.excerpt ?? '',
       tags: data.tags ?? [],
-      coverImage: data.coverImage,
     } as BlogMeta;
   });
 
@@ -56,7 +54,6 @@ export function getBlog(slug: string): Blog | null {
     author: data.author ?? 'Unknown',
     excerpt: data.excerpt ?? '',
     tags: data.tags ?? [],
-    coverImage: data.coverImage,
     content,
   };
 }
