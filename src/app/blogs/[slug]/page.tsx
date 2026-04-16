@@ -80,7 +80,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="prose">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeSlug, rehypeHighlight]}
+            rehypePlugins={[rehypeSlug, [rehypeHighlight, { ignoreMissing: true }]]}
           >
             {blog.content}
           </ReactMarkdown>
