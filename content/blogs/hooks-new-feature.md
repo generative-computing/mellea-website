@@ -1,6 +1,6 @@
 ---
 title: "Hooks: A New Way to Extend Your LLM Application"
-date: "2026-04-14"
+date: "2026-04-17"
 author: "Paul Schweigert"
 excerpt: "Hooks are a simple but powerful way to tap into your LLM application's lifecycle and add custom behavior without touching your core logic."
 tags: ["v0.4", "hooks"]
@@ -15,7 +15,6 @@ You're building an LLM application. It works great in development. But as you mo
 - Track how much you're spending on API calls
 - Log every request for compliance
 - Block prompts that contain sensitive data
-- Retry failed requests automatically
 - Cache similar prompts to save money
 
 You *could* wrap every LLM call with custom logic. But that gets messy fast. Your business logic becomes tangled with cross-cutting concerns.
@@ -77,23 +76,18 @@ Mellea provides hooks throughout the execution lifecycle:
 - **Before and after** tool invocations
 - **During** sampling loops
 - **At** session initialization and cleanup
-- **Around** component execution
 
 Each hook receives a payload with relevant data (prompts, outputs, metadata) and can:
 
 - **Observe** what's happening
-- **Modify** the data flowing through
+- **Modify** some of the data flowing through
 - **Block** execution if needed
 
 ## What Could You Build?
 
 Once you start thinking in hooks, possibilities open up:
 
-**Security**: Automatically redact PII from inputs and outputs. Block prompts that look like injection attacks.
-
-**Reliability**: Retry failed requests with exponential backoff. Route to backup models when the primary fails. Implement circuit breakers.
-
-**Observability**: Send metrics to Prometheus. Create audit trails for compliance. Track which prompts are most expensive. (In fact, Mellea's own token usage metrics now run via hooks - when you enable `MELLEA_METRICS_ENABLED=true`, a built-in plugin automatically tracks token consumption using the hooks system.)
+**Observability**: Send metrics to Prometheus. Create audit trails for compliance. Track which prompts are most expensive. (In fact, Mellea's built-in telemetry even uses hooks, when you enable `MELLEA_METRICS_ENABLED=true` a built-in plugin automatically tracks metrics like token consumption using the hooks system.)
 
 **Quality**: Run multiple models and vote on the best output. Detect hallucinations by checking consistency. A/B test different models.
 
@@ -127,7 +121,3 @@ We've created [20+ experimental plugin examples](https://github.com/psschwei/mel
 What cross-cutting concerns are you wrestling with? What would you add to your LLM pipeline if it was just a few lines of code?
 
 Hooks make it possible.
-
----
-
-*Mellea v0.4.0 with hooks support is coming soon. Check out the [GitHub PR](https://github.com/generative-computing/mellea/pull/582) for technical details.*
