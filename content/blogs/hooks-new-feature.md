@@ -6,8 +6,6 @@ excerpt: "Hooks are a simple but powerful way to tap into your LLM application's
 tags: ["v0.4", "hooks"]
 ---
 
-# Hooks: A New Way to Extend Your LLM Applications
-
 Mellea v0.4.0 introduces **hooks** - a simple but powerful way to tap into your LLM application's lifecycle and add custom behavior without touching your core logic.
 
 ## The Problem
@@ -82,6 +80,7 @@ Mellea provides hooks throughout the execution lifecycle:
 - **Around** component execution
 
 Each hook receives a payload with relevant data (prompts, outputs, metadata) and can:
+
 - **Observe** what's happening
 - **Modify** the data flowing through
 - **Block** execution if needed
