@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeSlug from 'rehype-slug';
+import rehypeHighlight from 'rehype-highlight';
 import { getBlog, getAllBlogSlugs } from '@/lib/blogs';
 import { siteConfig } from '@/config/site';
 
@@ -79,7 +80,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         <div className="prose">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeSlug]}
+            rehypePlugins={[rehypeSlug, [rehypeHighlight, { ignoreMissing: true }]]}
           >
             {blog.content}
           </ReactMarkdown>
