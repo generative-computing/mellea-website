@@ -116,7 +116,7 @@ That's all you need to start extending Mellea.
 
 ## What Will You Build?
 
-We've created [20+ experimental plugin examples](https://github.com/psschwei/mellea-plugins) to help get ideas flowing - everything from PII redaction to A/B testing frameworks. These aren't full implementations, but they show what's possible. We're more excited about what *you'll* build.
+We're excited to see what *you'll* build. Whether it's cost tracking, A/B testing, or something we haven't thought of yet - hooks make it easy to experiment.
 
 What cross-cutting concerns are you wrestling with? What would you add to your LLM pipeline if it was just a few lines of code?
 
