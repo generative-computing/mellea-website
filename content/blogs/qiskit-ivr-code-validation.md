@@ -76,7 +76,7 @@ Mellea's IVR pattern structures LLM interactions as a loop:
 
 For Qiskit, the validator is the `flake8-qiskit-migration` plugin, the same tool used to enforce
 migration rules in production codebases. It parses the generated code's AST and checks it against
-the full catalog of QKT rules. When it finds a violation, it returns a structured error like:
+the full catalog of custom-defined Qiskit (QKT) rules. When it finds a violation, it returns a structured error like:
 
 ```console
 QKT101: QuantumCircuit.cnot() has been removed in Qiskit 1.0; use `.cx()` instead
