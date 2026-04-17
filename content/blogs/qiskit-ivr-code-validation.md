@@ -10,7 +10,7 @@ If you've used an LLM to help write Qiskit code, you've probably been burned. Th
 confidently generates something that looks right, until you run it and get a `DeprecationWarning`,
 an `AttributeError`, or a silent failure because `BasicAer` was removed two major versions ago.
 Qiskit has moved fast: primitives replaced `execute()`, `AerSimulator` moved packages, and a
-half-dozen APIs were retired in the Qiskit 1.x cycle. LLMs trained before those changes don't know
+half-dozen APIs were retired across the Qiskit 1.x and 2.x cycles. LLMs trained before those changes don't know
 what they don't know.
 
 The usual fix is manual review: you paste the output, cross-reference the migration guide, fix the
@@ -22,13 +22,12 @@ verifiable requirements and automatic repair to LLM calls. We built [an example]
 that applies its **Instruct-Validate-Repair (IVR)** pattern to Qiskit, using
 [`flake8-qiskit-migration`](https://github.com/qiskit-community/flake8-qiskit-migration) as the
 validator: generate code, check it against the migration rules, repair any violations, repeat.
-What makes this a good fit is that `flake8-qiskit-migration` doesn't just report failures; it
-returns the specific rules violated and their replacements, so the model knows exactly what to fix on
-each retry.
+`flake8-qiskit-migration` doesn't just report failures; it returns the specific rules violated and
+their replacements, so the model knows exactly what to fix on each retry.
 
 ## The Problem: LLMs Don't Know What Changed
 
-Qiskit's migration from 0.x to 1.x and beyond deprecated dozens of APIs. A few common offenders:
+Qiskit's migrations from 0.x to 1.x and 1.x to 2.x deprecated dozens of APIs. A few common offenders:
 
 | Deprecated | Modern replacement |
 | --- | --- |
@@ -96,11 +95,6 @@ replacement, so each attempt is guided by the exact constraint that failed.
 `generate_validated_qiskit_code()` wires the IVR loop together in about 20 lines:
 
 ```python
-from mellea import MelleaSession, start_session
-from mellea.stdlib.requirements import req, simple_validate
-from mellea.stdlib.sampling import RepairTemplateStrategy
-from validation_helpers import validate_qiskit_migration
-
 def generate_validated_qiskit_code(
     m: MelleaSession,
     prompt: str,
@@ -108,12 +102,10 @@ def generate_validated_qiskit_code(
 ) -> tuple[str, bool, int]:
     code_candidate = m.instruct(
         prompt,
-        requirements=[
-            req(
-                "Code must pass Qiskit migration validation (QKT rules)",
-                validation_fn=simple_validate(validate_qiskit_migration),
-            )
-        ],
+        requirements=[req(
+            "Code must pass Qiskit migration validation (QKT rules)",
+            validation_fn=simple_validate(validate_qiskit_migration),
+        )],
         strategy=strategy,
         return_sampling_results=True,
     )
@@ -214,8 +206,7 @@ qc.measure_all()
 ✓ Code passes Qiskit migration validation
 ````
 
-Two attempts, 23 seconds, no human involvement. The deprecated `BasicAer`, `execute`, and `cnot`
-are gone; modern equivalents are in their place.
+Two attempts, 23 seconds. The deprecated `BasicAer`, `execute`, and `cnot` are gone, replaced with their modern equivalents.
 
 The recommended model is a Qiskit-specialized fine-tune of Mistral Small
 (`hf.co/Qiskit/mistral-small-3.2-24b-qiskit-GGUF:latest`, ~15GB). It has current Qiskit API
