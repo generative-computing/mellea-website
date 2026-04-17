@@ -18,12 +18,12 @@ imports, and try again. That works once. It doesn't scale, and it requires the r
 know which APIs are deprecated, defeating the purpose of asking an LLM in the first place.
 
 [Mellea](https://mellea.ai) is a Python library for building reliable LLM applications that adds
-verifiable requirements and automatic repair to LLM calls. We built [an example](https://github.com/generative-computing/mellea/tree/main/docs/examples/instruct_validate_repair/qiskit_code_validation)
+verifiable requirements and automatic repair to LLM calls. We built [an example](https://github.com/generative-computing/mellea/tree/951145d6fc6e2977c388e164fb78904fcc2fb71a/docs/examples/instruct_validate_repair/qiskit_code_validation)
 that applies its **Instruct-Validate-Repair (IVR)** pattern to Qiskit, using
 [`flake8-qiskit-migration`](https://github.com/qiskit-community/flake8-qiskit-migration) as the
 validator: generate code, check it against the migration rules, repair any violations, repeat.
-What makes this a good fit is that `flake8-qiskit-migration` doesn't just report failure; it
-returns the specific rule violated and its replacement, so the model knows exactly what to fix on
+What makes this a good fit is that `flake8-qiskit-migration` doesn't just report failures; it
+returns the specific rules violated and their replacements, so the model knows exactly what to fix on
 each retry.
 
 ## The Problem: LLMs Don't Know What Changed
@@ -147,7 +147,7 @@ rules it violated and what the correct replacement is.
 
 ### Two Repair Strategies
 
-The example supports two strategies for how repair context is delivered. **RepairTemplateStrategy**
+The example supports two strategies for how the repair context is delivered. **RepairTemplateStrategy**
 (default) incorporates the validation errors into a revised instruction and retries; it works with
 `SimpleContext`, keeping each attempt independent. **MultiTurnStrategy** adds validation failures
 as a new user message in a running conversation, building up history across attempts, and requires
@@ -164,7 +164,7 @@ strategy = MultiTurnStrategy(loop_budget=10) if use_multiturn_strategy else Repa
 ### Running It
 
 The example uses `uv run` for zero-setup dependency management: `mellea` and
-`flake8-qiskit-migration` install automatically:
+`flake8-qiskit-migration` are installed automatically:
 
 ```bash
 uv run docs/examples/instruct_validate_repair/qiskit_code_validation/qiskit_code_validation.py
@@ -221,8 +221,8 @@ The recommended model is a Qiskit-specialized fine-tune of Mistral Small
 (`hf.co/Qiskit/mistral-small-3.2-24b-qiskit-GGUF:latest`, ~15GB). It has current Qiskit API
 knowledge baked in and works without a system prompt. Lighter general-purpose models can be
 substituted but produce less consistent results; if you go that route, set
-`system_prompt = QISKIT_SYSTEM_PROMPT` in the example. A deeper look at model and strategy
-performance across both datasets is coming in a follow-up post.
+`system_prompt = QISKIT_SYSTEM_PROMPT` in the example. Stay tuned for a deeper look at model and strategy
+performance across both datasets in a follow-up post.
 
 ## Try It
 
