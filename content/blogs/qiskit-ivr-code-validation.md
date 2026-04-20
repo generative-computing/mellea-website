@@ -208,9 +208,11 @@ qc.measure_all()
 
 Two attempts, 23 seconds. The deprecated `BasicAer`, `execute`, and `cnot` are gone, replaced with their modern equivalents.
 
-The recommended model is a Qiskit-specialized fine-tune of Mistral Small
+The recommended model is a [Qiskit-specialized fine-tune of Mistral Small](https://huggingface.co/Qiskit/mistral-small-3.2-24b-qiskit-GGUF)
 (`hf.co/Qiskit/mistral-small-3.2-24b-qiskit-GGUF:latest`, ~15GB). It has current Qiskit API
-knowledge baked in and works without a system prompt. Lighter general-purpose models can be
+knowledge baked in and works without a system prompt. Learn more about the available models for Qiskit-related tasks in the
+[official documentation](https://quantum.cloud.ibm.com/docs/en/guides/qiskit-code-assistant-local) or in the
+[Qiskit HuggingFace organization](https://huggingface.co/Qiskit). Lighter general-purpose models can be
 substituted but produce less consistent results; if you go that route, set
 `system_prompt = QISKIT_SYSTEM_PROMPT` in the example. Stay tuned for a deeper look at model and strategy
 performance across both datasets in a follow-up post.
