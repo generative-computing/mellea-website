@@ -3,7 +3,8 @@ import type { BlogMeta } from '@/lib/blogs';
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '';
-  const d = new Date(dateStr);
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(year, month - 1, day);
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 

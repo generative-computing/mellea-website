@@ -530,8 +530,8 @@ a {
 .blog-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 1px;
-  background: var(--border);
+  border-top: 1px solid var(--border);
+  border-left: 1px solid var(--border);
 }
 
 .blog-card {
@@ -542,12 +542,15 @@ a {
   gap: 1rem;
   transition: background 0.15s;
   cursor: pointer;
-  border: 1px solid transparent;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  outline: 1px solid transparent;
+  outline-offset: -1px;
 }
 
 .blog-card:hover {
   background: var(--bg-card-hover);
-  border-color: var(--border-accent);
+  outline-color: var(--border-accent);
 }
 
 .blog-card-meta {
