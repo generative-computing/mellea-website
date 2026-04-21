@@ -1,9 +1,9 @@
 ---
 title: "Your LLM Provider is Down. Now What?"
-date: "YYYY-MM-DD"
+date: "2026-04-27"
 author: "Paul Schweigert"
 excerpt: "Use mellea's provider-agnostic backend abstraction to build LLM applications that automatically survive outages through three layers of failover: validation retries, capability escalation (SOFAI), and infrastructure switching across providers."
-tags: ["mellea", "backends", "reliability"]
+tags: ["backends", "reliability"]
 ---
 
 ## Building model-agnostic AI applications that survive outages, lock-in, and the unexpected
@@ -36,7 +36,7 @@ def summarize(text: str) -> str:
     return response.choices[0].message.content
 ```
 
-This works until it doesn't. When the API returns 503s, your only option is to wait. You could add retry logic with exponential backoff, but that only helps with transient blips, not the 45-minute outages that spawn HN threads.
+This works until it doesn't. When the API returns 503s, your only option is to wait. You could add retry logic with exponential backoff, but that only helps with transient blips, not the 45-minute outages that spawn Hacker News threads.
 
 The deeper problem is architectural. Your inference logic, your prompt engineering, and your provider are fused into one block of code. Switching to Anthropic or a local model during an outage means rewriting the call signature, reformatting prompts, and re-testing, all under pressure at 2 AM while Slack is on fire.
 
@@ -52,7 +52,7 @@ Mellea is a Python library for writing *generative programs*: structured, testab
 
 Whether you're calling Claude through AWS Bedrock, GPT-4 through OpenAI, or Granite running locally via Ollama, your application code doesn't change. The `Backend` abstract class defines two methods (`generate_from_context()` and `generate_from_raw()`) and every provider adapter implements them identically.
 
-Switching from a cloud API to a local model looks like this:
+Because every backend implements the same interface, switching from a cloud API to a local model is a one-line change — no other code needs to be touched:
 
 ```python
 from mellea import MelleaSession
@@ -120,7 +120,7 @@ else:
 
 Output:
 
-```
+```text
 Got valid config after 1 attempt(s)
 {
   "name": "my-service",
@@ -176,7 +176,7 @@ SOFAI is designed for capability escalation: use the expensive model only when t
 The three escalation modes control how much context S2 inherits:
 
 | Mode | S2 sees | Best for |
-|------|---------|----------|
+| ---- | ------- | -------- |
 | `fresh_start` | Only the original prompt | Tasks where S1's failed attempts would confuse S2 |
 | `continue_chat` | Full S1 conversation history | Tasks where S1 made partial progress worth continuing |
 | `best_attempt` | S1's highest-scoring attempt | Tasks where S1 was close but needs refinement |
@@ -225,7 +225,7 @@ print(str(result))
 
 Output when the primary provider is down:
 
-```
+```text
 Anthropic (via LiteLLM) unavailable: Connection error: status 503
 OpenAI unavailable: Connection error: status 503
 Connected via Ollama (local)
@@ -345,4 +345,4 @@ This isn't just about surviving outages. It's about maintaining the freedom to c
 
 Mellea's backend abstraction and model-agnostic programming model make this practical: write your generative programs once against a uniform interface with declarative requirements and Python-based validation, then configure which providers serve them. The code doesn't change. Just the backend.
 
-If you've watched an outage thread climb Hacker News while your application sat dead alongside it, [start here](https://github.com/generative-computing/mellea). The getting-started guide takes about five minutes.
+If you've watched an outage thread climb Hacker News while your application sat dead alongside it, [get started here](https://docs.mellea.ai). The guide takes about five minutes.
