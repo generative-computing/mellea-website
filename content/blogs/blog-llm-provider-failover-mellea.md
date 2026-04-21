@@ -94,15 +94,17 @@ from mellea.stdlib.sampling import RejectionSamplingStrategy
 
 m = start_session("ollama", model_id="granite4:latest")
 
-def is_valid_json(output) -> tuple[bool, str]:
+def is_valid_json(ctx) -> tuple[bool, str]:
+    text = str(ctx.last_output())
     try:
-        json.loads(str(output))
+        json.loads(text)
         return (True, "")
     except json.JSONDecodeError as e:
         return (False, f"Invalid JSON: {e}")
 
 result = m.instruct(
-    "Generate a JSON config with keys: name, port, debug",
+    "Generate a JSON config with keys: name, port, debug. "
+    "Output ONLY the raw JSON object, no markdown fences or extra text.",
     requirements=[
         req("Output must be valid JSON.", validation_fn=is_valid_json)
     ],
@@ -111,7 +113,7 @@ result = m.instruct(
 )
 
 if result.success:
-    config = json.loads(str(result.result))
+    config = json.loads(str(result))
     print(f"Got valid config after {len(result.sample_generations)} attempt(s)")
     print(json.dumps(config, indent=2))
 else:
