@@ -306,7 +306,7 @@ a {
 
 /* ── Hero ── */
 .hero {
-  padding: 6rem 0 5rem;
+  padding: 3.5rem 0 2.5rem;
   position: relative;
   overflow: hidden;
 }
@@ -341,7 +341,7 @@ a {
 }
 
 .hero-logo img {
-  width: clamp(200px, 30vw, 420px);
+  width: clamp(160px, 22vw, 280px);
   height: auto;
 }
 
@@ -385,7 +385,7 @@ a {
   color: var(--text-secondary);
   max-width: 560px;
   line-height: 1.7;
-  margin-bottom: 2.5rem;
+  margin-bottom: 0;
 }
 
 /* ── Install command ── */
@@ -1386,10 +1386,10 @@ a {
 @media (max-width: 768px) {
   .container { padding: 0 1rem; }
   .header-inner { padding: 0 1rem; }
-  .hero { padding: 4rem 0 3rem; }
+  .hero { padding: 2.5rem 0 2rem; }
   .hero-inner { flex-direction: column; }
   .hero-logo { order: -1; }
-  .hero-logo img { width: clamp(140px, 50vw, 220px); }
+  .hero-logo img { width: clamp(120px, 35vw, 180px); }
   .blog-grid { grid-template-columns: 1fr; }
   .section-header { flex-direction: column; gap: 0.5rem; }
   .footer-inner { flex-direction: column; }
