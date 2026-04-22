@@ -842,33 +842,6 @@ a {
   text-decoration: underline;
 }
 
-/* ── Stats / Feature strip ── */
-.feature-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1px;
-  background: var(--border);
-  margin: 3rem 0;
-}
-
-.feature-item {
-  background: var(--bg-card);
-  padding: 2rem;
-}
-
-.feature-number {
-  font-family: var(--font-mono);
-  font-size: 2rem;
-  font-weight: 600;
-  color: var(--accent-blue);
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.feature-label {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-}
 
 /* ── How it works ── */
 .how-it-works-body {

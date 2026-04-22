@@ -51,24 +51,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="feature-strip">
-            <div className="feature-item">
-              <span className="feature-number">Unit</span>
-              <span className="feature-label">testable</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-number">100%</span>
-              <span className="feature-label">Open source</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-number">Typed</span>
-              <span className="feature-label">constrained output</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-number">Any</span>
-              <span className="feature-label">LLM provider</span>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -166,19 +148,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── See it in action ── */}
-      <section className="section">
-        <div className="container">
-          <div className="section-header">
-            <div>
-              <p className="section-label">Examples</p>
-              <h2 className="section-title">See it in action</h2>
-            </div>
-          </div>
-          <CodeShowcase />
-        </div>
-      </section>
-
       {/* ── Recent Blogs ── */}
       <section className="section">
         <div className="container">
@@ -197,6 +166,19 @@ export default function HomePage() {
               <BlogCard key={blog.slug} blog={blog} />
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ── See it in action ── */}
+      <section className="section">
+        <div className="container">
+          <div className="section-header">
+            <div>
+              <p className="section-label">Examples</p>
+              <h2 className="section-title">See it in action</h2>
+            </div>
+          </div>
+          <CodeShowcase />
         </div>
       </section>
 
