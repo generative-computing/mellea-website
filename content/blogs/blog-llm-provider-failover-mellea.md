@@ -1,6 +1,6 @@
 ---
 title: "Your LLM Provider is Down. Now What?"
-date: "2026-04-27"
+date: "2026-04-22"
 author: "Paul Schweigert"
 excerpt: "Use mellea's provider-agnostic backend abstraction to build LLM applications that automatically survive outages through three layers of failover: validation retries, capability escalation (SOFAI), and infrastructure switching across providers."
 tags: ["backends", "reliability"]
