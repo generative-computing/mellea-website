@@ -35,7 +35,7 @@ export function useGitHubStats() {
     const base = `https://api.github.com/repos/${repo}`;
 
     Promise.all([
-      fetch(base).then((r) => r.json()),
+      fetch(base).then((r) => { if (!r.ok) throw new Error(r.statusText); return r.json(); }),
       fetch(`${base}/releases/latest`).then((r) => (r.ok ? r.json() : null)),
       fetch(`${base}/contributors?per_page=1&anon=true`).then((r) => {
         // Contributors count lives in the Link header's last page number
