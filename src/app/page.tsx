@@ -33,6 +33,8 @@ export default function HomePage() {
                 the LLM call itself. Silent failures, untestable outputs.
                 Mellea lets you test and reason about every LLM call using type-annotated outputs, verifiable requirements, and automatic retries.
               </p>
+
+              <InstallCommand />
             </div>
 
             <div className="hero-logo">
@@ -61,9 +63,6 @@ export default function HomePage() {
 
           <div style={{ marginTop: '1.5rem' }}>
             <GitHubStats />
-            <div style={{ marginTop: '1rem' }}>
-              <InstallCommand />
-            </div>
           </div>
         </div>
       </section>

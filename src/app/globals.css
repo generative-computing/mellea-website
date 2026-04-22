@@ -385,7 +385,7 @@ a {
   color: var(--text-secondary);
   max-width: 560px;
   line-height: 1.7;
-  margin-bottom: 0;
+  margin-bottom: 1.5rem;
 }
 
 /* ── Install command ── */
