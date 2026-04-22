@@ -1,8 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { siteConfig } from '@/config/site';
 
 const CMD = 'uv pip install mellea';
 
@@ -42,8 +40,6 @@ export default function InstallCommand() {
           )}
         </button>
       </div>
-      <Link href={siteConfig.docsUrl} target="_blank" rel="noopener noreferrer" className="btn-primary">Get Started →</Link>
-      <Link href="/blogs" className="btn-secondary">Read the blog</Link>
     </div>
   );
 }

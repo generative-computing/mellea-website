@@ -61,8 +61,10 @@ export default function HomePage() {
 
           <div style={{ marginTop: '1.5rem' }}>
             <GitHubStats />
+            <div style={{ marginTop: '1rem' }}>
+              <InstallCommand />
+            </div>
           </div>
-          <InstallCommand />
         </div>
       </section>
 
