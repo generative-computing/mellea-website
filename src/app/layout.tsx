@@ -42,13 +42,13 @@ export const metadata: Metadata = {
     title: 'Mellea — Reliable, Testable LLM Output for Python',
     description: siteConfig.description,
     url: siteConfig.url,
-    images: [{ url: '/images/og-hero.png', width: 2064, height: 1104 }],
+    images: [{ url: '/images/mellea-logo.svg', width: 2064, height: 1104 }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Mellea — Reliable, Testable LLM Output for Python',
     description: siteConfig.description,
-    images: ['/images/og-hero.png'],
+    images: ['/images/mellea-logo.svg'],
   },
 };
 
