@@ -9,7 +9,7 @@ export const siteConfig = {
   docsUrl: 'https://docs.mellea.ai',
   githubUrl: 'https://github.com/generative-computing/mellea',
   discussionsUrl: 'https://github.com/generative-computing/mellea/discussions',
-  ogImage: 'https://mellea.ai/images/mellea-logo.svg',
+  ogImage: 'https://mellea.ai/images/mellea-logo.png',
   /* discordUrl: 'https://discord.com',
   twitterUrl: 'https://twitter.com', */
 };
