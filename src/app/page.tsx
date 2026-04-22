@@ -35,8 +35,6 @@ export default function HomePage() {
               </p>
 
               <InstallCommand />
-
-              <GitHubStats />
             </div>
 
             <div className="hero-logo">
@@ -51,6 +49,29 @@ export default function HomePage() {
             </div>
           </div>
 
+        </div>
+      </section>
+
+      {/* ── Recent Blogs ── */}
+      <section className="section">
+        <div className="container">
+          <div className="section-header">
+            <div>
+              <p className="section-label">Latest Posts</p>
+              <h2 className="section-title">From the blog</h2>
+            </div>
+            <Link href="/blogs" className="section-link">
+              All posts →
+            </Link>
+          </div>
+
+          <div className="blog-grid">
+            {recent.map((blog) => (
+              <BlogCard key={blog.slug} blog={blog} />
+            ))}
+          </div>
+
+          <GitHubStats />
         </div>
       </section>
 
@@ -144,27 +165,6 @@ export default function HomePage() {
               <p className="feature-card-body">Built-in Granite Guardian integration detects harmful outputs, hallucinations, and jailbreak attempts before they reach your users — no external service required.</p>
               <Link href="https://docs.mellea.ai/how-to/safety-guardrails" target="_blank" className="feature-card-link">Learn more →</Link>
             </article>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Recent Blogs ── */}
-      <section className="section">
-        <div className="container">
-          <div className="section-header">
-            <div>
-              <p className="section-label">Latest Posts</p>
-              <h2 className="section-title">From the blog</h2>
-            </div>
-            <Link href="/blogs" className="section-link">
-              All posts →
-            </Link>
-          </div>
-
-          <div className="blog-grid">
-            {recent.map((blog) => (
-              <BlogCard key={blog.slug} blog={blog} />
-            ))}
           </div>
         </div>
       </section>
