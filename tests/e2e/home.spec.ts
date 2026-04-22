@@ -60,29 +60,16 @@ test('install command is visible with copy button', async ({ page }) => {
   await expect(page.getByLabel('Copy install command')).toBeVisible();
 });
 
-test('hero has Get Started CTA', async ({ page }) => {
+test('header has Get Started CTA', async ({ page }) => {
   await page.goto('/');
-  const hero = page.getByRole('region', { name: /Hero/i });
-  await expect(hero.getByRole('link', { name: /Get Started/ })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: /Get Started/ })).toBeVisible();
 });
 
 test('GitHub stats section renders', async ({ page }) => {
   await page.goto('/');
-  // Stats are rendered inside the hero — verify the key labels are visible
-  const hero = page.getByRole('region', { name: /Hero/i });
-  await expect(hero.getByText('Stars')).toBeVisible();
-  await expect(hero.getByText('Forks')).toBeVisible();
-});
-
-// ── Feature Strip ──
-
-test('feature strip shows key attributes', async ({ page }) => {
-  await page.goto('/');
-  const hero = page.getByRole('region', { name: /Hero/i });
-  // Use text unique to the feature strip (not shared with eyebrow or body copy)
-  await expect(hero.getByText('100%')).toBeVisible();
-  await expect(hero.getByText(/constrained output/i)).toBeVisible();
-  await expect(hero.getByText(/LLM provider/i)).toBeVisible();
+  // Stats are rendered below the blog cards, not inside the hero
+  await expect(page.getByText('Stars')).toBeVisible();
+  await expect(page.getByText('Forks')).toBeVisible();
 });
 
 // ── How It Works Section ──
@@ -143,10 +130,9 @@ test('active tab shows description and learn more link', async ({ page }) => {
 
 // ── Recent Blog Posts ──
 
-test('recent blog posts section has heading and cards', async ({ page }) => {
+test('recent blog posts section has cards', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('From the blog')).toBeVisible();
-  // Scope to main and exclude the /blogs/ index link to count actual post cards
+  // Section heading removed — verify blog cards are present on the home page
   const cards = page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])');
   const count = await cards.count();
   expect(count).toBeGreaterThanOrEqual(1);
