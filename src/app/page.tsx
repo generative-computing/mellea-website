@@ -51,7 +51,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Recent Blogs ── */}
-      <section className="section" style={{ paddingTop: '1.5rem' }}>
+      <section className="section" style={{ paddingTop: '1rem' }}>
         <div className="container">
           <div className="blog-grid">
             {recent.map((blog) => (
