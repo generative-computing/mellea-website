@@ -51,25 +51,17 @@ export default function HomePage() {
       </section>
 
       {/* ── Recent Blogs ── */}
-      <section className="section">
+      <section className="section" style={{ paddingTop: '1.5rem' }}>
         <div className="container">
-          <div className="section-header">
-            <div>
-              <p className="section-label">Latest Posts</p>
-              <h2 className="section-title">From the blog</h2>
-            </div>
-            <Link href="/blogs" className="section-link">
-              All posts →
-            </Link>
-          </div>
-
           <div className="blog-grid">
             {recent.map((blog) => (
               <BlogCard key={blog.slug} blog={blog} />
             ))}
           </div>
 
-          <GitHubStats />
+          <div style={{ marginTop: '1.5rem' }}>
+            <GitHubStats />
+          </div>
           <InstallCommand />
         </div>
       </section>
