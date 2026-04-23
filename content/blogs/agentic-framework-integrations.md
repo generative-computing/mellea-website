@@ -114,6 +114,7 @@ result = crew.kickoff()
 ```
 
 **Note on `req` vs. `check`:** Both validate responses, but with different semantics:
+
 - `req()` - **Hard requirement** included in the instruction prompt. The model sees this requirement and is explicitly told to satisfy it.
 - `check()` - **Soft check** used only during validation. The model doesn't see this in the instruction; it's verified after generation.
 
