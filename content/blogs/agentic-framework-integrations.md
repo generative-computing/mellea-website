@@ -47,7 +47,7 @@ result = chain.invoke({"topic": "AI reliability"})
 # Returns first output that passes all requirements, or best attempt after loop_budget retries
 ```
 
-**Key Benefit:** Quality guarantees without manual retry logic. Mellea automatically validates and retries until requirements are met.
+**Key Benefit:** Requirements validation without manual retry logic. Mellea validates and retries up to `loop_budget` times, returning the first output that passes or the best attempt.
 
 ## Mellea + CrewAI: Multi-Agent Reliability
 
@@ -156,7 +156,7 @@ result = doc_gen(code="def calculate_total(items): ...")
 # Documentation automatically meets all requirements
 ```
 
-**Key Benefit:** Structured outputs that are guaranteed to meet requirements. Perfect for documentation generation, content production, and other structured tasks.
+**Key Benefit:** Structured outputs validated against your requirements. If all retries are exhausted, Mellea returns the best attempt with validation feedback. Perfect for documentation generation, content production, and other structured tasks.
 
 ## The Core Pattern: Instruct-Validate-Repair
 
@@ -184,15 +184,17 @@ This pattern fundamentally improves reliability by treating LLM outputs as **pro
 
 Mellea's validation adds:
 
-- **Latency**: Depending on loop_budget and framework
+- **Latency**: Each retry is one additional LLM call, so worst-case latency is `loop_budget × base_latency`. Set budgets conservatively for latency-sensitive paths.
 - **API Costs**: Proportional to retries and requirements
-- **Reliability**: Guaranteed quality within your specifications
+- **Reliability**: Outputs validated against your specifications, with detailed feedback when requirements aren't met
 
 Use Mellea when **quality matters more than latency**—which is most production scenarios.
 
 ## Getting Started
 
 Choose your framework and start validating:
+
+> **Note:** Pre-built packages are coming soon. In the meantime, see the [mellea-contribs repository](https://github.com/generative-computing/mellea-contribs) for installation instructions.
 
 ```bash
 # LangChain integration
@@ -216,7 +218,7 @@ Each integration includes:
 
 - **Example code** showing real-world patterns
 - **API documentation** for customization
-- **Performance tradeoff analysis** to guide your decisions
+- **Latency and cost considerations** (see the tradeoff section above)
 
 Explore the [mellea-contribs repository](https://github.com/generative-computing/mellea-contribs) for complete examples and documentation.
 
