@@ -183,7 +183,7 @@ Use Mellea when quality matters more than latency. For most production systems, 
 
 Pre-built packages are coming soon. For now, install from the [mellea-contribs repository](https://github.com/generative-computing/mellea-contribs).
 
-Configure your framework to use Mellea's LM and define your requirements. Validation happens automatically. Each integration includes example code, API documentation, and cost/latency tradeoffs in the repository.
+Configure your framework to use Mellea's LM and define your requirements. Validation runs on every call. Each integration includes example code, API documentation, and cost/latency tradeoffs in the repository.
 
 ---
 
