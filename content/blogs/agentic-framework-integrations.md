@@ -47,7 +47,7 @@ result = chain.invoke({"topic": "AI reliability"})
 # Returns first output that passes all requirements, or best attempt after loop_budget retries
 ```
 
-Mellea validates each output and retries up to `loop_budget` times, returning the first pass or the best attempt if all retries exhaust.
+Mellea validates each output and retries up to `loop_budget` times, returning the first pass or the best attempt once the budget is exhausted.
 
 ## Mellea + CrewAI: Multi-Agent Reliability
 
