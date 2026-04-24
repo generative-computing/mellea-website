@@ -8,13 +8,13 @@ tags: ["integration", "framework"]
 
 Building reliable AI applications requires more than good models—it requires validation. Whether you're orchestrating chains with LangChain, coordinating agents with CrewAI, or writing structured programs with DSPy, output quality determines whether your application works in production.
 
-Mellea adds structured validation and automatic retry to these frameworks. Here's how three integrations address this:
+Mellea adds structured validation and automatic retry to these frameworks.
 
 ## Mellea + LangChain: Validated Chains
 
-LangChain chains generate once and hope for the best. Invalid outputs crash downstream components or force manual retry logic.
+Without validation, LangChain chains pass whatever the model generates downstream. Invalid outputs crash components or get manually retried.
 
-With Mellea, you get built-in requirements validation and automatic retry:
+Mellea adds validation and automatic retry:
 
 ```python
 from mellea import start_session
@@ -47,13 +47,11 @@ result = chain.invoke({"topic": "AI reliability"})
 # Returns first output that passes all requirements, or best attempt after loop_budget retries
 ```
 
-Requirements validation runs without manual retry logic. Mellea validates and retries up to `loop_budget` times, returning the first passing output or the best attempt if all retries fail.
+Mellea validates each output and retries up to `loop_budget` times, returning the first pass or the best attempt if all retries exhaust.
 
 ## Mellea + CrewAI: Multi-Agent Reliability
 
-Multi-agent workflows suffer from cascading quality issues. When one agent's output is poor, downstream agents work with bad data.
-
-Mellea validates each agent's output independently:
+In multi-agent workflows, poor output from one agent degrades downstream results. Mellea validates each agent independently:
 
 ```python
 from mellea import start_session
@@ -113,20 +111,17 @@ result = crew.kickoff()
 # Each agent's output is validated for quality
 ```
 
-**`req` vs. `check`:** Both validate responses, but differently:
+`req()` embeds requirements in the instruction prompt so the model sees them upfront. `check()` validates only after generation, without priming the model.
 
-- `req()` — Hard requirement included in the instruction prompt. The model sees this and is told to satisfy it.
-- `check()` — Soft check used only during validation. The model doesn't see it; it's verified after generation.
+Use `req()` for things the model should actively target ("Must cite sources"). Use `check()` for constraints you want to verify without shaping generation ("Avoid speculation").
 
-Use `req()` for requirements the model should actively satisfy (e.g., "Must cite sources"). Use `check()` for constraints to verify without biasing generation (e.g., "Avoid speculation").
-
-Quality control happens at each pipeline step. Researchers produce well-sourced content, writers produce engaging copy—automatically.
+Each pipeline step validates independently. Researchers produce sourced content, writers produce engaging copy—the model sees the requirements, not just hopes.
 
 ## Mellea + DSPy: Validated Structured Programs
 
-DSPy provides structure through signatures, but doesn't guarantee outputs meet quality requirements. Generated documentation might be incomplete, summaries might miss key points.
+DSPy provides structure through signatures but doesn't guarantee output quality. Documentation might be incomplete or summaries might miss key points.
 
-Mellea treats validation as a first-class citizen:
+Mellea adds validation to DSPy:
 
 ```python
 import dspy
@@ -156,28 +151,24 @@ result = doc_gen(code="def calculate_total(items): ...")
 # Documentation automatically meets all requirements
 ```
 
-Structured outputs are validated against your requirements. If retries are exhausted, Mellea returns the best attempt with validation feedback. This works well for documentation generation, content production, and other structured tasks.
+Each output is validated against your requirements. If retries exhaust, Mellea returns the best attempt with feedback. This scales to documentation, content, and any structured output.
 
 ## The Core Pattern: Instruct-Validate-Repair
 
-All three integrations use the same approach:
+All three integrations follow the same approach:
 
 1. **Instruct** — Generate output using the framework's LLM
 2. **Validate** — Check output against requirements using LLM-as-a-judge
 3. **Repair** — Retry with feedback up to `loop_budget` attempts if invalid
 4. **Return** — First valid output or best attempt
 
-This treats LLM outputs as programs that must meet specifications, not text that hopefully works.
+Treat LLM outputs like code that must meet specifications, not text that hopefully works.
 
 ## Quality vs. Speed
 
-Mellea's validation adds:
+Validation adds latency (each retry is one LLM call, worst-case `loop_budget × base_latency`) and API costs proportional to retries. You get reliability: outputs validated against your specs, with detailed feedback when validation fails.
 
-- **Latency** — Each retry is one additional LLM call. Worst-case latency is `loop_budget × base_latency`.
-- **API costs** — Proportional to retries and requirements
-- **Reliability** — Outputs validated against your specs, with detailed feedback when requirements aren't met
-
-Use Mellea when quality matters more than latency. For most production scenarios, that's the right tradeoff.
+Use Mellea when quality matters more than latency. For most production systems, that's the right tradeoff.
 
 | Scenario | Without Mellea | With Mellea |
 | --- | --- | --- |
@@ -190,14 +181,10 @@ Use Mellea when quality matters more than latency. For most production scenarios
 
 ## Getting Started
 
-Pre-built packages are coming soon. For now, see the [mellea-contribs repository](https://github.com/generative-computing/mellea-contribs) for installation instructions.
+Pre-built packages are coming soon. For now, install from the [mellea-contribs repository](https://github.com/generative-computing/mellea-contribs).
 
-Configure your framework to use Mellea's LM and define your requirements. Validation happens automatically.
-
-Each integration includes example code, API documentation, and latency/cost considerations. Check the [mellea-contribs repository](https://github.com/generative-computing/mellea-contribs) for complete examples.
+Configure your framework to use Mellea's LM and define your requirements. Validation happens automatically. Each integration includes example code, API documentation, and cost/latency tradeoffs in the repository.
 
 ---
 
-Treating LLM outputs as programs with specifications improves reliability. Mellea brings this to LangChain, CrewAI, and DSPy.
-
-*This integration is part of [mellea-contribs](https://github.com/generative-computing/mellea-contribs), an incubation point for Mellea ecosystem contributions.*
+Treating LLM outputs as code that must meet specifications improves reliability. Mellea brings this to LangChain, CrewAI, and DSPy — part of [mellea-contribs](https://github.com/generative-computing/mellea-contribs), an incubation space for ecosystem contributions.
