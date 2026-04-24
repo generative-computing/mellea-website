@@ -1,12 +1,10 @@
 ---
 title: "Getting Started with Mellea in Five Minutes"
-date: "2026-04-24"
+date: "2026-04-27"
 author: "Angelo Danducci II"
-excerpt: "Install Python, pull a local model with Ollama, and build your first Mellea pipeline from scratch — no API key, no cloud, fully private."
+excerpt: "Install uv, pull a local model with Ollama, and build your first Mellea pipeline from scratch — no API key, no cloud, fully private."
 tags: ["getting-started", "ollama", "tutorial"]
 ---
-
-## Getting Started with Mellea in Five Minutes
 
 This guide walks you through everything you need to build your first Mellea pipeline: installing uv, pulling a local model with Ollama, and writing a small but complete generative program.
 
@@ -112,6 +110,7 @@ import mellea
 from mellea.core import Requirement
 from mellea.stdlib.requirements import simple_validate
 
+# start_session() uses Ollama and granite4:micro by default — the same backend and model we just set up.
 m = mellea.start_session()
 
 length_req = Requirement(
