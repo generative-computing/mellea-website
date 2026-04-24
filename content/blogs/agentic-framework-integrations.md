@@ -6,9 +6,9 @@ excerpt: "How Mellea brings structured validation and automatic retry to LangCha
 tags: ["integration", "framework"]
 ---
 
-Building reliable AI applications requires more than good models—it requires validation. Whether you're orchestrating chains with LangChain, coordinating agents with CrewAI, or writing structured programs with DSPy, output quality determines whether your application works in production.
+Building reliable AI applications requires more than good models—it requires validation. LangChain, CrewAI, and DSPy all handle orchestration, but none validate output quality. That determines whether your application actually works in production.
 
-Mellea adds structured validation and automatic retry to these frameworks.
+Mellea adds structured validation and automatic retry to all three.
 
 ## Mellea + LangChain: Validated Chains
 
