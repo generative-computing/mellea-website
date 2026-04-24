@@ -115,6 +115,12 @@ Pushing to `main` triggers `.github/workflows/nextjs.yml`. Pipeline: lint → (t
 
 Drop a `.md` file in `content/blogs/`. The filename becomes the URL slug: `my-post.md` → `/blogs/my-post`.
 
+**Naming rules** — the filename is a permanent public URL; once published it cannot be changed without breaking existing links (this site has no redirect support).
+
+- Use the topic as the slug, not a description of the content type: `llm-provider-failover.md`, not `blog-llm-provider-failover.md`
+- Never prefix with `blog-`, `post-`, `article-`, or similar — the `/blogs/` path already provides that context
+- Append `-mellea` only if needed to disambiguate from a generic topic name
+
 Required front matter:
 
 ```md

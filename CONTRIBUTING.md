@@ -14,7 +14,8 @@ There are two distinct ways to contribute:
 1. Fork the repository.
 
 2. Copy `templates/blog-post.md` to `content/blogs/your-slug.md`.
-   The filename becomes the URL slug: `content/blogs/my-post.md` → `/blogs/my-post`.
+   The filename becomes the URL slug (`my-post.md` → `/blogs/my-post`), so choose a
+   descriptive topic name and avoid redundant prefixes like `blog-`.
 
 3. Fill in the YAML front matter at the top of the file:
 
