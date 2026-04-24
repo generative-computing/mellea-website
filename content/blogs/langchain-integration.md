@@ -6,17 +6,15 @@ excerpt: "Learn how Mellea's generative programming patterns add structured vali
 tags: ["langchain", "mellea", "generative-programming", "llm", "validation", "reliability"]
 ---
 
-LangChain has revolutionized how developers build LLM applications, providing a rich ecosystem of chains, agents, and tools. But as applications move to production, developers face a critical challenge: **how do you ensure LLM outputs are reliable, consistent, and meet specific requirements?**
+LangChain makes it easy to build LLM applications with chains, agents, and tools. But in production, a simple problem emerges: **how do you ensure LLM outputs actually meet your requirements?**
 
-This is where **Mellea** comes in. Mellea is a generative programming framework that replaces flaky agents and brittle prompts with structured, maintainable, and robust AI workflows. The new **Mellea-LangChain integration** brings Mellea's unique capabilities directly into your LangChain applications.
+That's what the **Mellea-LangChain integration** does. Mellea is a generative programming framework that adds automatic validation, structured requirements, and intelligent retry logic to your LangChain workflows.
 
-## What Makes Mellea Different?
+## Core Pattern: Instruct-Validate-Repair
 
-While LangChain excels at orchestrating LLM interactions, Mellea introduces **generative programming patterns** that fundamentally change how you think about LLM reliability:
+Mellea adds **generative programming patterns** that treat LLM generation as a structured programming problem:
 
-### 1. **Instruct-Validate-Repair Pattern**
-
-Mellea's core innovation is treating LLM generation as a structured programming problem with explicit requirements and validation:
+### Automatic Validation and Retry
 
 ```python
 from mellea import start_session
@@ -47,18 +45,18 @@ response = chat_model.invoke(
 print(f"Content: {response.content}")
 ```
 
-**What's happening here?** Unlike traditional LangChain models that generate once and hope for the best, Mellea:
+Here's what happens:
 
 1. Generates an output
 2. Validates it against your requirements using LLM-as-a-judge
 3. If validation fails, automatically retries with feedback
 4. Returns the first valid output or the best attempt within the loop budget
 
-Standard LangChain doesn't include this—it's unique to Mellea.
+LangChain generates once and returns whatever it gets. Mellea keeps trying until the output is valid.
 
-### 2. **Sampling Strategies for Inference-Time Scaling**
+### Sampling Strategies for Inference-Time Scaling
 
-Mellea provides sophisticated sampling strategies that go beyond simple retry logic. These strategies trade additional inference-time compute for improved output quality:
+You can choose how aggressive the retry logic is. Each strategy trades more API calls for better output quality:
 
 ```python
 from mellea.stdlib.sampling import (
@@ -92,11 +90,11 @@ repair_model = chat_model.bind(
 )
 ```
 
-These strategies enable **inference-time scaling**—improving output quality by using more compute at generation time. LangChain doesn't provide this natively. In exchange for better quality, you pay extra latency and API costs proportional to the number of attempts.
+Each strategy uses more inference to improve quality. LangChain doesn't have a built-in equivalent. The tradeoff: more API calls and latency for better output.
 
-### 3. **Requirements as First-Class Citizens**
+### Requirements as Composable Objects
 
-In Mellea, requirements aren't just prompts - they're structured, composable, and verifiable:
+Requirements in Mellea are structured and reusable, not scattered in prompt text:
 
 ```python
 from mellea.stdlib.requirements import req, check, simple_validate
@@ -127,13 +125,13 @@ chain = prompt | chat_model.bind(
 )
 ```
 
-**Key insight:** Mellea lets you mix fast deterministic checks (< 1ms) with powerful LLM-based semantic validation, giving you both speed and flexibility.
+You get both speed (deterministic checks < 1ms) and flexibility (LLM-based semantic validation).
 
-## Mellea's Unique Functions in LangChain
+## What This Integration Enables
 
-### Function 1: Guaranteed Output Quality with Validation
+### Guaranteed Output Quality
 
-Standard LangChain models generate once—no retry if the output misses your requirements. Mellea adds built-in validation with automatic retry:
+Most LangChain chains generate once and return whatever they get. With Mellea, the output keeps being regenerated until it meets your requirements:
 
 ```python
 from langchain_core.prompts import ChatPromptTemplate
@@ -158,11 +156,11 @@ result = mellea_chain.invoke({"topic": "AI"})
 # Meets requirements or returns the best attempt with validation feedback
 ```
 
-**Tradeoff:** This approach increases latency (potentially 5x if all retries are needed) and API costs. Use when output quality is more important than response time.
+The cost: up to 5x latency and higher API usage. Use when quality beats speed.
 
-### Function 2: Composable Validation Logic
+### Reusable Requirements
 
-Validation logic scattered across code is hard to reuse and test. Mellea lets you compose and reuse requirements:
+Instead of validation logic scattered across your code, define requirements once and reuse them:
 
 ```python
 # Define reusable requirement sets
@@ -195,9 +193,9 @@ internal_email_chain = prompt2 | chat_model.bind(
 )
 ```
 
-### Function 3: Transparent Validation Results
+### Validation Transparency
 
-When validation fails, you want to know why and how many retries were attempted. Mellea provides detailed sampling results:
+When validation fails, see why it failed and how many attempts were made:
 
 ```python
 response = chat_model.invoke(
@@ -216,9 +214,9 @@ print(f"Content: {response.content}")
 # The model will retry up to loop_budget times to meet requirements
 ```
 
-### Function 4: Generative Functions
+### Generative Functions (Coming Soon)
 
-Mellea's `@generative` decorator (not yet exposed in this LangChain integration) defines AI-generated functions without implementation:
+Mellea's `@generative` decorator defines AI-generated functions without implementation. This isn't exposed in the current LangChain integration, but it's a powerful pattern:
 
 ```python
 from mellea import generative
@@ -228,20 +226,16 @@ from typing import Literal
 def classify_sentiment(text: str) -> Literal["positive", "negative", "neutral"]:
     """Classify the sentiment of the input text."""
 
-# Use in your LangChain workflow
 sentiment = classify_sentiment(m, text=user_input)
-if sentiment == "positive":
-    # Route to positive response chain
-    response = positive_chain.invoke({"input": user_input})
 ```
 
-This approach—defining functions without implementing them—is unique to Mellea.
+Instead of writing a classifier, you declare what it should do and let Mellea generate and validate the behavior.
 
-## How Mellea Enhances LangChain Patterns
+## Real-World Patterns
 
-### Enhanced Chain Reliability
+### Validated Output Parsing
 
-Standard LangChain generates text without guarantees. Mellea adds validation before parsing:
+Most LangChain chains parse without validation. Add Mellea validation before parsing to catch format issues early:
 
 ```python
 chain = (
@@ -257,9 +251,9 @@ chain = (
 result = chain.invoke(input)  # Validated before parsing!
 ```
 
-### Enhanced Agent Reliability
+### Validated Tool Calls
 
-Agents can produce invalid tool calls. Mellea validates them before execution:
+Agents often produce malformed tool calls. Validate them before execution:
 
 ```python
 # Agent outputs are validated
@@ -274,9 +268,9 @@ agent = create_tool_calling_agent(llm=mellea_model, tools=tools)
 result = agent_executor.invoke({"input": query})
 ```
 
-### Enhanced Output Parsing
+### Validation + Parsing
 
-Parsers fail on invalid output. Validate before parsing with Mellea:
+Combine semantic validation with deterministic parsing:
 
 ```python
 # Validate before parsing
@@ -307,26 +301,22 @@ chain = (
 result = chain.invoke(input)  # Double validation: generation + parsing
 ```
 
-## Real-World Example: Customer Support Email
+## Example: Customer Support Email
 
-Without Mellea, you manually validate and retry:
+Without Mellea, you retry manually when the output fails checks:
 
 ```python
-# Generate email
 chain = prompt | model
 email = chain.invoke({"customer": "John", "issue": "billing"})
 
-# Manual validation
 if len(email.split()) > 300:
     email = chain.invoke({"customer": "John", "issue": "billing", "length": "short"})
-
 if "Dear" not in email:
     email = chain.invoke({"customer": "John", "issue": "billing", "greeting": "required"})
-
-# Still might not meet all requirements!
+# Still might not meet all requirements
 ```
 
-With Mellea:
+With Mellea, define what you need and let it retry automatically:
 
 ```python
 chain = prompt | chat_model.bind(
@@ -343,29 +333,29 @@ chain = prompt | chat_model.bind(
 )
 
 email = chain.invoke({"customer": "John", "issue": "billing"})
-# Meets all requirements, or returns feedback on what failed
+# Retried up to 5 times automatically
 ```
 
-## What Mellea Adds That LangChain Doesn't Have
+## Feature Comparison
 
-| Feature | LangChain Alone | With Mellea |
+| Feature | LangChain | Mellea |
 | --- | --- | --- |
-| **Output Validation** | Manual, external | Built-in, automatic |
-| **Retry Logic** | Manual implementation | Sophisticated sampling strategies |
-| **Requirements** | Embedded in prompts | First-class, composable objects |
-| **Validation Feedback** | None | Detailed results and reasoning |
-| **Inference-Time Scaling** | Not supported | Multiple strategies (Rejection, MultiTurn, Repair) |
-| **Generative Programming** | Not available | `@generative` decorator for function synthesis |
-| **Semantic Validation** | Not available | LLM-as-a-judge built-in |
-| **Deterministic Checks** | Manual | `simple_validate()` for fast checks |
+| Output Validation | Manual, external | Automatic, built-in |
+| Retry Logic | You write it | Sampling strategies included |
+| Requirements | In prompts | Reusable Python objects |
+| Validation Feedback | None | Detailed results per attempt |
+| Inference-Time Scaling | No | Rejection, MultiTurn, Repair strategies |
+| Generative Functions | No | `@generative` decorator |
+| Semantic Validation | No | LLM-as-a-judge |
+| Fast Checks | No | `simple_validate()` with no LLM calls |
 
 ## Mellea vs. LangChain's Native Guardrails
 
-LangChain provides its own guardrails system (documented at [LangChain Guardrails](https://docs.langchain.com/oss/javascript/langchain/guardrails)), which offers a different approach to output validation. Understanding the differences helps you choose the right tool for your needs.
+LangChain has its own guardrails system for output validation. They work differently from Mellea.
 
-### What Are LangChain's Native Guardrails?
+### LangChain Guardrails
 
-LangChain's guardrails are primarily **post-generation validation** using external services and rule-based checks:
+LangChain's guardrails validate output after generation, using external services and rules:
 
 Example:
 
@@ -390,167 +380,151 @@ chain = prompt | model | guardrails
 result = chain.invoke({"input": "..."})
 ```
 
-### How Mellea's Approach Differs
+### How Mellea Differs
 
-Mellea takes a different approach:
+Instead of validating after generation, Mellea validates during generation and retries if needed:
 
-| Aspect | LangChain Native Guardrails | Mellea Guardrails |
+| Aspect | LangChain Guardrails | Mellea |
 | --- | --- | --- |
-| **Philosophy** | Post-generation validation | Instruct-validate-repair loop |
-| **Validation Timing** | After generation only | During generation with automatic retry |
-| **Validation Method** | External services + rules | LLM-as-a-judge + deterministic checks |
-| **Retry Logic** | Manual implementation | Built-in sampling strategies |
-| **Requirements** | Configuration strings/DSL | First-class Python objects |
-| **Composability** | Limited | Highly composable with `&` operator |
-| **Semantic Validation** | Requires external service | Built-in with LLM-as-a-judge |
-| **Deterministic Checks** | Rule-based only | Fast `simple_validate()` functions |
+| Philosophy | Validate after generation | Validate during; retry if needed |
+| Timing | After generation only | During generation with automatic retry |
+| Validation | External services + rules | LLM or deterministic checks |
+| Retry | You write it | Built-in strategies |
+| Requirements | Configuration DSL | Python objects |
+| Reusability | Limited | Composable with `&` |
+| Semantic Validation | Requires external API | Built-in |
+| Fast Checks | Rules only | `simple_validate()` functions |
 | **Integration** | Separate component | Integrated into model generation |
 
 ### Key Differences Explained
 
-#### 1. **Validation Timing and Retry**
+#### Validation Timing and Retry
 
-**LangChain Native:**
+LangChain generates, then validates. You handle retries manually:
 
 ```python
-# Generate once, validate after, manually retry if needed
 chain = prompt | model | guardrails
 try:
     result = chain.invoke(input)
 except ValidationError:
-    # Manual retry logic
-    result = chain.invoke(input)  # Try again
+    result = chain.invoke(input)  # Manual retry
 ```
 
-**Mellea:**
+Mellea validates and retries automatically during generation:
 
 ```python
-# Automatic validation and retry during generation
 chain = prompt | chat_model.bind(
     model_options={
         "requirements": [req("Must be professional")],
         "strategy": RejectionSamplingStrategy(loop_budget=5),
     }
 )
-result = chain.invoke(input)  # Automatically retries up to 5 times
+result = chain.invoke(input)  # Retries up to 5 times automatically
 ```
 
-**Tradeoff**: Mellea adds latency but guarantees quality. LangChain is faster but requires manual retry logic.
+Tradeoff: Mellea is slower but guarantees the output meets requirements. LangChain is faster but requires manual retry logic.
 
-#### 2. **Semantic vs. Rule-Based Validation**
+#### Semantic vs. Rule-Based Validation
 
-**LangChain Native:**
+LangChain uses rules and external services:
 
 ```python
-# Primarily rule-based or external service
 guardrails = GuardrailsRunnable(
     validators=[
         LengthValidator(min=50, max=500),
         RegexValidator(pattern=r"^Dear.*"),
-        ToxicityValidator(threshold=0.8),  # External API
+        ToxicityValidator(threshold=0.8),
     ]
 )
 ```
 
-**Mellea:**
+Mellea mixes semantic (LLM-based) with deterministic checks:
 
 ```python
-# Mix semantic (LLM-based) and deterministic validation
 requirements = [
-    # Semantic validation (flexible, understands context)
     req("Must be professional and empathetic"),
-    req("Must address the customer's concern"),
-    
-    # Deterministic validation (fast, no LLM call)
+    req("Must address the concern"),
     req("Under 500 words", validation_fn=simple_validate(lambda x: len(x.split()) < 500)),
     req("Starts with greeting", validation_fn=simple_validate(lambda x: x.startswith("Dear"))),
 ]
 ```
 
-**Tradeoff**: LangChain's rules are faster but less flexible. Mellea's semantic validation is more powerful but costs extra LLM calls.
+Tradeoff: LangChain's rules are fast but limited. Mellea's semantic checks are powerful but cost extra API calls.
 
-#### 3. **Composability and Reusability**
+#### Composability and Reusability
 
-**LangChain Native:**
+LangChain guardrails are typically per-chain:
 
 ```python
-# Guardrails are typically configured per-chain
 chain1 = prompt1 | model | guardrails1
 chain2 = prompt2 | model | guardrails2
-# Composition is limited
 ```
 
-**Mellea:**
+Mellea requirements are reusable Python lists:
 
 ```python
-# Requirements are composable Python objects
 professional_reqs = [req("Professional tone"), req("Clear structure")]
 length_reqs = [req("50-500 words", validation_fn=simple_validate(lambda x: 50 < len(x.split()) < 500))]
 
-# Reuse across chains
 email_chain = prompt1 | chat_model.bind(model_options={"requirements": professional_reqs + length_reqs})
 report_chain = prompt2 | chat_model.bind(model_options={"requirements": professional_reqs + length_reqs})
-
-# Or compose guardrails
-guardrail1 = MelleaGuardrail(requirements=professional_reqs, name="professional")
-guardrail2 = MelleaGuardrail(requirements=length_reqs, name="length")
-combined = guardrail1 & guardrail2  # Compose with & operator
 ```
 
-**Tradeoff**: Mellea takes more setup but enables reuse and easier maintenance.
-
-#### 4. **Validation Feedback and Transparency**
-
-**LangChain Native:**
+You can also compose guardrails with the `&` operator:
 
 ```python
-# Limited feedback on validation failures
+guardrail1 = MelleaGuardrail(requirements=professional_reqs, name="professional")
+guardrail2 = MelleaGuardrail(requirements=length_reqs, name="length")
+combined = guardrail1 & guardrail2
+```
+
+Tradeoff: Mellea requires more setup but pays off with reuse and maintainability.
+
+#### Validation Feedback
+
+LangChain gives generic error messages:
+
+```python
 try:
     result = chain.invoke(input)
 except ValidationError as e:
-    print(e)  # Generic error message
-    # No details on which validators failed or why
+    print(e)  # Generic message, no details on what failed
 ```
 
-**Mellea:**
+Mellea provides detailed results per attempt:
 
 ```python
-# Detailed validation results
 result = guardrail.validate(text)
 print(f"Passed: {result.passed}")
 print(f"Failed requirements: {result.errors}")
 print(f"Metadata: {result.metadata}")
-# Output:
-# Passed: False
-# Failed requirements: ['Must be professional and empathetic']
-# Metadata: {'guardrail_name': 'email_check', 'total_requirements': 3,
-#            'passed_requirements': 2, 'failed_requirements': 1}
+# Output: Failed requirements: ['Must be professional and empathetic']
 ```
 
-**Tradeoff**: Mellea gives you more details but you need to handle them.
+Tradeoff: Mellea gives more details, so you get better insight into what went wrong.
 
-### When to Use Each Approach
+### When to Use Each
 
-#### ✅ **Use LangChain's Native Guardrails When:**
+Use **LangChain guardrails** if you need:
 
-1. **You need specialized content moderation** - PII detection, toxicity filtering, bias detection from established services
-2. **You have existing guardrail infrastructure** - Already using Guardrails AI, NeMo, or similar services
-3. **Simple rule-based validation is sufficient** - Length checks, regex patterns, format validation
-4. **You want minimal latency overhead** - Post-generation validation with no retry logic
-5. **You're working with JavaScript/TypeScript** - LangChain's guardrails have better JS support
+- PII/toxicity detection from established services
+- Existing guardrail infrastructure (Guardrails AI, NeMo)
+- Simple rule-based validation only
+- Minimal latency overhead
+- JavaScript/TypeScript support
 
-#### ✅ **Use Mellea's Guardrails When:**
+Use **Mellea** if you need:
 
-1. **You need semantic validation** - Understanding context, tone, intent, or meaning
-2. **Automatic retry is important** - You want the system to fix issues without manual intervention
-3. **Quality is more important than speed** - You can afford 2-5x latency for better outputs
-4. **You need composable validation logic** - Building complex validation from reusable components
-5. **You want inference-time scaling** - Trading compute for quality with sophisticated sampling strategies
-6. **You're building production Python applications** - Mellea's Python-first design provides better ergonomics
+- Semantic validation (tone, intent, meaning)
+- Automatic retry without manual intervention
+- Quality over speed (can afford 2-5x latency)
+- Reusable validation logic
+- Inference-time scaling (compute for quality tradeoff)
+- Python applications with better ergonomics
 
-### Combining Both Approaches
+### Using Both Together
 
-You can use both systems together for comprehensive validation:
+Combine both for comprehensive validation:
 
 ```python
 from mellea import start_session
@@ -590,18 +564,13 @@ if not validation.passed:
     # Handle failure
 ```
 
-**This hybrid approach gives you:**
+This gives you semantic validation during generation + fast deterministic checks after, plus automatic retry and clear separation of concerns.
 
-- Semantic validation during generation (Mellea's strength)
-- Fast deterministic checks after generation (efficient post-processing)
-- Automatic retry for semantic issues
-- Clear separation of concerns
+### Full Example: Customer Support Email
 
-### Code Example: Side-by-Side Comparison
+Generate a professional email that addresses the customer's issue and meets length requirements.
 
-**Task**: Generate a customer support email that is professional, addresses the issue, and meets length requirements.
-
-**LangChain Native Approach:**
+**Without Mellea (LangChain):**
 
 ```python
 from langchain_core.prompts import ChatPromptTemplate
@@ -633,7 +602,7 @@ else:
     print("Could not generate valid email")
 ```
 
-**Mellea Approach:**
+**With Mellea:**
 
 ```python
 from mellea import start_session
@@ -670,54 +639,44 @@ result = chain.invoke({"issue": "billing problem"})
 # Guaranteed to meet requirements or returns best attempt with feedback
 ```
 
-**Key Differences:**
+The difference:
 
-- LangChain: ~15 lines of manual retry logic. Mellea: ~10 lines with automatic retries.
-- LangChain: rule-based validation. Mellea: semantic validation using the LLM.
-- LangChain: validation scattered across code. Mellea: centralized in requirements.
-- LangChain: generic error messages on failure. Mellea: detailed results on each attempt.
+- LangChain uses ~15 lines of manual retry logic. Mellea uses ~10 lines with built-in retries.
+- LangChain validates with rules. Mellea uses semantic validation (the LLM judges quality).
+- LangChain validation is scattered. Mellea validation is centralized.
+- LangChain gives generic errors. Mellea gives detailed results per attempt.
 
-### Summary: Choosing Your Approach
-
-Use **LangChain's guardrails** for simple rule-based validation with minimal overhead, especially if you already have guardrail infrastructure.
-
-Use **Mellea's guardrails** for semantic validation, automatic retry, and production reliability where quality beats speed.
-
-Use **both together** for comprehensive validation: semantic checks during generation (Mellea) + fast deterministic checks after generation.
-
-**LangChain's guardrails filter outputs. Mellea's guardrails generate correct outputs from the start.** Both are valuable; they solve different problems.
+In short: LangChain guardrails filter bad outputs after they're generated. Mellea guardrails generate correct outputs from the start.
 
 ## When to Use This Integration
 
-### ✅ **Good Use Cases:**
+**Good for:**
 
-1. **Production applications requiring high reliability** - When output quality is critical and you can afford increased latency
-2. **Structured content generation** - Emails, reports, documentation with specific format requirements
-3. **Compliance-sensitive applications** - When outputs must meet regulatory or business requirements
-4. **Multi-backend development** - When you need to switch between Ollama (dev) and OpenAI (prod)
-5. **Complex validation logic** - When you need both semantic and deterministic validation
+- Production apps where quality matters more than speed
+- Structured content (emails, reports, docs with format requirements)
+- Compliance-sensitive work (regulatory or business constraints)
+- Multi-backend dev (Ollama locally, OpenAI in prod)
+- Complex validation (semantic + deterministic checks)
 
-### ⚠️ **Consider Alternatives When:**
+**Not ideal for:**
 
-1. **Latency is critical** - Real-time chat applications where sub-second response is required
-2. **Simple use cases** - Basic Q&A where validation overhead isn't justified
-3. **Cost-sensitive applications with frontier models** - When using paid frontier models (GPT-4, Claude, etc.) where API costs must be minimized, as validation adds LLM calls. Note: If using Small Language Models (SLMs) with Mellea—which is part of our strategy to achieve comparable results to larger models—cost is typically not a concern due to lower inference costs.
-4. **Streaming is required** - Current integration doesn't support streaming (returns full response)
+- Real-time chat (sub-second latency required)
+- Simple Q&A (validation overhead not justified)
+- Cost-sensitive apps with frontier models (GPT-4, Claude API costs add up). Note: Mellea with Small Language Models (SLMs) has lower costs.
+- Streaming responses (current integration returns full response as one chunk)
 
-## Limitations and Tradeoffs
+## Limitations
 
-### Current Limitations
+- **No streaming** — `stream()` and `astream()` return the full response as one chunk
+- **Latency** — Validation and retry add 2-5x overhead to base latency
+- **Cost** — Each validation attempt consumes API credits
+- **LLM-as-judge** — Semantic validation quality depends on your validator model
 
-1. **No streaming support** - The `stream()` and `astream()` methods return the full response as a single chunk
-2. **Increased latency** - Validation and retry logic adds overhead (potentially 2-5x base latency)
-3. **Higher API costs** - Each validation attempt consumes API credits
-4. **LLM-as-judge limitations** - Semantic validation quality depends on the validator model's capabilities
+Key tradeoffs:
 
-### Tradeoffs to Consider
-
-- **Quality vs. Speed**: More validation = better quality but slower responses
-- **Cost vs. Reliability**: More retries = higher reliability but increased API costs
-- **Complexity vs. Simplicity**: Structured requirements add code complexity but improve maintainability
+- Quality vs. Speed: more validation = slower
+- Cost vs. Reliability: more retries = higher API costs
+- Complexity vs. Simplicity: structured requirements need more code but are easier to maintain
 
 ## Getting Started
 
@@ -764,82 +723,45 @@ result = validated_chain.invoke({"input": "Explain quantum computing"})
 print(result.content)
 ```
 
-## Architecture: How It Works
+## How It Works
 
-```diagram
-┌─────────────────────────────────────────────────────────┐
-│         Your LangChain Application                      │
-│         (Chains, Agents, Tools)                         │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│         MelleaChatModel (LangChain Interface)           │
-│         • Implements BaseChatModel                      │
-│         • Accepts requirements & strategies             │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│         Mellea's Generative Programming Layer           │
-│         ┌───────────────────────────────────────────┐   │
-│         │  Instruct-Validate-Repair Loop            │   │
-│         │  1. Generate output                       │   │
-│         │  2. Validate against requirements         │   │
-│         │  3. If invalid, retry with feedback       │   │
-│         │  4. Return validated output               │   │
-│         └───────────────────────────────────────────┘   │
-│         ┌───────────────────────────────────────────┐   │
-│         │  Sampling Strategies                      │   │
-│         │  • RejectionSampling                      │   │
-│         │  • MultiTurn                              │   │
-│         │  • RepairTemplate                         │   │
-│         └───────────────────────────────────────────┘   │
-│         ┌───────────────────────────────────────────┐   │
-│         │  Requirements System                      │   │
-│         │  • LLM-based validation (semantic)        │   │
-│         │  • Deterministic validation (fast)        │   │
-│         │  • Composable requirements                │   │
-│         └───────────────────────────────────────────┘   │
-└────────────────────────┬────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────┐
-│         Mellea Backends                                 │
-│         (Ollama, OpenAI, WatsonX, HuggingFace, etc.)    │
-└─────────────────────────────────────────────────────────┘
+```text
+Your LangChain Application
+    ↓
+MelleaChatModel (LangChain interface)
+    ↓
+Mellea's Generative Programming Layer
+  ├─ Instruct-Validate-Repair Loop (generate → validate → retry)
+  ├─ Sampling Strategies (Rejection, MultiTurn, RepairTemplate)
+  └─ Requirements System (semantic + deterministic validation)
+    ↓
+Mellea Backends (Ollama, OpenAI, WatsonX, HuggingFace, etc.)
 ```
 
-## Key Takeaways
+## Summary
 
-- Mellea adds structured generative programming to LangChain: treat outputs as programs with requirements and validation
-- The instruct-validate-repair pattern automatically retries until requirements are met
-- Requirements are composable and reusable with both LLM-based and deterministic validation
-- Sampling strategies enable inference-time scaling—trade compute for quality
-- Mellea enhances LangChain without replacing it
-- Know the tradeoff: higher latency and API costs for better quality
+- Mellea treats LLM outputs as programs: give them explicit requirements and validation.
+- The instruct-validate-repair pattern keeps trying until outputs are valid.
+- Requirements are composable Python objects, not scattered in prompts.
+- Sampling strategies let you trade compute for quality.
+- Mellea works with LangChain, not instead of it.
+- Tradeoff: higher latency and API costs for better quality.
 
-### Run Examples
+## Next Steps
+
+Run the examples:
 
 ```bash
 cd mellea-contribs/mellea_contribs/langchain_backend/examples
 python requirements_strategy_example.py
 ```
 
-### Learn More
+Read more:
 
 - [Mellea Documentation](https://docs.mellea.ai/)
 - [Integration Examples](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/langchain_backend/examples)
 - [LangChain Docs](https://python.langchain.com/)
 - [Mellea Discord Community](https://ibm.biz/mellea-discord)
-
-## Conclusion
-
-The Mellea-LangChain integration adds generative programming patterns to LangChain's ecosystem: structured validation, automatic retry, and inference-time scaling to trade compute for output quality.
-
-LLM outputs are programs that should meet specifications. Mellea makes this explicit through requirements, validation, and automatic repair. LangChain provides the ecosystem.
-
-Together, they let you build reliable, maintainable, production-ready AI applications—with clear tradeoffs on latency and cost.
 
 ---
 
