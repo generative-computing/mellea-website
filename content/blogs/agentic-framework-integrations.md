@@ -8,7 +8,7 @@ tags: ["integration", "framework"]
 
 Building reliable AI applications requires more than powerful models—it requires **guarantees**. Whether you're orchestrating complex chains with LangChain, coordinating multi-agent teams with CrewAI, or writing structured programs with DSPy, output quality can make or break production applications.
 
-Mellea brings structured validation and automatic repair to AI frameworks. Here's how three integrations address reliability in agentic AI:
+Mellea brings structured validation and automatic retry to AI frameworks. Here's how three integrations address reliability in agentic AI:
 
 ## Mellea + LangChain: Validated Chains
 
@@ -192,23 +192,7 @@ Use Mellea when **quality matters more than latency**—which is most production
 
 ## Getting Started
 
-Choose your framework and start validating:
-
 > **Note:** Pre-built packages are coming soon. In the meantime, see the [mellea-contribs repository](https://github.com/generative-computing/mellea-contribs) for installation instructions.
-
-```bash
-# LangChain integration
-pip install mellea
-pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-langchain/v0.1.0/mellea-langchain-0.1.0-py3-none-any.whl
-
-# CrewAI integration
-pip install mellea
-pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-crewai/v0.1.0/mellea-crewai-0.1.0-py3-none-any.whl
-
-# DSPy integration
-pip install mellea
-pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-dspy/v0.1.0/mellea-dspy-0.1.0-py3-none-any.whl
-```
 
 Then configure your framework to use Mellea's LM and define your requirements. That's it—validation happens automatically.
 
