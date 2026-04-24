@@ -151,7 +151,7 @@ result = doc_gen(code="def calculate_total(items): ...")
 # Documentation automatically meets all requirements
 ```
 
-Each output is validated against your requirements. If retries exhaust, Mellea returns the best attempt with feedback. This scales to documentation, content, and any structured output.
+Each output is validated against your requirements. If the budget is exhausted, Mellea returns the best attempt with feedback. This scales to documentation, content, and any structured output.
 
 ## The Core Pattern: Instruct-Validate-Repair
 
