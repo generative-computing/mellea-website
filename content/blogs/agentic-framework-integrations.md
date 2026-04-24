@@ -115,7 +115,7 @@ result = crew.kickoff()
 
 Use `req()` for things the model should actively target ("Must cite sources"). Use `check()` for constraints you want to verify without shaping generation ("Avoid speculation").
 
-Each pipeline step validates independently. Researchers produce sourced content, writers produce engaging copy—the model sees the requirements, not just hopes.
+Each pipeline step validates independently. Researchers produce sourced content, writers produce structured copy — requirements enforced, not assumed.
 
 ## Mellea + DSPy: Validated Structured Programs
 
