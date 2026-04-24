@@ -41,7 +41,7 @@ uv init mellea-demo
 cd mellea-demo
 ```
 
-This creates a minimal project with a `.python-version` file and a managed virtual environment. 
+This creates a minimal project with a `.python-version` file and a managed virtual environment.
 
 uv picks up Python 3.11+ automatically.
 
@@ -53,7 +53,7 @@ uv picks up Python 3.11+ automatically.
 uv add mellea
 ```
 
-uv creates the virtual environment, resolves dependencies, and installs everything in one step. 
+uv creates the virtual environment, resolves dependencies, and installs everything in one step.
 
 Verify it installed cleanly:
 
@@ -65,7 +65,7 @@ uv pip show mellea
 
 ## Step 4: Install Ollama
 
-Mellea is model-agnostic, but we'll use [Ollama](https://ollama.com) to run a model locally — no API key, no cloud, fully private. See installation instructions for Ollama [here](https://ollama.com/download).  At the time of writing these are:
+Mellea is model-agnostic, but we'll use [Ollama](https://ollama.com) to run a model locally — no API key, no cloud, fully private. See [installation instructions for Ollama](https://ollama.com/download).  At the time of writing these are:
 
 ```bash
 # macOS / Linux
@@ -157,8 +157,6 @@ You should see a well-formed email printed to the terminal. That's a complete Me
 
 This example uses a single length requirement, but the same pattern scales to anything you can express in Python: JSON schema validation, regex matching, semantic checks, or calls to external APIs. The model doesn't change — only your `requirements` list does.
 
-
-
 If you want to run Mellea against a cloud provider instead of Ollama, you can swap the backend:
 
 ```python
@@ -168,7 +166,6 @@ from mellea.backends.openai import OpenAIBackend
 m = MelleaSession(backend=OpenAIBackend(model_id="gpt-4"))
 ```
 
-You can check out additional ways of using requirements [here](https://docs.mellea.ai/concepts/requirements-system).
+You can check out [additional ways of using requirements](https://docs.mellea.ai/concepts/requirements-system).
 
 Full documentation is at [docs.mellea.ai](https://docs.mellea.ai).
-
