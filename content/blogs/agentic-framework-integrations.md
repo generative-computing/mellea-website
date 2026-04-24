@@ -187,4 +187,4 @@ Configure your framework to use Mellea's LM and define your requirements. Valida
 
 ---
 
-Treating LLM outputs as code that must meet specifications improves reliability. Mellea brings this to LangChain, CrewAI, and DSPy — part of [mellea-contribs](https://github.com/generative-computing/mellea-contribs), an incubation space for ecosystem contributions.
+Treating LLM outputs as code that must meet specifications improves reliability. Mellea brings this to LangChain, CrewAI, and DSPy; these integrations are part of [mellea-contribs](https://github.com/generative-computing/mellea-contribs), an incubation space for ecosystem contributions.
