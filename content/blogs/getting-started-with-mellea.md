@@ -6,7 +6,7 @@ excerpt: "Install uv, pull a local model with Ollama, and build your first Melle
 tags: ["getting-started", "ollama", "tutorial"]
 ---
 
-This guide walks you through everything you need to build your first Mellea pipeline: installing uv, pulling a local model with Ollama, and writing a small but complete generative program.
+This guide walks you through everything you need to build your first Mellea pipeline: installing uv, pulling a local model with Ollama, and writing a small but complete generative program.  While models can vary drastically in size, this example should be able to run on machines with 8GB of RAM and approximately 6GB of additional disk space for model and installed requirements.
 
 ---
 
@@ -110,8 +110,7 @@ import mellea
 from mellea.core import Requirement
 from mellea.stdlib.requirements import simple_validate
 
-# start_session() uses Ollama and granite4:micro by default — the same backend and model we just set up.
-m = mellea.start_session()
+m = mellea.start_session()  # defaults to Ollama and granite4:micro
 
 length_req = Requirement(
     "The response must be at least 100 characters long.",
@@ -124,7 +123,8 @@ length_req = Requirement(
 )
 
 email = m.instruct(
-    "Write an email inviting the interns to a lunch party.", requirements=[length_req]
+    "Write an email inviting the interns to a lunch party.",
+    requirements=[length_req]
 )
 
 print(email)
@@ -149,6 +149,9 @@ uv run app.py
 ```
 
 You should see a well-formed email printed to the terminal. That's a complete Mellea pipeline: local model, structured output, automatic validation, no cloud required.
+
+It should be noted that LLMs are stochastic in nature.  That, along with the initial prompt and requirements, may lead to the IVR loop succeeding on the first attempt or needing more retries.
+You can view more details on how to modify [the sampling strategies here](https://docs.mellea.ai/concepts/instruct-validate-repair#sampling-strategies-and-the-ivr-loop).
 
 ---
 
