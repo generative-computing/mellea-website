@@ -56,7 +56,7 @@ LangChain generates once and returns whatever it gets. Mellea keeps trying until
 
 ### Sampling Strategies for Inference-Time Scaling
 
-You can choose how aggressive the retry logic is. Each strategy trades more API calls for better output quality:
+You can choose how aggressive the retry logic is. Each strategy trades more API calls for better output quality. Pass the strategy along with requirements in `model_options`:
 
 ```python
 from mellea.stdlib.sampling import (
@@ -64,28 +64,35 @@ from mellea.stdlib.sampling import (
     MultiTurnStrategy,
     RepairTemplateStrategy
 )
+from mellea.stdlib.requirements import req
 
 # Rejection Sampling: Keep trying until requirements are met (up to loop_budget)
 # Cost: Up to N LLM calls + N validation calls
-rejection_model = chat_model.bind(
+response = chat_model.invoke(
+    messages,
     model_options={
-        "strategy": RejectionSamplingStrategy(loop_budget=5)
+        "requirements": [req("Must be professional")],
+        "strategy": RejectionSamplingStrategy(loop_budget=5),
     }
 )
 
 # Multi-Turn Strategy: Agentic multi-turn repair with conversation
 # Cost: Multiple LLM calls with conversational context
-multi_turn_model = chat_model.bind(
+response = chat_model.invoke(
+    messages,
     model_options={
-        "strategy": MultiTurnStrategy(loop_budget=3)
+        "requirements": [req("Must be professional")],
+        "strategy": MultiTurnStrategy(loop_budget=3),
     }
 )
 
 # Repair Template Strategy: Adds repair instructions to failed attempts
 # Cost: Up to N LLM calls with repair context
-repair_model = chat_model.bind(
+response = chat_model.invoke(
+    messages,
     model_options={
-        "strategy": RepairTemplateStrategy(loop_budget=3)
+        "requirements": [req("Must be professional")],
+        "strategy": RepairTemplateStrategy(loop_budget=3),
     }
 )
 ```
@@ -98,6 +105,7 @@ Requirements in Mellea are structured and reusable, not scattered in prompt text
 
 ```python
 from mellea.stdlib.requirements import req, check, simple_validate
+from langchain_core.messages import HumanMessage
 
 # LLM-validated requirements (semantic, slower but flexible)
 semantic_requirements = [
@@ -116,8 +124,9 @@ deterministic_requirements = [
 # Combine both types for comprehensive validation
 all_requirements = semantic_requirements + deterministic_requirements
 
-# Use in LangChain chain with strategy to validate requirements
-chain = prompt | chat_model.bind(
+# Generate with validation
+response = chat_model.invoke(
+    [HumanMessage(content="Write a business email to the sales team about a product launch. Include a contact email.")],
     model_options={
         "requirements": all_requirements,
         "strategy": RejectionSamplingStrategy(loop_budget=5),
@@ -142,17 +151,19 @@ result = standard_chain.invoke({"topic": "AI"})
 # May or may not meet your requirements
 
 # With Mellea (validated)
-mellea_chain = prompt | chat_model.bind(
+mellea_chain = prompt | chat_model
+result = mellea_chain.invoke(
+    {"topic": "AI"},
     model_options={
         "requirements": [
             req("Must be well-structured with clear sections"),
             req("Must include specific examples"),
-            req("Must be between 300-500 words"),
+            req("Must be between 300-500 words",
+                validation_fn=simple_validate(lambda x: 300 <= len(x.split()) <= 500)),
         ],
         "strategy": RejectionSamplingStrategy(loop_budget=5),
     }
 )
-result = mellea_chain.invoke({"topic": "AI"})
 # Meets requirements or returns the best attempt with validation feedback
 ```
 
@@ -179,13 +190,18 @@ concise_requirements = [
 email_requirements = professional_email_requirements + concise_requirements
 
 # Use across multiple chains with strategy
-customer_email_chain = prompt1 | chat_model.bind(
+customer_email_chain = prompt1 | chat_model
+result1 = customer_email_chain.invoke(
+    {"customer": "John", "issue": "billing"},
     model_options={
         "requirements": email_requirements,
         "strategy": RejectionSamplingStrategy(loop_budget=5),
     }
 )
-internal_email_chain = prompt2 | chat_model.bind(
+
+internal_email_chain = prompt2 | chat_model
+result2 = internal_email_chain.invoke(
+    {"topic": "quarterly review"},
     model_options={
         "requirements": email_requirements,
         "strategy": RejectionSamplingStrategy(loop_budget=5),
@@ -199,37 +215,69 @@ When validation fails, see why it failed and how many attempts were made:
 
 ```python
 response = chat_model.invoke(
-    messages,
+    [HumanMessage(content="Write a brief statement about technology")],
     model_options={
-        "requirements": requirements,
+        "requirements": [
+            req("Must be exactly 3 sentences"),
+            req("Must mention 'quantum computing'"),
+            req("Must be under 50 words", validation_fn=simple_validate(lambda x: len(x.split()) < 50)),
+        ],
         "strategy": RejectionSamplingStrategy(loop_budget=5),
+        "return_sampling_results": True,
     }
 )
 
-# The response is a standard LangChain AIMessage
-# Validation happens automatically behind the scenes
-print(f"Content: {response.content}")
+# During generation, you'll see detailed feedback:
+# 0%|          | 0/5 [00:00<?, ?it/s] FAILED. Valid: 2/3. Failed:
+#     - Must be exactly 3 sentences
+# 20%|██        | 1/5 [00:00<00:03,  1.10it/s] FAILED. Valid: 2/3. Failed:
+#     - Must be exactly 3 sentences
+# ...
+# After 5 attempts, it selects the best result
 
-# Note: In the LangChain integration, sampling results are handled internally
-# The model will retry up to loop_budget times to meet requirements
+# The response is a standard LangChain AIMessage
+print(f"Content: {response.content}")
 ```
 
-### Generative Functions (Coming Soon)
+This transparency shows:
+- Progress bar indicating validation attempts (0-100%)
+- Which specific requirements failed at each attempt
+- How many requirements passed vs. failed
+- When the best attempt is selected after exhausting retries
 
-Mellea's `@generative` decorator defines AI-generated functions without implementation. This isn't exposed in the current LangChain integration, but it's a powerful pattern:
+### Generative Functions
+
+Mellea's `@generative` decorator defines AI-generated functions without implementation. While this feature works with Mellea directly, it's not yet integrated into the LangChain wrapper, but it demonstrates a powerful pattern:
 
 ```python
-from mellea import generative
+from mellea import start_session, generative
 from typing import Literal
 
+# Create session
+m = start_session()
+
+# Define a generative function - no implementation needed!
 @generative
 def classify_sentiment(text: str) -> Literal["positive", "negative", "neutral"]:
     """Classify the sentiment of the input text."""
 
-sentiment = classify_sentiment(m, text=user_input)
+# Use it like a regular function
+sentiment = classify_sentiment(m, text="I love this product!")
+print(sentiment)  # Output: positive
+
+# Another example
+@generative
+def categorize_email(subject: str, body: str) -> Literal["urgent", "normal", "spam"]:
+    """Categorize an email based on its subject and body."""
+
+category = categorize_email(m,
+    subject="URGENT: Server Down",
+    body="Our production server is down."
+)
+print(category)  # Output: urgent
 ```
 
-Instead of writing a classifier, you declare what it should do and let Mellea generate and validate the behavior.
+Instead of writing a classifier, you declare what it should do (via the function signature and docstring) and let Mellea generate the behavior. The type hints constrain the output to valid values.
 
 ## Real-World Patterns
 
@@ -238,17 +286,17 @@ Instead of writing a classifier, you declare what it should do and let Mellea ge
 Most LangChain chains parse without validation. Add Mellea validation before parsing to catch format issues early:
 
 ```python
-chain = (
-    prompt 
-    | chat_model.bind(
-        model_options={
-            "requirements": [req("Must be valid JSON"), req("Must include all fields")],
-            "strategy": RejectionSamplingStrategy(loop_budget=3),
-        }
-    )
-    | output_parser
+chain = prompt | chat_model
+
+result = chain.invoke(
+    input,
+    model_options={
+        "requirements": [req("Must be valid JSON"), req("Must include all fields")],
+        "strategy": RejectionSamplingStrategy(loop_budget=3),
+    }
 )
-result = chain.invoke(input)  # Validated before parsing!
+# Now parse the validated output
+parsed = output_parser.parse(result.content)
 ```
 
 ### Validated Tool Calls
@@ -274,31 +322,39 @@ Combine semantic validation with deterministic parsing:
 
 ```python
 # Validate before parsing
-from mellea_langchain import MelleaOutputParser
+import json
 
-# Define validation functions (MelleaOutputParser uses simple callables)
+# Define validation functions
 def is_json(text: str) -> bool:
     """Must be JSON."""
-    return text.strip().startswith("{")
+    try:
+        json.loads(text)
+        return True
+    except:
+        return text.strip().startswith("{")
 
 def has_name_field(text: str) -> bool:
     """Must include 'name' field."""
-    return "name" in text
+    return "name" in text.lower()
 
-parser = MelleaOutputParser(
-    requirements=[is_json, has_name_field]
+# Create chain with semantic validation during generation
+chain = prompt | chat_model
+
+result = chain.invoke(
+    input,
+    model_options={
+        "requirements": [req("Must output valid JSON")],
+        "strategy": RejectionSamplingStrategy(loop_budget=3),
+    }
 )
-chain = (
-    prompt 
-    | chat_model.bind(
-        model_options={
-            "requirements": [req("Must output valid JSON")],
-            "strategy": RejectionSamplingStrategy(loop_budget=3),
-        }
-    )
-    | parser
-)
-result = chain.invoke(input)  # Double validation: generation + parsing
+
+# Deterministic post-validation
+if is_json(result.content) and has_name_field(result.content):
+    parsed = json.loads(result.content)
+    # Use parsed data
+else:
+    # Handle validation failure
+    pass
 ```
 
 ## Example: Customer Support Email
@@ -319,7 +375,10 @@ if "Dear" not in email:
 With Mellea, define what you need and let it retry automatically:
 
 ```python
-chain = prompt | chat_model.bind(
+chain = prompt | chat_model
+
+email = chain.invoke(
+    {"customer": "John", "issue": "billing"},
     model_options={
         "requirements": [
             req("Must have a professional greeting"),
@@ -331,8 +390,6 @@ chain = prompt | chat_model.bind(
         "strategy": RejectionSamplingStrategy(loop_budget=5),
     }
 )
-
-email = chain.invoke({"customer": "John", "issue": "billing"})
 # Retried up to 5 times automatically
 ```
 
@@ -413,13 +470,14 @@ except ValidationError:
 Mellea validates and retries automatically during generation:
 
 ```python
-chain = prompt | chat_model.bind(
+chain = prompt | chat_model
+result = chain.invoke(
+    input,
     model_options={
         "requirements": [req("Must be professional")],
         "strategy": RejectionSamplingStrategy(loop_budget=5),
     }
-)
-result = chain.invoke(input)  # Retries up to 5 times automatically
+)  # Retries up to 5 times automatically
 ```
 
 Tradeoff: Mellea is slower but guarantees the output meets requirements. LangChain is faster but requires manual retry logic.
@@ -466,15 +524,33 @@ Mellea requirements are reusable Python lists:
 professional_reqs = [req("Professional tone"), req("Clear structure")]
 length_reqs = [req("50-500 words", validation_fn=simple_validate(lambda x: 50 < len(x.split()) < 500))]
 
-email_chain = prompt1 | chat_model.bind(model_options={"requirements": professional_reqs + length_reqs})
-report_chain = prompt2 | chat_model.bind(model_options={"requirements": professional_reqs + length_reqs})
+email_chain = prompt1 | chat_model
+email_result = email_chain.invoke(
+    input,
+    model_options={"requirements": professional_reqs + length_reqs}
+)
+
+report_chain = prompt2 | chat_model
+report_result = report_chain.invoke(
+    input,
+    model_options={"requirements": professional_reqs + length_reqs}
+)
 ```
 
 You can also compose guardrails with the `&` operator:
 
 ```python
-guardrail1 = MelleaGuardrail(requirements=professional_reqs, name="professional")
-guardrail2 = MelleaGuardrail(requirements=length_reqs, name="length")
+# MelleaGuardrail expects callable functions
+def is_professional(text: str) -> bool:
+    """Check if text is professional."""
+    return len(text) > 20
+
+def is_proper_length(text: str) -> bool:
+    """Check if text is 50-500 words."""
+    return 50 < len(text.split()) < 500
+
+guardrail1 = MelleaGuardrail(requirements=[is_professional], name="professional")
+guardrail2 = MelleaGuardrail(requirements=[is_proper_length], name="length")
 combined = guardrail1 & guardrail2
 ```
 
@@ -529,25 +605,28 @@ Combine both for comprehensive validation:
 ```python
 from mellea import start_session
 from mellea_langchain import MelleaChatModel, MelleaGuardrail
-from mellea.stdlib.requirements import req, simple_validate
+from mellea.stdlib.requirements import req
+from mellea.stdlib.sampling import RejectionSamplingStrategy
 
 # Create Mellea model with semantic validation during generation
 m = start_session()
-chat_model = MelleaChatModel(
-    mellea_session=m,
-    requirements=[
-        req("Must be professional and helpful"),
-        req("Must address the customer's specific issue"),
-    ]
-)
+chat_model = MelleaChatModel(mellea_session=m)
 
-# Add deterministic post-generation checks
+# Define deterministic post-generation checks (MelleaGuardrail expects callables)
+def under_500_words(text: str) -> bool:
+    """Under 500 words."""
+    return len(text.split()) < 500
+
+def no_email_addresses(text: str) -> bool:
+    """No email addresses."""
+    return "@" not in text
+
+def no_sensitive_data(text: str) -> bool:
+    """No sensitive data."""
+    return not any(word in text.lower() for word in ["password", "ssn"])
+
 post_guardrail = MelleaGuardrail(
-    requirements=[
-        simple_validate(lambda x: len(x.split()) < 500, "Under 500 words"),
-        simple_validate(lambda x: "@" not in x, "No email addresses"),
-        simple_validate(lambda x: not any(word in x.lower() for word in ["password", "ssn"]), "No sensitive data"),
-    ],
+    requirements=[under_500_words, no_email_addresses, no_sensitive_data],
     name="post_generation_check"
 )
 
@@ -555,7 +634,16 @@ post_guardrail = MelleaGuardrail(
 chain = prompt | chat_model
 
 # Generate with semantic validation
-result = chain.invoke({"input": "..."})
+result = chain.invoke(
+    {"input": "..."},
+    model_options={
+        "requirements": [
+            req("Must be professional and helpful"),
+            req("Must address the customer's specific issue"),
+        ],
+        "strategy": RejectionSamplingStrategy(loop_budget=3),
+    }
+)
 
 # Apply deterministic post-checks
 validation = post_guardrail.validate(result.content)
@@ -621,7 +709,11 @@ prompt = ChatPromptTemplate.from_messages([
 ])
 
 # Automatic validation and retry
-chain = prompt | chat_model.bind(
+chain = prompt | chat_model
+
+# Single call with automatic validation and retry
+result = chain.invoke(
+    {"issue": "billing problem"},
     model_options={
         "requirements": [
             req("Must be professional and empathetic"),
@@ -633,9 +725,6 @@ chain = prompt | chat_model.bind(
         "strategy": RejectionSamplingStrategy(loop_budget=5),
     }
 )
-
-# Single call with automatic validation and retry
-result = chain.invoke({"issue": "billing problem"})
 # Guaranteed to meet requirements or returns best attempt with feedback
 ```
 
@@ -683,7 +772,14 @@ Key tradeoffs:
 ### Installation
 
 ```bash
-pip install mellea mellea-langchain langchain
+# 1. Install mellea and langchain
+pip install mellea langchain
+
+# 2. Install mellea-integration-core
+pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-integration-core/v0.1.0/mellea_integration_core-0.1.0-py3-none-any.whl
+
+# 3. Install mellea-langchain
+pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-langchain/v0.1.0/mellea_langchain-0.1.0-py3-none-any.whl
 ```
 
 ### Your First Validated Chain
@@ -708,7 +804,11 @@ prompt = ChatPromptTemplate.from_messages([
     ("human", "{input}")
 ])
 
-validated_chain = prompt | chat_model.bind(
+validated_chain = prompt | chat_model
+
+# Use it!
+result = validated_chain.invoke(
+    {"input": "Explain quantum computing"},
     model_options={
         "requirements": [
             req("Response must be helpful and accurate"),
@@ -717,9 +817,6 @@ validated_chain = prompt | chat_model.bind(
         "strategy": RejectionSamplingStrategy(loop_budget=3),
     }
 )
-
-# Use it!
-result = validated_chain.invoke({"input": "Explain quantum computing"})
 print(result.content)
 ```
 
