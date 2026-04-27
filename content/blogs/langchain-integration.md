@@ -239,7 +239,8 @@ response = chat_model.invoke(
 print(f"Content: {response.content}")
 ```
 
-This transparency shows:
+This transparency provides detailed feedback during validation:
+
 - Progress bar indicating validation attempts (0-100%)
 - Which specific requirements failed at each attempt
 - How many requirements passed vs. failed
