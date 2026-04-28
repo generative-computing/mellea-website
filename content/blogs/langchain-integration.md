@@ -196,6 +196,7 @@ response = chat_model.invoke(
 You get both speed (deterministic checks < 1ms) and flexibility (LLM-based semantic validation).
 
 **Note on `req()` vs `check()`:**
+
 - `req()` includes the requirement in the instruction prompt so the model sees it upfront and actively targets it
 - `check()` excludes the requirement from the instruction prompt but still validates it after generation
 
