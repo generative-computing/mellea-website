@@ -415,7 +415,7 @@ result = check_email_format(m, email="Dear John, ... Best regards, Alice")
 
 ## The Trade-off
 
-Manual retry loops are simple for one-off cases. Guardrails add minimal overhead but only check rules. Mellea costs 2-5x more latency in exchange for semantic validation during generation, not after.
+Mellea allows you to specify both fast/programmatic requirements and slower/semantic requirements that utilize an LLM call. Mellea helps to guarantee that your output matches those requirements automatically; LangChain requires manual retry logic.
 
 ## Using Mellea with Other Tools
 
