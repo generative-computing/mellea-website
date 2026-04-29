@@ -239,32 +239,16 @@ result = m.instruct(prompt, requirements=requirements, strategy=sofai)
 
 How much this saves depends entirely on your task distribution and the cost gap between your models. If S1 handles the majority of requests, the saving can be substantial — small models are often an order of magnitude cheaper per token than large ones. If your tasks are uniformly hard, you pay for S1 attempts before every S2 call with no saving at all. **Profile your own workload before assuming a win.**
 
-## Going Further
+## Going Further: A Harder Problem
 
-### Cloud model as S2
+Graph coloring demonstrates the pattern, but the Granite 4 hybrid models are genuinely capable at structured tasks — the 1.5B model handles C5 coloring reliably. For a task that *truly* separates the tiers, **Sudoku** is sharper.
 
-The most common production SOFAI setup is a local or cheap model as S1 and a cloud API as S2. Mellea backends are interchangeable — swapping S2 to OpenAI is one line:
+A 1.5B local model consistently violates given cells — it fills the grid but overwrites fixed values. A 27B cloud model solves it first attempt. This also makes Sudoku a natural fit for the **local S1 / cloud S2** topology: run cheaply against your local model, pay the cloud API only when the hard reasoning is genuinely needed.
 
-```python
-from mellea.backends.openai import OpenAIBackend  # reads OPENAI_API_KEY from env
-
-sofai = SOFAISamplingStrategy(
-    s1_solver_backend=OllamaModelBackend("granite4:350m-h"),  # local, free
-    s2_solver_backend=OpenAIBackend(model_id="gpt-4o-mini"),  # cloud, only on escalation
-    loop_budget=3,
-)
-```
-
-The same pattern works with `BedrockBackend`, or any OpenAI-compatible endpoint via `base_url`. You also get a natural failover story: if the local backend is unavailable, S2 is already there. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for the layered failover pattern.
-
-### A harder problem: Sudoku
-
-Graph coloring demonstrates the pattern, but the Granite 4 hybrid architecture is genuinely capable at structured tasks — the 1.5B model handles it reliably. For a task that *truly* separates the tiers, Sudoku is sharper. A 1.5B local model consistently violates given cells (it fills the grid but overwrites fixed values); a 27B cloud model solves it first attempt.
-
-The SOFAI setup is identical — only the puzzle and validator change:
+The puzzle and validator are new, but the SOFAI wiring is identical:
 
 ```python
-# Medium Sudoku (0 = empty)
+# Medium Sudoku — 0 = empty cell
 PUZZLE = [
     [5, 3, 0, 0, 7, 0, 0, 0, 0],
     [6, 0, 0, 1, 9, 5, 0, 0, 0],
@@ -272,19 +256,17 @@ PUZZLE = [
 ]
 
 def check_sudoku(ctx) -> ValidationResult:
-    # Parse JSON grid, then check:
-    # 1. Given cells are preserved
-    # 2. All rows contain 1–9 exactly once
-    # 3. All columns contain 1–9 exactly once
-    # 4. All 3×3 boxes contain 1–9 exactly once
+    # Check: given cells preserved, each row/column/box contains 1–9 exactly once
+    # Return specific failure: "Row 3 missing [4, 8] | Col 5 missing [2]"
     ...
-    return ValidationResult(False, reason="Row 3 missing [4, 8] | Col 5 missing [2]")
 ```
 
 ```python
+from mellea.backends.openai import OpenAIBackend
+
 sofai = SOFAISamplingStrategy(
-    s1_solver_backend=OllamaModelBackend("granite4:1b-h"),          # local, free
-    s2_solver_backend=OpenAIBackend(                                 # cloud, on escalation
+    s1_solver_backend=OllamaModelBackend("granite4:1b-h"),   # local, free
+    s2_solver_backend=OpenAIBackend(                          # cloud, on escalation only
         model_id="google/gemma-3-27b-it:free",
         base_url="https://openrouter.ai/api/v1",
         api_key=os.environ["OPENROUTER_API_KEY"],
@@ -294,9 +276,11 @@ sofai = SOFAISamplingStrategy(
 )
 ```
 
-When S1 fails, SOFAI sends its best attempt *plus the specific cell violations* to the cloud model — which corrects them and returns a valid solution. The cloud API is only called once, only when needed.
+When S1 fails, SOFAI sends its best attempt *plus the specific cell violations* to the cloud model, which corrects them and returns a valid solution. The cloud API is called once, only when needed.
 
-The [complete Sudoku cloud example](https://github.com/generative-computing/mellea/blob/main/docs/examples/sofai/sofai_graph_coloring.py) follows this structure. The only new dependency is an `OPENROUTER_API_KEY` (free tier available at [openrouter.ai](https://openrouter.ai)).
+Mellea backends are interchangeable — the same setup works with `BedrockBackend` or any OpenAI-compatible endpoint via `base_url`. You also get a natural failover story: if the local backend is unavailable, S2 is already there. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea).
+
+A free-tier OpenRouter key is available at [openrouter.ai](https://openrouter.ai). Free model availability changes — check [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free) for current options.
 
 ## Trade-offs and When Not to Use It
 
