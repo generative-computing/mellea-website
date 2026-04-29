@@ -40,9 +40,7 @@ cd sofai-example
 uv add mellea
 ```
 
-**Step 3 — The example problem**
-
-The script solves a **graph coloring** task: assign a color to each node of a pentagon so that no two adjacent nodes share the same color. It's a constraint satisfaction problem with an objectively right answer — perfect for SOFAI because we can validate correctness programmatically. The 340M model tries first; the 1.5B model steps in only if it fails.
+**Step 3 — The example problem:** the script solves a **graph coloring** task: assign a color to each node of a pentagon so that no two adjacent nodes share the same color. It's a constraint satisfaction problem with an objectively right answer — perfect for SOFAI because we can validate correctness programmatically. The 340M model tries first; the 1.5B model steps in only if it fails.
 
 ```text
     A
