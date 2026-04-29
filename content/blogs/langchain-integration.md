@@ -395,32 +395,6 @@ Use Mellea for quality-critical applications where you accept 2-5x latency for r
 
 Each validation retry costs API credits. Semantic validation quality depends on your validator model's ability to judge the specific requirements you define. For minimal overhead, stick with format-only guardrails. For one-off cases, manual retry logic is simpler.
 
-## The Architecture
-
-MelleaChatModel wraps your LLM backend and adds an instruct-validate-repair loop. It handles retries, tracks validation results, and swaps backends (Ollama, OpenAI, etc.) transparently.
-
-## Attaching Requirements to Your Chain
-
-When building chains in LangChain, use the [`bind()` method](https://python.langchain.com/docs/how_to/binding/) to attach `model_options` before composing the chain:
-
-```python
-# Correct: bind() before building the chain
-model_with_requirements = chat_model.bind(
-    model_options={
-        "requirements": [...],
-        "strategy": RejectionSamplingStrategy(loop_budget=5),
-    }
-)
-chain = prompt | model_with_requirements
-result = chain.invoke(input)
-
-# Wrong: model_options in invoke() are not forwarded to the model
-chain = prompt | chat_model
-result = chain.invoke(input, model_options={...})  # Won't work!
-```
-
-**Why?** LangChain's `RunnableSequence.invoke()` only forwards `**kwargs` to the first step in the pipe (the prompt template). Use `bind()` to attach options before building the chain so they're available when the model runs.
-
 ## Next Steps
 
 Copy the "Your First Validated Chain" example above, save it as `validated_chain.py`, and run it:
