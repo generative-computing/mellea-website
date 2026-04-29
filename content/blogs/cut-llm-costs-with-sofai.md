@@ -16,42 +16,6 @@ Mellea's `SOFAISamplingStrategy` implements this as a first-class sampling strat
 
 > **Best fit:** tasks with verifiable outputs — structured data extraction, schema validation, constraint satisfaction, code generation. If you can't check correctness programmatically, skip to [Trade-offs](#trade-offs-and-when-not-to-use-it).
 
-## How SOFAI Works
-
-SOFAI operates in two phases driven by the same [Instruct-Validate-Repair](https://docs.mellea.ai/concepts/instruct-validate-repair) loop that powers the rest of Mellea.
-
-**Phase 1 — S1 loop (fast model):**
-
-1. Generate a candidate with the fast model.
-2. Validate against your requirements.
-3. If it passes — return immediately. You never touch the expensive model.
-4. If it fails — extract the specific reason from the `ValidationResult` and repair.
-5. Repeat up to `loop_budget` times.
-6. If no improvement is detected between consecutive attempts, exit early and escalate.
-
-**Phase 2 — S2 escalation (slow model):**
-
-- Triggered when S1 exhausts its budget without a passing result.
-- Makes a single attempt with the more capable model.
-- How much context S2 receives is controlled by `s2_solver_mode` (more on this below).
-
-```text
-Request
-   ↓
-S1 (fast) ←──── repair w/ failure reason ────┐
-   ↓                                           │
-Validate                                       │
-   ├── pass ─────────────────────────────→ Result
-   └── fail ──────────────────────────────────┘
-         (loop exhausted or no improvement)
-              ↓
-         S2 (slow) → Validate → Result
-```
-
-The repair loop is only as useful as the feedback it receives. SOFAI passes `ValidationResult.reason` *directly* into the repair prompt — a vague "validation failed" gives the model nothing to act on, but a precise "Adjacent nodes C and D both have color 'Red'" tells it exactly what to fix. **Specific failure reasons are the engine that makes this work.**
-
-The name comes from Daniel Kahneman's dual-process thinking model (System 1: fast and automatic; System 2: slow and deliberate), formalized by IBM Research into an [AI architecture for LLMs](https://www.nature.com/articles/s44387-025-00027-5). The core idea: decide *when* to invoke the expensive solver — and most of the time, the fast one is good enough.
-
 ## Quick Start
 
 **Prerequisites** — you'll need two tools installed:
@@ -152,11 +116,11 @@ A quick note on the Granite 4 hybrid architecture: it's *surprisingly capable* a
 
 The rest of this post walks through what the code does and why — so you can adapt it to your own tasks.
 
-## Walkthrough: Graph Coloring
+## Walkthrough: What Just Happened
 
-Graph coloring is a clean demo for SOFAI: the task has an objectively right answer, the validator is straightforward to write, and small models fail on it often enough to trigger escalation. The task: assign a color to each node so that no two adjacent nodes share the same color.
+The script you ran is solving a **graph coloring** problem — assign a color to each node so no two adjacent nodes share the same color. It's a clean SOFAI demo because it has an objectively right answer, a straightforward validator, and small models fail on it often enough to show the escalation path.
 
-We'll use a 5-node cycle (pentagon) — each node connected to its two neighbours. An odd cycle requires at least 3 colors, which makes it a genuine constraint problem:
+The graph is a 5-node cycle (pentagon). An odd cycle needs at least 3 colors, which makes it a genuine constraint problem:
 
 ```text
     A
@@ -256,6 +220,42 @@ Attempts: 3
 The 340M model keeps reaching for "Yellow" despite the instruction. The 1.5B model receives that failure reason alongside the bad attempt, understands the constraint, and solves it cleanly. When S1 *does* succeed on the first or second attempt, you pay nothing for the larger model at all.
 
 Want to know if SOFAI saves money for your workload? Run the same validator against your own prompts and compare S1 pass rates — the higher the S1 pass rate, the more you save.
+
+## How SOFAI Works
+
+SOFAI operates in two phases driven by the same [Instruct-Validate-Repair](https://docs.mellea.ai/concepts/instruct-validate-repair) loop that powers the rest of Mellea.
+
+**Phase 1 — S1 loop (fast model):**
+
+1. Generate a candidate with the fast model.
+2. Validate against your requirements.
+3. If it passes — return immediately. You never touch the expensive model.
+4. If it fails — extract the specific reason from the `ValidationResult` and repair.
+5. Repeat up to `loop_budget` times.
+6. If no improvement is detected between consecutive attempts, exit early and escalate.
+
+**Phase 2 — S2 escalation (slow model):**
+
+- Triggered when S1 exhausts its budget without a passing result.
+- Makes a single attempt with the more capable model.
+- How much context S2 receives is controlled by `s2_solver_mode` (more on this below).
+
+```text
+Request
+   ↓
+S1 (fast) ←──── repair w/ failure reason ────┐
+   ↓                                           │
+Validate                                       │
+   ├── pass ─────────────────────────────→ Result
+   └── fail ──────────────────────────────────┘
+         (loop exhausted or no improvement)
+              ↓
+         S2 (slow) → Validate → Result
+```
+
+SOFAI passes `ValidationResult.reason` *directly* into the repair prompt — the "Adjacent nodes C and D both have color 'Red'" failure reason you saw above is exactly what the model receives. **Specific failure reasons are what make the repair loop useful** — a vague "validation failed" gives the model nothing to act on.
+
+The name comes from Daniel Kahneman's dual-process thinking model (System 1: fast and automatic; System 2: slow and deliberate), formalized by IBM Research into an [AI architecture for LLMs](https://www.nature.com/articles/s44387-025-00027-5). The core idea: decide *when* to invoke the expensive solver — and most of the time, the fast one is good enough.
 
 ## Configuring SOFAI
 
