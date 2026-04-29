@@ -226,11 +226,11 @@ How much this saves depends entirely on your task distribution and the cost gap 
 **Going further — cloud model as S2:** the example above uses two local models, but in production the most common SOFAI setup is a local or cheap model as S1 and a cloud API as S2. Mellea backends are interchangeable, so swapping S2 to OpenAI is one line:
 
 ```python
-from mellea.backends.openai import OpenAIModelBackend  # reads OPENAI_API_KEY from env
+from mellea.backends.openai import OpenAIBackend  # reads OPENAI_API_KEY from env
 
 sofai = SOFAISamplingStrategy(
     s1_solver_backend=OllamaModelBackend("granite4:350m-h"),  # local, free
-    s2_solver_backend=OpenAIModelBackend(model_id="gpt-4o-mini"),  # cloud, only on escalation
+    s2_solver_backend=OpenAIBackend(model_id="gpt-4o-mini"),  # cloud, only on escalation
     loop_budget=3,
 )
 ```
