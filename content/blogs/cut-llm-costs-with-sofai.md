@@ -52,6 +52,8 @@ uv add mellea
 
 **Step 4 — Save this as `sofai_graph_coloring.py`:**
 
+> The script is about 30 lines of problem-specific constraint logic (the validator), plus about 10 lines of Mellea. The validator is yours to write for any task — the Mellea parts are always the same.
+
 ```python
 import json
 import mellea
@@ -60,9 +62,12 @@ from mellea.stdlib.context import ChatContext
 from mellea.stdlib.requirements import ValidationResult, req
 from mellea.stdlib.sampling import SOFAISamplingStrategy
 
+# ── Problem definition ─────────────────────────────────────────────────────
 graph = {"A": ["B", "E"], "B": ["A", "C"], "C": ["B", "D"], "D": ["C", "E"], "E": ["D", "A"]}
 colors = ["Red", "Blue", "Green"]
 
+# ── Validator: your domain logic goes here ────────────────────────────────
+# Return a specific reason string — Mellea feeds it into the repair prompt.
 def check_graph_coloring(ctx) -> ValidationResult:
     output = ctx.last_output()
     if output is None:
@@ -90,13 +95,14 @@ def check_graph_coloring(ctx) -> ValidationResult:
         return ValidationResult(False, reason=" | ".join(errors))
     return ValidationResult(True, reason="Valid coloring.")
 
+# ── Mellea: this part is always the same ──────────────────────────────────
 s1_backend = OllamaModelBackend(model_id="granite4:350m-h")
 s2_backend = OllamaModelBackend(model_id="granite4:1b-h")
 
 sofai = SOFAISamplingStrategy(
     s1_solver_backend=s1_backend,
     s2_solver_backend=s2_backend,
-    s2_solver_mode="best_attempt",
+    s2_solver_mode="best_attempt",  # S2 sees S1's best attempt + failure reason
     loop_budget=3,
 )
 
@@ -207,24 +213,6 @@ SOFAI passes `ValidationResult.reason` *directly* into the repair prompt — the
 
 The name comes from Daniel Kahneman's dual-process thinking model (System 1: fast and automatic; System 2: slow and deliberate), formalized by IBM Research into an [AI architecture for LLMs](https://www.nature.com/articles/s44387-025-00027-5). The core idea: decide *when* to invoke the expensive solver — and most of the time, the fast one is good enough.
 
-## Configuring SOFAI
-
-### How much context does S2 get? (`s2_solver_mode`)
-
-When S2 takes over, how much context it receives affects both quality and token cost:
-
-| Mode | What S2 sees | When to use |
-| ---- | ----------- | ----------- |
-| `"fresh_start"` | Original prompt only, no S1 history | S1 history is noisy or contradictory |
-| `"continue_chat"` | Full S1 conversation history | Problem benefits from seeing prior attempts |
-| `"best_attempt"` | S1's best output + failure summary | Best trade-off for most constraint problems |
-
-`"best_attempt"` is the recommended default: S2 starts from a near-solution and fixes specific violations rather than reasoning from scratch.
-
-### LLM-based validation (`feedback_strategy`)
-
-If you'd rather use an LLM to judge correctness instead of a custom function, pass a `judge_backend` and set `feedback_strategy` to `"simple"`, `"first_error"`, or `"all_errors"`. Use `"all_errors"` when multiple constraints can fail simultaneously; `"first_error"` reduces prompt length at the cost of more repair iterations.
-
 ## The Cost Story
 
 The entire change to your application is one parameter:
@@ -278,6 +266,8 @@ export OPENROUTER_API_KEY=<your-key>
 
 **Save this as `sofai_sudoku_cloud.py` and run it:**
 
+> Again, the bulk of the code is problem-specific constraint checking — the Mellea parts at the bottom are the same ~10 lines as before.
+
 ```python
 import json
 import os
@@ -288,6 +278,7 @@ from mellea.stdlib.context import ChatContext
 from mellea.stdlib.requirements import ValidationResult, req
 from mellea.stdlib.sampling import SOFAISamplingStrategy
 
+# ── Problem definition ─────────────────────────────────────────────────────
 PUZZLE = [
     [5, 3, 0, 0, 7, 0, 0, 0, 0],
     [6, 0, 0, 1, 9, 5, 0, 0, 0],
@@ -309,6 +300,7 @@ def puzzle_str() -> str:
         lines.append(" ".join(parts[:3]) + " | " + " ".join(parts[3:6]) + " | " + " ".join(parts[6:]))
     return "\n".join(lines)
 
+# ── Validator: your domain logic goes here ────────────────────────────────
 def check_sudoku(ctx) -> ValidationResult:
     output = ctx.last_output()
     if output is None:
@@ -327,22 +319,22 @@ def check_sudoku(ctx) -> ValidationResult:
             return ValidationResult(False, reason=f"Row {i+1} must have 9 integers.")
         for j, val in enumerate(row):
             if not isinstance(val, int) or not (1 <= val <= 9):
-                return ValidationResult(False, reason=f"Cell [{i+1}][{j+1}] = {val!r} — must be integer 1–9.")
+                return ValidationResult(False, reason=f"Cell [{i+1}][{j+1}] = {val!r} — must be 1–9.")
     errors = []
-    for r in range(9):
+    for r in range(9):                              # given cells must be preserved
         for c in range(9):
             if PUZZLE[r][c] != 0 and grid[r][c] != PUZZLE[r][c]:
                 errors.append(f"Cell [{r+1}][{c+1}] must be {PUZZLE[r][c]}, got {grid[r][c]}")
     if errors:
         return ValidationResult(False, reason=" | ".join(errors[:3]))
-    for r in range(9):
+    for r in range(9):                              # rows
         if sorted(grid[r]) != list(range(1, 10)):
             errors.append(f"Row {r+1} missing {sorted(set(range(1,10)) - set(grid[r]))}")
-    for c in range(9):
+    for c in range(9):                              # columns
         col = [grid[r][c] for r in range(9)]
         if sorted(col) != list(range(1, 10)):
             errors.append(f"Column {c+1} missing {sorted(set(range(1,10)) - set(col))}")
-    for br in range(3):
+    for br in range(3):                             # 3×3 boxes
         for bc in range(3):
             box = [grid[br*3+r][bc*3+c] for r in range(3) for c in range(3)]
             if sorted(box) != list(range(1, 10)):
@@ -401,6 +393,14 @@ The 1.5B model *almost* solves the puzzle — it produces a plausible-looking gr
 
 Mellea backends are interchangeable — the same setup works with any OpenAI-compatible endpoint via `base_url`, or `BedrockBackend` for AWS. Free model availability on OpenRouter changes — check [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free) for current options. See also [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for combining SOFAI with backend failover.
 
+## Tuning and Next Steps
+
+Both examples use `s2_solver_mode="best_attempt"` — S2 receives S1's best attempt plus the failure summary, which works well for most constraint problems. Three modes are available: `"fresh_start"` (original prompt only), `"continue_chat"` (full S1 history), and `"best_attempt"`. If you prefer an LLM to judge correctness instead of a custom function, `SOFAISamplingStrategy` also accepts a `judge_backend` and a `feedback_strategy` parameter.
+
+The most useful thing you can do after running these examples is **measure your own S1 pass rate** on a representative sample of your real workload. That number — combined with the cost gap between your models — tells you exactly how much SOFAI saves. If S1 rarely passes, escalation overhead may outweigh the savings; if it passes most of the time, the savings are substantial.
+
+Full API reference: [`SOFAISamplingStrategy`](https://docs.mellea.ai/api/mellea/stdlib/sampling/sofai) · [`ValidationResult`](https://docs.mellea.ai/api/mellea/core/requirement) · [Requirements system](https://docs.mellea.ai/concepts/requirements-system) · [Inference-Time Scaling guide](https://docs.mellea.ai/advanced/inference-time-scaling)
+
 ## Trade-offs and When Not to Use It
 
 > **Best fit:** SOFAI works well on tasks with verifiable outputs — structured data extraction, schema validation, constraint satisfaction, code generation. If you can't check correctness programmatically, the repair loop has nothing to work with.
@@ -415,7 +415,7 @@ SOFAI adds overhead worth being honest about:
 SOFAI shines on tasks with verifiable outputs — code generation, structured data extraction, constraint satisfaction, JSON schema validation. It's less useful for open-ended generation where correctness can't be checked programmatically.
 
 - **Source:** [`mellea/stdlib/sampling/sofai.py`](https://github.com/generative-computing/mellea/blob/main/mellea/stdlib/sampling/sofai.py)
-- **Docs:** [Inference-Time Scaling guide](https://docs.mellea.ai/advanced/inference-time-scaling)
+- **Docs:** [Inference-Time Scaling](https://docs.mellea.ai/advanced/inference-time-scaling) · [Instruct-Validate-Repair](https://docs.mellea.ai/concepts/instruct-validate-repair) · [Requirements & ValidationResult](https://docs.mellea.ai/concepts/requirements)
 
 If you're hitting API costs that don't match the complexity of your tasks, SOFAI is worth trying. Most pipelines with verifiable outputs can drop it in as a strategy swap — write a validator, pass `strategy=sofai`, and let Mellea handle the rest.
 
