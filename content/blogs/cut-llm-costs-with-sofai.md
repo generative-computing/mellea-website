@@ -6,13 +6,15 @@ excerpt: "Route most requests to a small model and escalate only hard cases to a
 tags: ["sofai", "sampling", "cost", "ollama"]
 ---
 
-Most LLM applications eventually hit the same wall: you started by routing everything through your best model, and now the bill is uncomfortably large. The expensive model handles the hard problems beautifully — but it's also handling the trivial ones that a model ten times cheaper could manage.
+**Your LLM bill is too high.** Not because you're doing anything wrong — because you're routing *every* request through your best model, including the easy ones a model ten times cheaper could handle.
 
-The instinct is to swap to a cheaper model entirely. The problem: smaller models fail on hard cases, and you're back to choosing between overspending on quality or quietly degrading the experience.
+Swap to a cheaper model entirely? Then the hard cases degrade. You're stuck choosing between quality and cost.
 
-**SOFAI** (Slow and Fast AI) sidesteps that trade-off. Instead of picking one model for everything, it uses a *fast model* as a first-pass solver and escalates to a *stronger model* only when the fast one genuinely can't solve the problem. Most requests pay small-model prices; hard requests get the quality they need.
+**There's a better way: use both.**
 
-Mellea's `SOFAISamplingStrategy` implements this as a first-class sampling strategy. If you haven't used Mellea before, [Getting Started with Mellea](/blogs/getting-started-with-mellea) is a good five-minute primer.
+**SOFAI** (Slow and Fast AI) tries the fast, cheap model first. If it gets the answer right — great, you pay nothing for the expensive one. Only when it genuinely fails does Mellea escalate to the stronger model. *Most requests pay small-model prices. Hard requests get the quality they need.*
+
+Mellea makes this a one-line change to your existing pipeline. Let's see it in action.
 
 > **Best fit:** tasks with verifiable outputs — structured data extraction, schema validation, constraint satisfaction, code generation. If you can't check correctness programmatically, skip to [Trade-offs](#trade-offs-and-when-not-to-use-it).
 
