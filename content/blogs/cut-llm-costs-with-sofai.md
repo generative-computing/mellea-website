@@ -393,31 +393,25 @@ The 1.5B model *almost* solves the puzzle — it produces a plausible-looking gr
 
 Mellea backends are interchangeable — the same setup works with any OpenAI-compatible endpoint via `base_url`, or `BedrockBackend` for AWS. Free model availability on OpenRouter changes — check [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free) for current options. See also [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for combining SOFAI with backend failover.
 
-## Tuning and Next Steps
+## Is SOFAI Right for Your Workload?
 
-Both examples use `s2_solver_mode="best_attempt"` — S2 receives S1's best attempt plus the failure summary, which works well for most constraint problems. Three modes are available: `"fresh_start"` (original prompt only), `"continue_chat"` (full S1 history), and `"best_attempt"`. If you prefer an LLM to judge correctness instead of a custom function, `SOFAISamplingStrategy` also accepts a `judge_backend` and a `feedback_strategy` parameter.
+SOFAI works best on tasks with **verifiable outputs** — structured data extraction, schema validation, constraint satisfaction, code generation. If you can't check correctness programmatically, the repair loop has nothing to drive it.
 
-The most useful thing you can do after running these examples is **measure your own S1 pass rate** on a representative sample of your real workload. That number — combined with the cost gap between your models — tells you exactly how much SOFAI saves. If S1 rarely passes, escalation overhead may outweigh the savings; if it passes most of the time, the savings are substantial.
+A few things worth knowing before you ship it:
 
-Full API reference: [`SOFAISamplingStrategy`](https://docs.mellea.ai/api/mellea/stdlib/sampling/sofai) · [`ValidationResult`](https://docs.mellea.ai/api/mellea/core/requirement) · [Requirements system](https://docs.mellea.ai/concepts/requirements-system) · [Inference-Time Scaling guide](https://docs.mellea.ai/advanced/inference-time-scaling)
+- **Measure your S1 pass rate first.** Run SOFAI against a sample of your real workload and see how often S1 succeeds without escalation. That number, combined with the cost gap between your models, tells you exactly what you save. If S1 rarely passes, the S1 overhead before every S2 call may outweigh the benefit.
+- **Validator quality drives repair quality.** The repair loop is only as good as your `ValidationResult.reason` string. Specific failure messages ("Row 3 missing [4, 8]") give the model something to fix; generic ones ("failed") don't.
+- **Every request pays S1 latency.** If your workload is uniformly hard, you're adding generation time before every S2 call with no saving.
+- **`ChatContext` is required.** The repair loop is multi-turn — stateless contexts will error.
+- **S2 is one attempt.** If S2 also fails, the best S1 result is returned. Design your pipeline accordingly.
 
-## Trade-offs and When Not to Use It
-
-> **Best fit:** SOFAI works well on tasks with verifiable outputs — structured data extraction, schema validation, constraint satisfaction, code generation. If you can't check correctness programmatically, the repair loop has nothing to work with.
-
-SOFAI adds overhead worth being honest about:
-
-- **Latency increases.** Every request pays at least one full S1 generation + validation. If your workload is uniformly hard, you're adding S1 cost before every S2 call with no benefit.
-- **Validator quality matters.** The repair loop is only as good as your `ValidationResult.reason`. Generic "failed" messages give the model nothing to act on.
-- **`ChatContext` is required.** `SOFAISamplingStrategy` needs `ChatContext` because the repair loop is multi-turn. Stateless contexts will error.
-- **S2 is one attempt, not guaranteed.** If S2 also fails, the best S1 result is returned. Design your pipeline accordingly.
-
-SOFAI shines on tasks with verifiable outputs — code generation, structured data extraction, constraint satisfaction, JSON schema validation. It's less useful for open-ended generation where correctness can't be checked programmatically.
+To tune further: `s2_solver_mode` controls how much context S2 receives (`"best_attempt"` is the right default for most constraint problems); `judge_backend` and `feedback_strategy` let you use an LLM as the validator instead of a custom function. Full details in the docs below.
 
 - **Source:** [`mellea/stdlib/sampling/sofai.py`](https://github.com/generative-computing/mellea/blob/main/mellea/stdlib/sampling/sofai.py)
-- **Docs:** [Inference-Time Scaling](https://docs.mellea.ai/advanced/inference-time-scaling) · [Instruct-Validate-Repair](https://docs.mellea.ai/concepts/instruct-validate-repair) · [Requirements & ValidationResult](https://docs.mellea.ai/concepts/requirements)
+- **API reference:** [`SOFAISamplingStrategy`](https://docs.mellea.ai/api/mellea/stdlib/sampling/sofai) · [`ValidationResult`](https://docs.mellea.ai/api/mellea/core/requirement) · [Requirements system](https://docs.mellea.ai/concepts/requirements-system)
+- **Guides:** [Inference-Time Scaling](https://docs.mellea.ai/advanced/inference-time-scaling) · [Instruct-Validate-Repair](https://docs.mellea.ai/concepts/instruct-validate-repair)
 
-If you're hitting API costs that don't match the complexity of your tasks, SOFAI is worth trying. Most pipelines with verifiable outputs can drop it in as a strategy swap — write a validator, pass `strategy=sofai`, and let Mellea handle the rest.
+If you're hitting API costs that don't match the complexity of your tasks, SOFAI is worth trying. Write a validator, pass `strategy=sofai`, and let Mellea handle the rest.
 
 ---
 
