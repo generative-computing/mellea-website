@@ -205,7 +205,7 @@ result = m.instruct(prompt, requirements=requirements, strategy=sofai)
 
 Cost: small-model tokens for requests S1 can handle; large-model tokens only on escalation.
 
-How much this saves depends on your task distribution. As illustrative math: if S1 resolves 70% of requests without escalation and the small model is ~10× cheaper per token, blended cost works out to roughly 6–7× cheaper. Conversely, if your tasks are uniformly hard, you pay for S1 attempts before every S2 call — so profile your own workload first.
+How much this saves depends entirely on your task distribution and the cost gap between your two models. If S1 handles the majority of requests without escalation, the saving can be substantial — small models are often an order of magnitude cheaper per token than large ones. If your tasks are uniformly hard, you pay for S1 attempts before every S2 call with no saving at all. Profile your own workload before assuming a win.
 
 SoFAI can also pair with backend failover: run S1 against a local model and S2 against a cloud model, so you get both cost savings *and* a fallback if the local backend is unavailable. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for the layered failover pattern.
 
