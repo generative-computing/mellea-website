@@ -128,6 +128,8 @@ def check_graph_coloring(ctx) -> ValidationResult:
 
 We chose these two models deliberately to keep the memory footprint small: `granite4:350m-h` is 340 million parameters (~366 MB on disk) and `granite4:1b-h` is 1.5 billion parameters (~1.6 GB on disk). Both use Q8_0 quantization. Ollama loads one model at a time, so you need roughly 4 GB RAM — the total weight of both models is under 2 GB, leaving comfortable headroom for the OS and KV cache. Any machine that can run Ollama can run this example.
 
+Worth noting: the Granite 4 hybrid architecture is surprisingly capable at structured output tasks for its size — the 1.5B model solves graph coloring reliably, and even the 340M model gets it right more often than you might expect. We picked the 340M as S1 specifically to exercise the escalation path; in a real pipeline the natural breakpoint between tiers will depend on your task.
+
 Now wire it together with SOFAI. The session backend is set to the fast model — SOFAI swaps to the slow model internally when it escalates:
 
 ```python
