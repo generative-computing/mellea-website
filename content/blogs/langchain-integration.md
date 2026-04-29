@@ -63,10 +63,8 @@ model_with_requirements = chat_model.bind(
     }
 )
 
-validated_chain = prompt | model_with_requirements
-
-# Use it!
-result = validated_chain.invoke({"input": "Explain quantum computing"})
+chain = prompt | model_with_requirements
+result = chain.invoke({"input": "Explain quantum computing"})
 print(result.content)
 ```
 
@@ -235,6 +233,9 @@ from mellea.stdlib.sampling import (
     RepairTemplateStrategy
 )
 from mellea.stdlib.requirements import req
+from langchain_core.messages import HumanMessage
+
+messages = [HumanMessage(content="Write a professional email")]
 
 # Rejection Sampling: Keep trying until requirements are met (up to loop_budget)
 response = chat_model.invoke(
@@ -263,8 +264,6 @@ response = chat_model.invoke(
     }
 )
 ```
-
-LangChain doesn't have this built-in.
 
 ### Mixing Semantic and Deterministic Checks
 
