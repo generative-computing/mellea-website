@@ -126,12 +126,14 @@ def check_graph_coloring(ctx) -> ValidationResult:
     return ValidationResult(True, reason="Valid coloring.")
 ```
 
+We chose these two models deliberately to keep the memory footprint small: `granite4:350m-h` is 340 million parameters (~366 MB on disk) and `granite4:1b-h` is 1.5 billion parameters (~1.6 GB on disk). Both use Q8_0 quantization. Ollama loads one model at a time, so you need roughly 4 GB RAM — the total weight of both models is under 2 GB, leaving comfortable headroom for the OS and KV cache. Any machine that can run Ollama can run this example.
+
 Now wire it together with SOFAI. The session backend is set to the fast model — SOFAI swaps to the slow model internally when it escalates:
 
 ```python
 # Any Ollama-compatible model pair works (e.g. llama3.2:1b + llama3.2:3b)
-s1_backend = OllamaModelBackend(model_id="granite4:350m-h")  # 350M — fast, cheap
-s2_backend = OllamaModelBackend(model_id="granite4:1b-h")    # 1.5B — slower, more capable
+s1_backend = OllamaModelBackend(model_id="granite4:350m-h")  # 340M params — fast, cheap
+s2_backend = OllamaModelBackend(model_id="granite4:1b-h")    # 1.5B params — slower, more capable
 
 sofai = SOFAISamplingStrategy(
     s1_solver_backend=s1_backend,
@@ -221,7 +223,19 @@ Cost: small-model tokens for requests S1 can handle; large-model tokens only on 
 
 How much this saves depends entirely on your task distribution and the cost gap between your two models. If S1 handles the majority of requests without escalation, the saving can be substantial — small models are often an order of magnitude cheaper per token than large ones. If your tasks are uniformly hard, you pay for S1 attempts before every S2 call with no saving at all. Profile your own workload before assuming a win.
 
-SOFAI can also pair with backend failover: run S1 against a local model and S2 against a cloud model, so you get both cost savings *and* a fallback if the local backend is unavailable. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for the layered failover pattern.
+**Going further — cloud model as S2:** the example above uses two local models, but in production the most common SOFAI setup is a local or cheap model as S1 and a cloud API as S2. Mellea backends are interchangeable, so swapping S2 to OpenAI is one line:
+
+```python
+from mellea.backends.openai import OpenAIModelBackend  # reads OPENAI_API_KEY from env
+
+sofai = SOFAISamplingStrategy(
+    s1_solver_backend=OllamaModelBackend("granite4:350m-h"),  # local, free
+    s2_solver_backend=OpenAIModelBackend(model_id="gpt-4o-mini"),  # cloud, only on escalation
+    loop_budget=3,
+)
+```
+
+The same pattern works with `WatsonXModelBackend`, `BedrockModelBackend`, or any OpenAI-compatible endpoint via `base_url`. SOFAI can also pair with backend failover: run S1 locally and S2 in the cloud, so you get cost savings *and* a fallback if the local backend is unavailable. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for the layered failover pattern.
 
 ## Trade-offs and When Not to Use It
 
