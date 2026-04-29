@@ -241,46 +241,147 @@ How much this saves depends entirely on your task distribution and the cost gap 
 
 ## Going Further: A Harder Problem
 
-Graph coloring demonstrates the pattern, but the Granite 4 hybrid models are genuinely capable at structured tasks — the 1.5B model handles C5 coloring reliably. For a task that *truly* separates the tiers, **Sudoku** is sharper.
+Graph coloring is a great introduction to the pattern — but the Granite 4 hybrid architecture is *surprisingly capable* at structured tasks for its size, and the 1.5B model handles graph coloring reliably. That's actually good news in production, but it means the demo doesn't fully stress the capability gap.
 
-A 1.5B local model consistently violates given cells — it fills the grid but overwrites fixed values. A 27B cloud model solves it first attempt. This also makes Sudoku a natural fit for the **local S1 / cloud S2** topology: run cheaply against your local model, pay the cloud API only when the hard reasoning is genuinely needed.
+For that, **Sudoku** is the real test.
 
-The puzzle and validator are new, but the SOFAI wiring is identical:
+Sudoku requires holding 27 simultaneous constraints in mind (9 rows, 9 columns, 9 boxes) while filling a partially-specified grid without overwriting the given values. Small models fail at this not because they ignore instructions, but because the reasoning load genuinely exceeds their capacity — they produce plausible-looking grids that violate the constraints in subtle ways. A 1.5B local model consistently overwrites fixed cells with wrong values. A 27B cloud model solves it on the first attempt.
+
+This is exactly the SOFAI value proposition made concrete: **run cheaply against a local model for the easy cases, pay for cloud inference only when you genuinely need the reasoning power.** For most workloads, the majority of requests won't need the cloud at all — and when they do, SOFAI escalates automatically with the full context of what S1 tried and where it failed.
+
+The code follows exactly the same pattern as graph coloring. Only the puzzle and validator change — the SOFAI wiring, the `instruct()` call, and the retry loop are identical.
+
+**Additional prerequisites:** a free [OpenRouter](https://openrouter.ai) API key, and one more model:
+
+```bash
+ollama pull granite4:1b-h       # 1.5B — S1 solver
+export OPENROUTER_API_KEY=<your-key>
+```
+
+**Save this as `sofai_sudoku_cloud.py` and run it:**
 
 ```python
-# Medium Sudoku — 0 = empty cell
+import json
+import os
+import mellea
+from mellea.backends.ollama import OllamaModelBackend
+from mellea.backends.openai import OpenAIBackend
+from mellea.stdlib.context import ChatContext
+from mellea.stdlib.requirements import ValidationResult, req
+from mellea.stdlib.sampling import SOFAISamplingStrategy
+
 PUZZLE = [
     [5, 3, 0, 0, 7, 0, 0, 0, 0],
     [6, 0, 0, 1, 9, 5, 0, 0, 0],
-    # ...
+    [0, 9, 8, 0, 0, 0, 0, 6, 0],
+    [8, 0, 0, 0, 6, 0, 0, 0, 3],
+    [4, 0, 0, 8, 0, 3, 0, 0, 1],
+    [7, 0, 0, 0, 2, 0, 0, 0, 6],
+    [0, 6, 0, 0, 0, 0, 2, 8, 0],
+    [0, 0, 0, 4, 1, 9, 0, 0, 5],
+    [0, 0, 0, 0, 8, 0, 0, 7, 9],
 ]
 
-def check_sudoku(ctx) -> ValidationResult:
-    # Check: given cells preserved, each row/column/box contains 1–9 exactly once
-    # Return specific failure: "Row 3 missing [4, 8] | Col 5 missing [2]"
-    ...
-```
+def puzzle_str() -> str:
+    lines = []
+    for i, row in enumerate(PUZZLE):
+        if i in (3, 6):
+            lines.append("------+-------+------")
+        parts = [str(x) if x else "." for x in row]
+        lines.append(" ".join(parts[:3]) + " | " + " ".join(parts[3:6]) + " | " + " ".join(parts[6:]))
+    return "\n".join(lines)
 
-```python
-from mellea.backends.openai import OpenAIBackend
+def check_sudoku(ctx) -> ValidationResult:
+    output = ctx.last_output()
+    if output is None:
+        return ValidationResult(False, reason="No output.")
+    raw = str(output.value).strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1].lstrip("json").strip()
+    try:
+        grid = json.loads(raw)
+    except json.JSONDecodeError:
+        return ValidationResult(False, reason="Output is not valid JSON.")
+    if not isinstance(grid, list) or len(grid) != 9:
+        return ValidationResult(False, reason=f"Expected 9 rows, got {len(grid) if isinstance(grid, list) else type(grid).__name__}.")
+    for i, row in enumerate(grid):
+        if not isinstance(row, list) or len(row) != 9:
+            return ValidationResult(False, reason=f"Row {i+1} must have 9 integers.")
+        for j, val in enumerate(row):
+            if not isinstance(val, int) or not (1 <= val <= 9):
+                return ValidationResult(False, reason=f"Cell [{i+1}][{j+1}] = {val!r} — must be integer 1–9.")
+    errors = []
+    for r in range(9):
+        for c in range(9):
+            if PUZZLE[r][c] != 0 and grid[r][c] != PUZZLE[r][c]:
+                errors.append(f"Cell [{r+1}][{c+1}] must be {PUZZLE[r][c]}, got {grid[r][c]}")
+    if errors:
+        return ValidationResult(False, reason=" | ".join(errors[:3]))
+    for r in range(9):
+        if sorted(grid[r]) != list(range(1, 10)):
+            errors.append(f"Row {r+1} missing {sorted(set(range(1,10)) - set(grid[r]))}")
+    for c in range(9):
+        col = [grid[r][c] for r in range(9)]
+        if sorted(col) != list(range(1, 10)):
+            errors.append(f"Column {c+1} missing {sorted(set(range(1,10)) - set(col))}")
+    for br in range(3):
+        for bc in range(3):
+            box = [grid[br*3+r][bc*3+c] for r in range(3) for c in range(3)]
+            if sorted(box) != list(range(1, 10)):
+                errors.append(f"Box [{br+1}][{bc+1}] missing {sorted(set(range(1,10)) - set(box))}")
+    if errors:
+        return ValidationResult(False, reason=" | ".join(errors[:3]))
+    return ValidationResult(True, reason="Valid Sudoku solution.")
+
+s1_backend = OllamaModelBackend(model_id="granite4:1b-h")
+s2_backend = OpenAIBackend(
+    model_id="google/gemma-3-27b-it:free",  # free tier — see openrouter.ai/models?q=free
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ["OPENROUTER_API_KEY"],
+)
 
 sofai = SOFAISamplingStrategy(
-    s1_solver_backend=OllamaModelBackend("granite4:1b-h"),   # local, free
-    s2_solver_backend=OpenAIBackend(                          # cloud, on escalation only
-        model_id="google/gemma-3-27b-it:free",
-        base_url="https://openrouter.ai/api/v1",
-        api_key=os.environ["OPENROUTER_API_KEY"],
-    ),
+    s1_solver_backend=s1_backend,
+    s2_solver_backend=s2_backend,
     s2_solver_mode="best_attempt",
     loop_budget=3,
 )
+
+m = mellea.MelleaSession(backend=s1_backend, ctx=ChatContext())
+result = m.instruct(
+    f"Solve this Sudoku. Fill every empty cell (shown as '.') so each row, "
+    f"column, and 3×3 box contains 1–9 exactly once.\n\n{puzzle_str()}\n\n"
+    "Return ONLY a JSON 2D array — 9 rows of 9 integers:\n[[5,3,4,...],...]",
+    requirements=[req("Valid Sudoku solution.", validation_fn=check_sudoku)],
+    strategy=sofai,
+    return_sampling_results=True,
+    model_options={"temperature": 0.1},
+)
+
+print(f"Success: {result.success}")
+print(f"Attempts: {len(result.sample_generations)}")
 ```
 
-When S1 fails, SOFAI sends its best attempt *plus the specific cell violations* to the cloud model, which corrects them and returns a valid solution. The cloud API is called once, only when needed.
+```bash
+uv run python sofai_sudoku_cloud.py
+```
 
-Mellea backends are interchangeable — the same setup works with `BedrockBackend` or any OpenAI-compatible endpoint via `base_url`. You also get a natural failover story: if the local backend is unavailable, S2 is already there. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea).
+You should see S1 fail with specific cell violations, then S2 step in and solve it:
 
-A free-tier OpenRouter key is available at [openrouter.ai](https://openrouter.ai). Free model availability changes — check [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free) for current options.
+```text
+Attempt 1 — granite4:1b-h: FAIL
+  Reason: Cell [3][8] must be 6, got 7 | Cell [5][6] must be 3, got 7
+Attempt 2 — granite4:1b-h: FAIL
+  Reason: Cell [3][8] must be 6, got 7 | Cell [5][6] must be 3, got 7
+Attempt 3 — google/gemma-3-27b-it:free: PASS
+
+Success: True
+Attempts: 3
+```
+
+The 1.5B model *almost* solves the puzzle — it produces a plausible-looking grid but overwrites a few fixed cells with wrong values. The cloud model receives those exact violations, corrects them, and returns a valid solution. The cloud API was called once.
+
+Mellea backends are interchangeable — the same setup works with any OpenAI-compatible endpoint via `base_url`, or `BedrockBackend` for AWS. Free model availability on OpenRouter changes — check [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free) for current options. See also [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for combining SOFAI with backend failover.
 
 ## Trade-offs and When Not to Use It
 
