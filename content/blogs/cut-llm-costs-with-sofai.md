@@ -1,16 +1,16 @@
 ---
-title: "Cut LLM Costs Without Sacrificing Quality: The SoFAI Pattern in Mellea"
+title: "Cut LLM Costs Without Sacrificing Quality: The SOFAI Pattern in Mellea"
 date: "2026-05-06"
 author: "Nigel Jones"
 excerpt: "Route most requests to a small model and escalate only hard cases to a larger one — Mellea's SOFAISamplingStrategy makes the dual-model pattern a one-line strategy swap."
 tags: ["sofai", "sampling", "cost", "ollama"]
 ---
 
-Every LLM application eventually hits the same wall: you started by routing everything through your best model, and now the bill is uncomfortably large. The expensive model handles the hard problems beautifully — but it's doing the same job on trivial tasks that a model ten times cheaper could handle.
+Most LLM applications eventually hit the same wall: you started by routing everything through your best model, and now the bill is uncomfortably large. The expensive model handles the hard problems beautifully — but it's doing the same job on trivial tasks that a model ten times cheaper could handle.
 
 The instinct is to swap to a cheaper model entirely. The problem: smaller models fail on the hard cases, and you have to choose between overspending on quality or degrading the experience.
 
-**SoFAI** (Slow and Fast AI) sidesteps that trade-off. Instead of picking one model for everything, it uses a fast model as a first-pass solver and escalates to a stronger model only when the fast one genuinely can't solve the problem. The result: most requests pay small-model prices, hard requests get the quality they need.
+**SOFAI** (Slow and Fast AI) sidesteps that trade-off. Instead of picking one model for everything, it uses a fast model as a first-pass solver and escalates to a stronger model only when the fast one genuinely can't solve the problem. The result: most requests pay small-model prices, hard requests get the quality they need.
 
 Mellea's `SOFAISamplingStrategy` implements this pattern as a first-class sampling strategy, building on the same [Instruct-Validate-Repair](https://docs.mellea.ai/concepts/instruct-validate-repair) loop that powers the rest of the library. If you haven't used Mellea before, [Getting Started with Mellea](/blogs/getting-started-with-mellea) is a good five-minute primer.
 
@@ -24,7 +24,7 @@ Mellea's implementation brings that into a Python library you can use today, wit
 
 ## How the Loop Works
 
-SoFAI operates in two phases:
+SOFAI operates in two phases:
 
 **Phase 1 — S1 loop (fast model):**
 
@@ -41,7 +41,7 @@ SoFAI operates in two phases:
 - Makes a single attempt with the more capable model.
 - How S2 receives context depends on `s2_solver_mode` (see below).
 
-The repair loop is only as useful as the feedback it receives. SoFAI passes `ValidationResult.reason` directly into the repair prompt — a vague "validation failed" gives the model nothing to act on, but a specific "Nodes C and D are adjacent but both have color 'Red'" tells it exactly what to fix.
+The repair loop is only as useful as the feedback it receives. SOFAI passes `ValidationResult.reason` directly into the repair prompt — a vague "validation failed" gives the model nothing to act on, but a specific "Nodes C and D are adjacent but both have color 'Red'" tells it exactly what to fix.
 
 ```text
 Request
@@ -58,7 +58,7 @@ Validate                                       │
 
 ## A Working Example: Graph Coloring
 
-Graph coloring is a canonical constraint satisfaction problem — useful for demos because small models fail on it often enough to exercise the escalation path, while large models solve it reliably. Assign colors to nodes so that no two adjacent nodes share a color.
+Graph coloring is a canonical constraint satisfaction problem — useful for demos because small models fail on it often enough to exercise the escalation path, while larger models solve it more reliably. Assign colors to nodes so that no two adjacent nodes share a color.
 
 Here's the full setup:
 
@@ -116,7 +116,7 @@ def check_graph_coloring(ctx) -> ValidationResult:
     return ValidationResult(True, reason="Valid coloring.")
 ```
 
-Now wire it together with SoFAI. The session backend is set to the fast model — SoFAI swaps to the slow model internally when it escalates:
+Now wire it together with SOFAI. The session backend is set to the fast model — SOFAI swaps to the slow model internally when it escalates:
 
 ```python
 # Any Ollama-compatible model pair works (e.g. llama3.1:8b + llama3.1:70b, mistral:7b + mixtral:8x7b)
@@ -163,6 +163,8 @@ Attempts: 3
 
 When S1 succeeds on the first or second attempt, you pay nothing for the large model at all.
 
+Want to know if SOFAI saves money for your workload? Run the same validator against your own prompts and compare S1 pass rates — the higher the S1 pass rate, the more you save.
+
 ## Controlling S2 Context with `s2_solver_mode`
 
 How much context S2 receives when it takes over affects both quality and token cost. Three modes are available:
@@ -191,7 +193,7 @@ result = m.instruct(prompt, requirements=requirements)
 
 Cost: large-model tokens for every request, including the easy ones.
 
-**After — SoFAI dual-model escalation:**
+**After — SOFAI dual-model escalation:**
 
 ```python
 sofai = SOFAISamplingStrategy(
@@ -207,18 +209,18 @@ Cost: small-model tokens for requests S1 can handle; large-model tokens only on 
 
 How much this saves depends entirely on your task distribution and the cost gap between your two models. If S1 handles the majority of requests without escalation, the saving can be substantial — small models are often an order of magnitude cheaper per token than large ones. If your tasks are uniformly hard, you pay for S1 attempts before every S2 call with no saving at all. Profile your own workload before assuming a win.
 
-SoFAI can also pair with backend failover: run S1 against a local model and S2 against a cloud model, so you get both cost savings *and* a fallback if the local backend is unavailable. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for the layered failover pattern.
+SOFAI can also pair with backend failover: run S1 against a local model and S2 against a cloud model, so you get both cost savings *and* a fallback if the local backend is unavailable. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for the layered failover pattern.
 
 ## Trade-offs and When Not to Use It
 
-SoFAI adds overhead you should account for:
+SOFAI adds overhead you should account for:
 
 - **Minimum latency increases.** Every request pays at least one full S1 generation + validation. If your workload is uniformly hard, you're adding S1 calls before every S2 call with no savings.
 - **Requires a good validator.** The repair loop is only as useful as your `ValidationResult.reason` feedback. Generic validators that return "failed" give the model nothing to act on.
 - **`ChatContext` required.** `SOFAISamplingStrategy` requires a `ChatContext` session because the repair loop is multi-turn. Sessions using a stateless context will error.
-- **S2 is still a fallback, not guaranteed.** SoFAI makes one S2 attempt. If S2 also fails, the best result from S1 is returned. Design your pipeline accordingly.
+- **S2 is still a fallback, not guaranteed.** SOFAI makes one S2 attempt. If S2 also fails, the best result from S1 is returned. Design your pipeline accordingly.
 
-SoFAI is a good fit for tasks with verifiable outputs — code generation, structured data extraction, constraint satisfaction, JSON schema validation. It is less useful for open-ended generation tasks where correctness can't be checked programmatically.
+SOFAI is a good fit for tasks with verifiable outputs — code generation, structured data extraction, constraint satisfaction, JSON schema validation. It is less useful for open-ended generation tasks where correctness can't be checked programmatically.
 
 ## Get Started
 
@@ -234,7 +236,7 @@ python docs/examples/sofai/sofai_graph_coloring.py
 - **Example:** [`docs/examples/sofai/sofai_graph_coloring.py`](https://github.com/generative-computing/mellea/blob/main/docs/examples/sofai/sofai_graph_coloring.py)
 - **Docs:** [Inference-Time Scaling guide](https://docs.mellea.ai/advanced/inference-time-scaling)
 
-If you're hitting API costs that don't match the complexity of your tasks, SoFAI is worth trying. Most pipelines with verifiable outputs can drop it in as a strategy swap with no other changes.
+If you're hitting API costs that don't match the complexity of your tasks, SOFAI is worth trying. Most pipelines with verifiable outputs can drop it in as a strategy swap with no other changes.
 
 ---
 
