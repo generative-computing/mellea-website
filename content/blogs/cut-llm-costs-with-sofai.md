@@ -110,13 +110,7 @@ print(f"Attempts: {len(result.sample_generations)}")
 uv run python sofai_graph_coloring.py
 ```
 
-We picked these models to keep the footprint small — both are Granite 4 hybrid models using Q8_0 quantisation, and the pair fits comfortably in 4 GB RAM. Ollama loads one model at a time so you never need both in memory simultaneously.
-
-A quick note on the Granite 4 hybrid architecture: it's *surprisingly capable* at structured output tasks for its size. The 340M model handles graph coloring correctly more often than you'd expect from something this small — we deliberately chose it as S1 to exercise the escalation path. In a real pipeline, the right tier boundary depends on your task.
-
-The rest of this post walks through what the code does and why — so you can adapt it to your own tasks.
-
-## Walkthrough: What Just Happened
+## What Just Happened
 
 The script you ran is solving a **graph coloring** problem — assign a color to each node so no two adjacent nodes share the same color. It's a clean SOFAI demo because it has an objectively right answer, a straightforward validator, and small models fail on it often enough to show the escalation path.
 
@@ -171,7 +165,9 @@ def check_graph_coloring(ctx) -> ValidationResult:
     return ValidationResult(True, reason="Valid coloring.")
 ```
 
-**Wiring it together** — pass `strategy=sofai` and Mellea handles the rest:
+**Wiring it together** — pass `strategy=sofai` and Mellea handles the rest.
+
+The two models are Granite 4 hybrid (Q8_0 quantisation), fitting comfortably in 4 GB RAM with ~2 GB total download. Worth noting: the hybrid architecture is *surprisingly capable* for its size — the 340M model solves graph coloring more often than you'd expect. We chose it as S1 specifically to exercise the escalation path; in a real pipeline, the right tier boundary depends on your task.
 
 ```python
 s1_backend = OllamaModelBackend(model_id="granite4:350m-h")  # 340M params — fast, cheap
