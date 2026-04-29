@@ -16,9 +16,7 @@ Swap to a cheaper model entirely? Then the hard cases degrade. You're stuck choo
 
 Mellea makes this a one-line change to your existing pipeline. Let's see it in action.
 
-> **Best fit:** tasks with verifiable outputs — structured data extraction, schema validation, constraint satisfaction, code generation. If you can't check correctness programmatically, skip to [Trade-offs](#trade-offs-and-when-not-to-use-it).
-
-## Quick Start
+## See It in Action
 
 **Prerequisites** — you'll need two tools installed:
 
@@ -329,6 +327,8 @@ Graph coloring is a good introduction, but the Granite 4 hybrid models are genui
 The validator, SOFAI setup, and `instruct()` call follow exactly the same pattern — only the prompt and validator change. This is the point: once you've written a validator, the escalation logic comes for free.
 
 ## Trade-offs and When Not to Use It
+
+> **Best fit:** SOFAI works well on tasks with verifiable outputs — structured data extraction, schema validation, constraint satisfaction, code generation. If you can't check correctness programmatically, the repair loop has nothing to work with.
 
 SOFAI adds overhead worth being honest about:
 
