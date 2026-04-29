@@ -1,5 +1,5 @@
 ---
-title: "Reduce LLM Costs with Dual-Model Routing: The SoFAI Pattern in Mellea"
+title: "Cut LLM Costs Without Sacrificing Quality: The SoFAI Pattern in Mellea"
 date: "2026-05-06"
 author: "Nigel Jones"
 excerpt: "Route most requests to a small model and escalate only hard cases to a larger one — Mellea's SOFAISamplingStrategy makes the dual-model pattern a one-line strategy swap."
