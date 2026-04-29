@@ -159,6 +159,22 @@ print(f"Success: {result.success}")
 print(f"Attempts: {len(result.sample_generations)}")
 ```
 
+That's the complete application code. Mellea owns the retry and escalation cycle — your code just calls `instruct()`:
+
+```text
+Your code           │  Mellea handles
+────────────────────┼───────────────────────────────────────
+m.instruct(         │  ┌─ S1: generate candidate
+  prompt,           │  ├─ validate → extract failure reason
+  strategy=sofai,   │  ├─ repair with specific feedback
+)                   │  ├─ retry up to loop_budget times
+                    │  ├─ detect no-improvement → escalate
+                    │  ├─ S2: generate with S1 context
+result              │  └─ validate → return result
+```
+
+The repair prompt construction, failure detection, S2 context handoff, and loop termination all happen inside `SOFAISamplingStrategy`. You get the result (or the best attempt if everything fails) with no custom orchestration logic.
+
 Example output when S1 fails twice and S2 resolves it:
 
 ```text
@@ -235,7 +251,9 @@ sofai = SOFAISamplingStrategy(
 )
 ```
 
-The same pattern works with `WatsonXModelBackend`, `BedrockModelBackend`, or any OpenAI-compatible endpoint via `base_url`. SOFAI can also pair with backend failover: run S1 locally and S2 in the cloud, so you get cost savings *and* a fallback if the local backend is unavailable. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for the layered failover pattern.
+The same pattern works with `BedrockBackend`, or any OpenAI-compatible endpoint via `base_url`. SOFAI can also pair with backend failover: run S1 locally and S2 in the cloud, so you get cost savings *and* a fallback if the local backend is unavailable. See [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for the layered failover pattern.
+
+**A harder example — Sudoku:** graph coloring is a good introduction, but small models (1.5B and below) can often stumble through it. For a task that genuinely requires reasoning capacity, Sudoku is a sharper test: a 1.5B local model consistently fails to fill the grid correctly, while a 27B cloud model solves it on the first attempt — making the cost case concrete. The validator, SOFAI setup, and `instruct()` call follow exactly the same pattern as above; only the prompt and validator function change.
 
 ## Trade-offs and When Not to Use It
 
@@ -256,22 +274,23 @@ You'll need [uv](https://docs.astral.sh/uv/getting-started/installation/) (fast 
 # Install uv — https://docs.astral.sh/uv/getting-started/installation/
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Pull the two models into Ollama (~2 GB total)
-ollama pull granite4:350m-h  # 350M model — S1 fast solver
+# Pull the two models into Ollama (~2 GB total, ~4 GB RAM required)
+ollama pull granite4:350m-h  # 340M model — S1 fast solver
 ollama pull granite4:1b-h    # 1.5B model — S2 slow solver
 
-# Create a project, install Mellea, and download the example
+# Create a project and install Mellea
 uv init sofai-example
 cd sofai-example
 uv add mellea
-curl -O https://raw.githubusercontent.com/generative-computing/mellea/main/docs/examples/sofai/sofai_graph_coloring.py
+```
 
-# Run it
+Copy the three code blocks from the example above into a single file `sofai_graph_coloring.py` — the imports, the validator function, and the SOFAI setup and `instruct()` call — then run it:
+
+```bash
 uv run python sofai_graph_coloring.py
 ```
 
 - **Source:** [`mellea/stdlib/sampling/sofai.py`](https://github.com/generative-computing/mellea/blob/main/mellea/stdlib/sampling/sofai.py)
-- **Example:** [`docs/examples/sofai/sofai_graph_coloring.py`](https://github.com/generative-computing/mellea/blob/main/docs/examples/sofai/sofai_graph_coloring.py)
 - **Docs:** [Inference-Time Scaling guide](https://docs.mellea.ai/advanced/inference-time-scaling)
 
 If you're hitting API costs that don't match the complexity of your tasks, SOFAI is worth trying. Most pipelines with verifiable outputs can drop it in as a strategy swap with no other changes.
