@@ -286,7 +286,71 @@ cd sofai-example
 uv add mellea
 ```
 
-Copy the three code blocks from the example above into a single file `sofai_graph_coloring.py` — the imports, the validator function, and the SOFAI setup and `instruct()` call — then run it:
+Save this complete script as `sofai_graph_coloring.py` and run it:
+
+```python
+import json
+import mellea
+from mellea.backends.ollama import OllamaModelBackend
+from mellea.stdlib.context import ChatContext
+from mellea.stdlib.requirements import ValidationResult, req
+from mellea.stdlib.sampling import SOFAISamplingStrategy
+
+graph = {"A": ["B", "E"], "B": ["A", "C"], "C": ["B", "D"], "D": ["C", "E"], "E": ["D", "A"]}
+colors = ["Red", "Blue", "Green"]
+
+def check_graph_coloring(ctx) -> ValidationResult:
+    output = ctx.last_output()
+    if output is None:
+        return ValidationResult(False, reason="No output. Expected JSON like {\"A\": \"Red\", ...}")
+    raw = str(output.value).strip()
+    if raw.startswith("```"):
+        raw = raw.split("```")[1].lstrip("json").strip()
+    try:
+        coloring = json.loads(raw)
+    except json.JSONDecodeError:
+        return ValidationResult(False, reason="Output is not valid JSON.")
+    errors = []
+    missing = set(graph) - set(coloring)
+    if missing:
+        errors.append(f"Missing nodes: {', '.join(sorted(missing))}")
+    bad_colors = [c for c in coloring.values() if c not in colors]
+    if bad_colors:
+        errors.append(f"Invalid colors {set(bad_colors)}. Use: {', '.join(colors)}")
+    if not errors:
+        for node, neighbours in graph.items():
+            for nb in neighbours:
+                if nb in coloring and coloring.get(node) == coloring[nb]:
+                    errors.append(f"Adjacent nodes {node}–{nb} both have color '{coloring[node]}'")
+    if errors:
+        return ValidationResult(False, reason=" | ".join(errors))
+    return ValidationResult(True, reason="Valid coloring.")
+
+s1_backend = OllamaModelBackend(model_id="granite4:350m-h")
+s2_backend = OllamaModelBackend(model_id="granite4:1b-h")
+
+sofai = SOFAISamplingStrategy(
+    s1_solver_backend=s1_backend,
+    s2_solver_backend=s2_backend,
+    s2_solver_mode="best_attempt",
+    loop_budget=3,
+)
+
+m = mellea.MelleaSession(backend=s1_backend, ctx=ChatContext())
+result = m.instruct(
+    "Color the nodes of the graph (A, B, C, D, E) using only the colors "
+    "Red, Blue, or Green. Adjacent nodes must have different colors. "
+    "Adjacencies: A-B, B-C, C-D, D-E, E-A. "
+    'Return JSON: {"A": "Red", "B": "Green", ...}',
+    requirements=[req("Valid graph coloring.", validation_fn=check_graph_coloring)],
+    strategy=sofai,
+    return_sampling_results=True,
+    model_options={"temperature": 0.1, "seed": 42},
+)
+
+print(f"Success: {result.success}")
+print(f"Attempts: {len(result.sample_generations)}")
+```
 
 ```bash
 uv run python sofai_graph_coloring.py
