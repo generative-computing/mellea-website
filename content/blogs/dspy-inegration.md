@@ -12,14 +12,85 @@ DSPy has revolutionized how developers build LLM applications through structured
 
 ## What is DSPy?
 
-[DSPy](https://github.com/stanfordnlp/dspy) (Declarative Self-improving Python) is a framework for programming—not prompting—language models. Instead of writing brittle prompts, you define **signatures** that specify what your program should do, and DSPy handles the prompting automatically.
+[DSPy](https://github.com/stanfordnlp/dspy) (Declarative Self-improving Python) is a framework for programming—not prompting—language models. Instead of writing brittle prompts, you define signatures that specify what your program should do, and DSPy handles the prompting automatically.
 
-**Key DSPy Concepts:**
+Signatures are type-safe input/output specifications (e.g., `"question -> answer"`). You compose them with reusable modules like `Predict` and `ChainOfThought`, and DSPy can optimize your program through compilation. The modularity means you can build complex systems from simple building blocks.
 
-- **Signatures**: Type-safe input/output specifications (e.g., `"question -> answer"`)
-- **Modules**: Reusable components like `Predict`, `ChainOfThought`
-- **Optimization**: Automatic prompt improvement through compilation
-- **Modularity**: Compose complex programs from simple building blocks
+## Getting Started
+
+### Installation
+
+First, follow [Mellea's Getting Started guide](https://docs.mellea.ai/getting-started) to set up your environment (including Ollama if running locally).
+
+Then install the DSPy integration:
+
+```bash
+# 1. Install mellea and dspy
+pip install mellea dspy
+
+# 2. Install mellea-integration-core
+pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-integration-core/v0.1.0/mellea_integration_core-0.1.0-py3-none-any.whl
+
+# 3. Install mellea-dspy
+pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-dspy/v0.1.0/mellea_dspy-0.1.0-py3-none-any.whl
+```
+
+### Your First Validated DSPy Program
+
+```python
+import dspy
+from mellea import start_session
+from mellea_dspy import MelleaLM
+from mellea.stdlib.sampling import RejectionSamplingStrategy
+
+# Step 1: Create Mellea session
+m = start_session()  # Uses Ollama by default
+
+# Step 2: Configure MelleaLM with requirements
+lm = MelleaLM(
+    mellea_session=m,
+    model="mellea-ollama",
+    requirements=[
+        "Must be clear",
+        "Must mention structured approaches or automation",
+        "Must be professional"
+    ],
+    strategy=RejectionSamplingStrategy(loop_budget=3)
+)
+
+# Step 3: Configure DSPy to use Mellea LM
+dspy.configure(lm=lm)
+
+# Step 4: Define and use your DSPy program
+qa = dspy.ChainOfThought("question -> answer")
+result = qa(question="What is generative programming?")
+
+print(result.answer)
+# Output validated against requirements
+```
+
+### Configuration Options
+
+```python
+# Different backends
+lm_ollama = MelleaLM(mellea_session=m, model="mellea-ollama")
+lm_openai = MelleaLM(mellea_session=m, model="mellea-openai")
+
+# With generation parameters
+lm = MelleaLM(
+    mellea_session=m,
+    model="mellea-ollama",
+    temperature=0.7,      # Control randomness
+    max_tokens=2000       # Maximum output length
+)
+
+# With default requirements (applied to all generations)
+lm = MelleaLM(
+    mellea_session=m,
+    model="mellea-ollama",
+    requirements=["Must be concise", "Must be helpful"]
+)
+```
 
 ## What Makes Mellea + DSPy Different?
 
@@ -61,11 +132,11 @@ DSPy generates structured outputs, but without validation you can't guarantee th
 ```python
 from mellea.stdlib.sampling import RejectionSamplingStrategy
 
-# Without Mellea - hope for the best
+# Without Mellea
 qa = dspy.Predict("text -> summary")
-result = qa(text="Long article...")  # Might be too long or miss key points
+result = qa(text="Long article...")  # May exceed length or miss key points
 
-# With Mellea - guaranteed quality through DSPy
+# With Mellea
 lm = MelleaLM(
     mellea_session=m,
     model="mellea-ollama",
@@ -80,7 +151,7 @@ dspy.configure(lm=lm)
 
 summarizer = dspy.Predict("text -> summary")
 result = summarizer(text="Long article...")
-# Output automatically meets all requirements or you get feedback on why it failed
+# Output meets requirements or you get detailed feedback on what failed
 ```
 
 ### Semantic Validation
@@ -176,7 +247,7 @@ class Summarize(dspy.Signature):
     summary = dspy.OutputField()
 
 summarizer = dspy.Predict(Summarize)
-result = summarizer(text="Long article...")  # Hope it's concise!
+result = summarizer(text="Long article...")  # No guarantee about length or quality
 ```
 
 **Mellea-Enhanced DSPy:**
@@ -197,10 +268,10 @@ lm = MelleaLM(
 )
 dspy.configure(lm=lm)
 
-# Now the summarizer automatically validates
+# The summarizer now validates before returning
 summarizer = dspy.Predict(Summarize)
 result = summarizer(text="Long article...")
-# Guaranteed to meet requirements!
+# Output meets your requirements
 ```
 
 ### Enhanced Chain of Thought
@@ -210,7 +281,7 @@ result = summarizer(text="Long article...")
 ```python
 cot = dspy.ChainOfThought("question -> answer")
 result = cot(question="Complex question...")
-# Reasoning might be unclear or incomplete
+# Reasoning may be unclear or incomplete
 ```
 
 **Mellea-Enhanced:**
@@ -231,10 +302,10 @@ lm = MelleaLM(
 )
 dspy.configure(lm=lm)
 
-# Now ChainOfThought automatically validates reasoning
+# ChainOfThought now validates reasoning against requirements
 cot = dspy.ChainOfThought("question -> answer")
 result = cot(question="Explain how machine learning models learn from data")
-# Reasoning is validated for quality
+# Reasoning meets your quality bars before it's returned
 ```
 
 ### Enhanced Modular Programs
@@ -264,10 +335,10 @@ lm = MelleaLM(
 )
 dspy.configure(lm=lm)
 
-# Now the module automatically validates all outputs
+# The module validates all outputs before returning them
 qa_module = ValidatedQA()
 answer = qa_module(question="What is Python?")
-# Output is automatically validated against requirements
+# All outputs checked against requirements
 ```
 
 ## Real-World Impact: Before and After Mellea
@@ -311,10 +382,10 @@ lm = MelleaLM(
 )
 dspy.configure(lm=lm)
 
-# Generate with DSPy - validation happens automatically
+# Generate with DSPy—validation is built in
 doc_gen = dspy.Predict("code -> documentation")
 result = doc_gen(code="def factorial(n): ...")
-# Meets all requirements or you get detailed feedback on what failed
+# Output meets requirements or you see what failed
 ```
 
 ## What Mellea Adds That DSPy Doesn't Have
@@ -335,120 +406,14 @@ Use Mellea if you're building production systems where output quality is non-neg
 
 Skip it for latency-sensitive paths (sub-100ms p50) or simple Q&A where a user can manually fix a bad answer. The overhead isn't worth it.
 
-## Getting Started
-
-### Installation
-
-```bash
-# Install dependencies
-pip install mellea dspy
-
-# Ensure Ollama is running (for local models)
-ollama pull granite4:micro
-```
-
-### Your First Validated DSPy Program
-
-```python
-import dspy
-from mellea import start_session
-from mellea_dspy import MelleaLM
-from mellea.stdlib.sampling import RejectionSamplingStrategy
-
-# Step 1: Create Mellea session
-m = start_session()  # Uses Ollama by default
-
-# Step 2: Configure MelleaLM with requirements
-lm = MelleaLM(
-    mellea_session=m,
-    model="mellea-ollama",
-    requirements=[
-        "Must be clear",
-        "Must mention structured approaches or automation",
-        "Must be professional"
-    ],
-    strategy=RejectionSamplingStrategy(loop_budget=3)
-)
-
-# Step 3: Configure DSPy to use Mellea LM
-dspy.configure(lm=lm)
-
-# Step 4: Define and use your DSPy program
-qa = dspy.ChainOfThought("question -> answer")
-result = qa(question="What is generative programming?")
-
-print(result.answer)
-# Output is automatically validated against requirements
-```
-
-### Configuration Options
-
-```python
-# Different backends
-lm_ollama = MelleaLM(mellea_session=m, model="mellea-ollama")
-lm_openai = MelleaLM(mellea_session=m, model="mellea-openai")
-
-# With generation parameters
-lm = MelleaLM(
-    mellea_session=m,
-    model="mellea-ollama",
-    temperature=0.7,      # Control randomness
-    max_tokens=2000       # Maximum output length
-)
-
-# With default requirements (applied to all generations)
-lm = MelleaLM(
-    mellea_session=m,
-    model="mellea-ollama",
-    requirements=["Must be concise", "Must be helpful"]
-)
-```
-
 ## The Tradeoff
 
-Mellea doesn't replace DSPy—it complements it. You keep all of DSPy's features (signatures, modules, compilation) and gain validation on top. The cost is latency and LLM calls. The benefit is higher quality and fewer manual retries. Most teams find that worth it.
+Mellea doesn't replace DSPy—it complements it. You keep all of DSPy's features (signatures, modules, compilation) and gain validation on top. The cost is latency and LLM calls. The benefit is higher quality and fewer manual retries.
 
 ## Next Steps
 
-### Learn More
+Copy the "Your First Validated DSPy Program" example at the top, save it as `validated_program.py`, and run it.
 
-- **Mellea Documentation**: [docs.mellea.ai](https://docs.mellea.ai/)
-- **DSPy Documentation**: [dspy-docs.vercel.app](https://dspy-docs.vercel.app/)
-- **Integration Examples**: [GitHub Examples](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/dspy_backend/examples)
-- **Join the Community**: [Mellea Discord](https://ibm.biz/mellea-discord)
+For more, see the [Mellea docs](https://docs.mellea.ai/), [DSPy integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/dspy_backend/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord).
 
-### Explore Examples
-
-Several examples are included:
-
-```bash
-# Clone the repository
-git clone https://github.com/generative-computing/mellea-contribs
-cd mellea-contribs/mellea_contribs/dspy_backend
-
-# Run examples
-uv run examples/01_basic_usage.py
-uv run examples/02_requirements_validation.py
-uv run examples/08_bestofn_verification.py
-```
-
-### Example Code
-
-- [Basic Usage](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/dspy_backend/examples/01_basic_usage.py)
-- [Requirements Validation](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/dspy_backend/examples/02_requirements_validation.py)
-- [Sampling Strategies](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/dspy_backend/examples/03_sampling_strategies.py)
-- [Runtime Verification](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/dspy_backend/examples/08_bestofn_verification.py)
-
-## The Real Win
-
-Structured prompting is powerful. Adding validation makes it reliable. DSPy's signatures give you type safety for outputs; Mellea's requirements give you quality safety. Together they let you ship AI applications with confidence.
-
----
-
-To get started:
-
-```bash
-pip install mellea dspy
-```
-
-This integration lives in [mellea-contribs](https://github.com/generative-computing/mellea-contribs), the incubation point for community contributions to Mellea.
+This integration lives in [mellea-contribs](https://github.com/generative-computing/mellea-contribs).
