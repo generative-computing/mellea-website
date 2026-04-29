@@ -8,7 +8,110 @@ tags: ["crewai", "multi-agent", "validation", "integration"]
 
 CrewAI makes it easy to build multi-agent workflows. But it doesn't validate outputs. One bad agent response cascades through the pipeline.
 
-**Mellea** validates LLM outputs and retries them until they pass. Drop it into your CrewAI crews as an LLM backend, and each agent's output meets the requirements you set—or returns a fallback.
+**Mellea** validates LLM outputs and retries them until they pass. Drop it into your CrewAI crews as an LLM backend, and each agent's output either meets your requirements or falls back to a safe default.
+
+## Getting Started
+
+### Installation
+
+First, follow [Mellea's Getting Started guide](https://docs.mellea.ai/getting-started) to set up your environment (including Ollama if running locally).
+
+Then install the CrewAI integration:
+
+```bash
+# 1. Install mellea and crewai
+pip install mellea crewai
+
+# 2. Install mellea-integration-core
+pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-integration-core/v0.1.0/mellea_integration_core-0.1.0-py3-none-any.whl
+
+# 3. Install mellea-crewai
+pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-crewai/v0.1.0/mellea_crewai-0.1.0-py3-none-any.whl
+```
+
+### Your first validated agent:
+
+```python
+from mellea import start_session
+from mellea_crewai import MelleaLLM
+from mellea.stdlib.requirements import req
+from mellea.stdlib.sampling import RejectionSamplingStrategy
+from crewai import Agent, Task, Crew
+
+# Create Mellea session
+m = start_session()  # Uses Ollama by default
+
+# Create validated agent
+agent = Agent(
+    role="Research Assistant",
+    goal="Provide accurate, well-researched information",
+    backstory="You are an expert researcher with attention to detail",
+    llm=MelleaLLM(
+        mellea_session=m,
+        requirements=[
+            req("Response must be accurate and well-researched"),
+            req("Response must be concise (under 300 words)"),
+            req("Must include specific examples"),
+        ],
+        strategy=RejectionSamplingStrategy(loop_budget=3),
+    )
+)
+
+# Create task
+task = Task(
+    description="Research the benefits of retrieval-augmented generation (RAG)",
+    agent=agent,
+    expected_output="A concise, well-researched summary with examples"
+)
+
+# Execute
+crew = Crew(agents=[agent], tasks=[task])
+result = crew.kickoff()
+print(result)
+```
+
+Multi-agent example:
+
+```python
+# Create specialized agents
+researcher = Agent(
+    role="Researcher",
+    goal="Conduct thorough research",
+    llm=MelleaLLM(
+        mellea_session=m,
+        requirements=[req("Must cite sources"), req("Must include data")],
+        strategy=RejectionSamplingStrategy(loop_budget=5)
+    )
+)
+
+writer = Agent(
+    role="Writer",
+    goal="Write engaging content",
+    llm=MelleaLLM(
+        mellea_session=m,
+        requirements=[req("Must be well-structured"), req("Must be engaging")],
+        strategy=MultiTurnStrategy(loop_budget=3)
+    )
+)
+
+# Create tasks with dependencies
+research_task = Task(
+    description="Research AI trends",
+    agent=researcher,
+    expected_output="Research summary"
+)
+
+writing_task = Task(
+    description="Write blog post based on research",
+    agent=writer,
+    expected_output="Blog post",
+    context=[research_task]  # Depends on research
+)
+
+# Execute validated crew
+crew = Crew(agents=[researcher, writer], tasks=[research_task, writing_task])
+result = crew.kickoff()
+```
 
 ## How Mellea Works
 
@@ -16,7 +119,7 @@ Mellea adds three concrete capabilities to CrewAI:
 
 ### 1. **Instruct-Validate-Repair Pattern for Agents**
 
-Mellea treats agent outputs as programs. You define requirements they must meet. Here's what that looks like:
+Define requirements your agents must meet, and Mellea validates and retries automatically:
 
 ```python
 from mellea import start_session
@@ -61,7 +164,7 @@ This agent generates, validates against requirements, and retries on failure. St
 
 ### 2. **Sampling Strategies**
 
-You can pick how Mellea retries. Each strategy trades latency and cost for quality:
+Pick a retry strategy. Each trades latency and cost for quality:
 
 ```python
 from mellea.stdlib.sampling import (
@@ -108,7 +211,7 @@ All of these trade more API calls and latency (2–5x typical) for higher qualit
 
 ### 3. **Requirements: Semantic and Deterministic**
 
-Mellea validates outputs in two ways. You can mix them:
+Mix semantic checks (LLM-powered) with deterministic ones (Python rules):
 
 ```python
 from mellea.stdlib.requirements import req, check, simple_validate
@@ -142,7 +245,7 @@ analyst = Agent(
 
 ### Validated Agent Output
 
-Standard CrewAI agents run once and output whatever they generate. Mellea agents validate against your requirements and retry if needed:
+Standard CrewAI agents run once. Mellea agents validate against your requirements and retry if they don't pass:
 
 ```python
 # Standard CrewAI: generates once, no validation
@@ -167,11 +270,11 @@ validated_agent = Agent(
 )
 ```
 
-The downside: potentially 5x latency and proportional API costs if all retries run. Worth it when quality matters more than speed.
+The cost: potentially 5x latency and API spend if all retries fire. It's worth it when reliability matters more than speed.
 
 ### Task-Level Guardrails
 
-CrewAI has a separate guardrails system for tasks. Mellea lets you use requirements as guardrails:
+You can use Mellea requirements as guardrails directly:
 
 ```python
 from mellea_crewai import create_guardrail
@@ -213,7 +316,7 @@ task = Task(
 
 ### Per-Agent Customization
 
-Each agent in a crew can have its own validation rules and strategy:
+Each agent gets its own validation rules and strategy:
 
 ```python
 # Researcher with strict accuracy requirements
@@ -301,9 +404,7 @@ sales_agent = Agent(
 
 ## Building Multi-Agent Workflows
 
-### Standard Crew vs. Mellea Crew
-
-Standard CrewAI:
+Here's what a validated crew looks like:
 
 ```python
 # Guarantee quality at each step
@@ -332,7 +433,7 @@ result = crew.kickoff()  # Each agent's output is validated before moving to the
 
 ### Task Dependencies
 
-You can validate inputs to downstream tasks:
+Validate inputs to downstream tasks so they start with quality inputs:
 
 ```python
 # Ensure research quality before analysis begins
@@ -359,7 +460,7 @@ analysis_task = Task(
 
 ### Agent Specialization
 
-Different agents can have different validation and temperature settings:
+You can tune validation and temperature per role:
 
 ```python
 # Each agent has specialized validation
@@ -384,15 +485,13 @@ writer = Agent(
 
 ## Example: Content Production Pipeline
 
-### Without Validation (Standard CrewAI)
+Standard CrewAI agents generate once. Here's what that looks like:
 
 ```python
-# Create agents
 researcher = Agent(role="Researcher", goal="Research topics", llm=standard_llm)
 writer = Agent(role="Writer", goal="Write content", llm=standard_llm)
 editor = Agent(role="Editor", goal="Edit content", llm=standard_llm)
 
-# Create tasks
 research_task = Task(
     description="Research AI trends",
     agent=researcher,
@@ -413,17 +512,13 @@ editing_task = Task(
     context=[writing_task]
 )
 
-# Execute - hope each step is good
 crew = Crew(agents=[researcher, writer, editor], tasks=[research_task, writing_task, editing_task])
 result = crew.kickoff()
-
-# Problems: research might lack citations, writing might be wrong length, editing might add errors
 ```
 
-### With Mellea Validation
+With Mellea, add validation at each step:
 
 ```python
-# Create validated agents with specialized requirements
 researcher = Agent(
     role="Senior Researcher",
     goal="Conduct thorough research",
@@ -504,8 +599,6 @@ editing_task = Task(
 # Execute with validation at each step
 crew = Crew(agents=[researcher, writer, editor], tasks=[research_task, writing_task, editing_task])
 result = crew.kickoff()
-
-# Now: research has data and citations, writing is the right length and structure, editing maintains consistency
 ```
 
 ## Feature Comparison
@@ -525,111 +618,25 @@ result = crew.kickoff()
 
 ## When to Use Mellea
 
-**Good fit:**
+**Good fit if:**
 
-- Production multi-agent systems where quality matters more than latency
-- Content pipelines with validation checkpoints at each stage
-- Compliance-sensitive apps where outputs must meet specific requirements
-- Multi-backend setups (Ollama in dev, OpenAI in prod)
-- Complex validation across different agents
+- You're building production multi-agent systems where quality beats speed
+- You need validation checkpoints in content pipelines
+- Your outputs must meet compliance or quality standards
+- You're mixing backends (Ollama locally, OpenAI in prod)
+- You need different validation rules across roles
 
-**Consider alternatives when:**
+**Skip it if:**
 
-- You need sub-second responses (validation adds 2–5x latency)
-- You're doing basic single-agent Q&A
-- API costs are a hard constraint
+- You need sub-second responses (validation costs 2–5x latency)
+- You're doing single-agent Q&A
+- API budgets are tight
 - You need streaming
-- Simple CrewAI validation is enough
+- Basic CrewAI validation is enough
 
 ## Limitations
 
-Mellea adds latency: validation and retries can make responses 2–5x slower per agent. API costs scale with loop_budget and the number of agents in your crew. LLM-as-judge validation is only as good as your validator model. No streaming support. Structured requirements add a bit of code complexity, but it usually pays off.
-
-## Getting Started
-
-Your first validated agent:
-
-```python
-from mellea import start_session
-from mellea_crewai import MelleaLLM
-from mellea.stdlib.requirements import req
-from mellea.stdlib.sampling import RejectionSamplingStrategy
-from crewai import Agent, Task, Crew
-
-# Create Mellea session
-m = start_session()  # Uses Ollama by default
-
-# Create validated agent
-agent = Agent(
-    role="Research Assistant",
-    goal="Provide accurate, well-researched information",
-    backstory="You are an expert researcher with attention to detail",
-    llm=MelleaLLM(
-        mellea_session=m,
-        requirements=[
-            req("Response must be accurate and well-researched"),
-            req("Response must be concise (under 300 words)"),
-            req("Must include specific examples"),
-        ],
-        strategy=RejectionSamplingStrategy(loop_budget=3),
-    )
-)
-
-# Create task
-task = Task(
-    description="Research the benefits of retrieval-augmented generation (RAG)",
-    agent=agent,
-    expected_output="A concise, well-researched summary with examples"
-)
-
-# Execute
-crew = Crew(agents=[agent], tasks=[task])
-result = crew.kickoff()
-print(result)
-```
-
-Multi-agent example:
-
-```python
-# Create specialized agents
-researcher = Agent(
-    role="Researcher",
-    goal="Conduct thorough research",
-    llm=MelleaLLM(
-        mellea_session=m,
-        requirements=[req("Must cite sources"), req("Must include data")],
-        strategy=RejectionSamplingStrategy(loop_budget=5)
-    )
-)
-
-writer = Agent(
-    role="Writer",
-    goal="Write engaging content",
-    llm=MelleaLLM(
-        mellea_session=m,
-        requirements=[req("Must be well-structured"), req("Must be engaging")],
-        strategy=MultiTurnStrategy(loop_budget=3)
-    )
-)
-
-# Create tasks with dependencies
-research_task = Task(
-    description="Research AI trends",
-    agent=researcher,
-    expected_output="Research summary"
-)
-
-writing_task = Task(
-    description="Write blog post based on research",
-    agent=writer,
-    expected_output="Blog post",
-    context=[research_task]  # Depends on research
-)
-
-# Execute validated crew
-crew = Crew(agents=[researcher, writer], tasks=[research_task, writing_task])
-result = crew.kickoff()
-```
+Mellea trades speed for quality. Validation and retries add 2–5x latency per agent. API costs scale with loop_budget and the number of agents in your crew. LLM-as-judge validation is only as good as your validator model. No streaming support yet. Structured requirements add a bit of code overhead, but the payoff usually justifies it.
 
 ## Architecture: How It Works
 
@@ -678,11 +685,11 @@ result = crew.kickoff()
 └─────────────────────────────────────────────────────────┘
 ```
 
-MelleaLLM wraps Mellea sessions inside CrewAI. Converters handle message and tool format translation.
+MelleaLLM wraps Mellea sessions inside CrewAI and handles message and tool format translation.
 
 ## Takeaways
 
-Treat agent outputs like programs with specs. Validate and retry until they pass. Requirements are semantic (LLM checks) or deterministic (Python rules). Each agent gets its own strategy. Task guardrails use Mellea requirements. The tradeoff: more validation → slower + more expensive, but higher quality. Use it when reliability beats speed.
+Treat agent outputs like program specs. Validate and retry until they pass. Use semantic checks (LLM validation) for nuance and deterministic checks (Python rules) for speed. Each agent gets its own strategy. Hook requirements into task guardrails. The tradeoff is clear: more validation costs latency and API budget, but gets you higher quality output. Use it when reliability matters more than speed.
 
 ## Learn More
 
