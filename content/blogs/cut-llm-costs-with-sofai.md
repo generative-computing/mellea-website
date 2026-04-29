@@ -40,7 +40,19 @@ cd sofai-example
 uv add mellea
 ```
 
-**Step 3 — Save this as `sofai_graph_coloring.py` and run it:**
+**Step 3 — The example problem**
+
+The script solves a **graph coloring** task: assign a color to each node of a pentagon so that no two adjacent nodes share the same color. It's a constraint satisfaction problem with an objectively right answer — perfect for SOFAI because we can validate correctness programmatically. The 340M model tries first; the 1.5B model steps in only if it fails.
+
+```text
+    A
+   / \
+  E   B
+  |   |
+  D - C
+```
+
+**Step 4 — Save this as `sofai_graph_coloring.py`:**
 
 ```python
 import json
@@ -106,25 +118,33 @@ print(f"Success: {result.success}")
 print(f"Attempts: {len(result.sample_generations)}")
 ```
 
+**Step 5 — Run it:**
+
 ```bash
 uv run python sofai_graph_coloring.py
 ```
 
-## What Just Happened
-
-The script you ran is solving a **graph coloring** problem — assign a color to each node so no two adjacent nodes share the same color. It's a clean SOFAI demo because it has an objectively right answer, a straightforward validator, and small models fail on it often enough to show the escalation path.
-
-The graph is a 5-node cycle (pentagon). An odd cycle needs at least 3 colors, which makes it a genuine constraint problem:
+You should see output like this — the small model fails twice, the larger one steps in and solves it:
 
 ```text
-    A
-   / \
-  E   B
-  |   |
-  D - C
+Attempt 1 — S1 (granite4:350m-h): FAIL
+  Reason: Invalid colors {'Yellow'}. Use: Red, Blue, Green
+Attempt 2 — S1 (granite4:350m-h): FAIL
+  Reason: Invalid colors {'Yellow'}. Use: Red, Blue, Green
+Attempt 3 — S2 (granite4:1b-h): PASS
+  {"A": "Red", "B": "Blue", "C": "Red", "D": "Blue", "E": "Green"}
+
+Success: True
+Attempts: 3
 ```
 
-**The validator** is where good failure feedback comes from. Return specific, actionable reasons — not just "failed":
+Read on for a breakdown of what happened.
+
+## What Just Happened
+
+You just saw SOFAI in action. The 340M model tried and failed twice — then the 1.5B model stepped in and solved it. Here's what each part of the script does.
+
+**The validator** is the most important piece — it's where specific failure feedback comes from:
 
 ```python
 import json
@@ -198,20 +218,6 @@ print(f"Attempts: {len(result.sample_generations)}")
 ```
 
 > **You don't write the retry loop.** The repair prompt construction, failure detection, S2 context handoff, and loop termination all happen inside `SOFAISamplingStrategy`. From your application's perspective, `m.instruct()` either returns a valid result or the best attempt — no custom orchestration needed.
-
-Example output when S1 fails twice and S2 resolves it:
-
-```text
-Attempt 1 — S1 (granite4:350m-h): FAIL
-  Reason: Invalid colors {'Yellow'}. Use: Red, Blue, Green
-Attempt 2 — S1 (granite4:350m-h): FAIL
-  Reason: Invalid colors {'Yellow'}. Use: Red, Blue, Green
-Attempt 3 — S2 (granite4:1b-h): PASS
-  {"A": "Red", "B": "Blue", "C": "Red", "D": "Blue", "E": "Green"}
-
-Success: True
-Attempts: 3
-```
 
 The 340M model keeps reaching for "Yellow" despite the instruction. The 1.5B model receives that failure reason alongside the bad attempt, understands the constraint, and solves it cleanly. When S1 *does* succeed on the first or second attempt, you pay nothing for the larger model at all.
 
