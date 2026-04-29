@@ -1,6 +1,6 @@
 ---
 title: "What Mellea Brings to LangChain: Structured Generative Programming for Reliable AI Applications"
-date: "2026-04-27"
+date: "2026-04-29"
 author: "Akihiko Kuroda"
 excerpt: "Learn how Mellea's generative programming patterns add structured validation, automatic retry, and inference-time scaling to LangChain applications."
 tags: ["langchain", "mellea", "generative-programming", "llm", "validation", "reliability"]
@@ -326,7 +326,7 @@ LangChain doesn't have this built-in.
 Combine fast rules with semantic validation:
 
 ```python
-from mellea.stdlib.requirements import req, check, simple_validate
+from mellea.stdlib.requirements import req, simple_validate
 
 # LLM-validated semantic checks (slower but flexible)
 semantic_requirements = [
