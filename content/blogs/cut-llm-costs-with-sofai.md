@@ -12,7 +12,7 @@ Swap to a cheaper model entirely? Then the hard cases degrade. You're stuck choo
 
 **There's a better way: use both.**
 
-**SOFAI** (Slow and Fast AI) tries the fast, cheap model first. If it gets the answer right — great, you pay nothing for the expensive one. Only when it genuinely fails does Mellea escalate to the stronger model. *Most requests pay small-model prices. Hard requests get the quality they need.*
+**SOFAI** (Slow and Fast AI) tries the fast, cheap model first. If it gets the answer right — great, you pay nothing for the expensive one. Only when it genuinely fails does **Mellea** escalate to the stronger model. *Most requests pay small-model prices. Hard requests get the quality they need.*
 
 Mellea makes this a one-line change to your existing pipeline. Let's see it in action.
 
