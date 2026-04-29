@@ -141,6 +141,8 @@ tags: ["tag1", "tag2", "etc"]
 | `excerpt` | Yes      | Shown on cards and listing page |
 | `tags`    | No       | Array of strings                |
 
+Use **US spelling** throughout (`color` not `colour`, `organized` not `organised`). This applies regardless of the author's locale — consistency across posts matters more than author preference.
+
 Verify with `npm run build` — no config changes or code edits needed.
 
 ## 9. Common Issues
