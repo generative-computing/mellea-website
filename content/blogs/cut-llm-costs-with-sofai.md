@@ -175,8 +175,6 @@ Then pass it as `strategy=sofai` to `m.instruct()`. That's the *only* change to 
 
 The 340M model keeps reaching for "Yellow" despite being told to use only Red, Blue, and Green — a typical failure mode for very small models on structured tasks. The 1.5B model receives that specific failure reason alongside the bad attempt, understands the constraint, and solves it cleanly. When S1 *does* succeed on the first or second attempt, you pay nothing for the larger model at all.
 
-Want to know if SOFAI saves money for your workload? Run the same validator against your own prompts and compare S1 pass rates — the higher the S1 pass rate, the more you save.
-
 ## How SOFAI Works
 
 SOFAI operates in two phases driven by the same [Instruct-Validate-Repair](https://docs.mellea.ai/concepts/instruct-validate-repair) loop that powers the rest of Mellea.
@@ -194,7 +192,7 @@ SOFAI operates in two phases driven by the same [Instruct-Validate-Repair](https
 
 - Triggered when S1 exhausts its budget without a passing result.
 - Makes a single attempt with the more capable model.
-- How much context S2 receives is controlled by `s2_solver_mode` (more on this below).
+- How much context S2 receives is controlled by `s2_solver_mode` (covered in [Is SOFAI Right for Your Workload?](#is-sofai-right-for-your-workload)).
 
 ```text
 Request
@@ -225,7 +223,7 @@ result = m.instruct(prompt, requirements=requirements)
 result = m.instruct(prompt, requirements=requirements, strategy=sofai)
 ```
 
-How much this saves depends entirely on your task distribution and the cost gap between your models. If S1 handles the majority of requests, the saving can be substantial — small models are often an order of magnitude cheaper per token than large ones. If your tasks are uniformly hard, you pay for S1 attempts before every S2 call with no saving at all. **Profile your own workload before assuming a win.**
+How much this saves depends entirely on your task distribution and the cost gap between your models. If S1 handles the majority of requests, the saving can be substantial — small models are often an order of magnitude cheaper per token than large ones. If your tasks are uniformly hard, you pay for S1 attempts before every S2 call with no saving at all.
 
 ## Going Further: A Harder Problem
 
@@ -233,7 +231,7 @@ Graph coloring is a great introduction to the pattern — but the Granite 4 hybr
 
 For that, **Sudoku** is the real test.
 
-The rules: fill every empty cell in a 9×9 grid so that each row, each column, and each 3×3 box contains every digit from 1 to 9 exactly once. Given cells (the bold digits below) are fixed — you must work around them:
+The rules: fill every empty cell in a 9×9 grid so that each row, each column, and each 3×3 box contains every digit from 1 to 9 exactly once. The given cells are fixed — you must work around them:
 
 ```text
 5 3 . | . 7 . | . . .
@@ -249,7 +247,7 @@ The rules: fill every empty cell in a 9×9 grid so that each row, each column, a
 . . . | . 8 . | . 7 9
 ```
 
-A correct solution fills every `.` with a digit such that no row, column, or box repeats. There are 27 constraints to satisfy simultaneously — and you must not overwrite a given cell (that's the specific failure mode the 1.5B model hits: it fills the grid, but replaces some of those fixed bold digits with wrong values).
+A correct solution fills every `.` with a digit such that no row, column, or box repeats. There are 27 constraints to satisfy simultaneously — and you must not overwrite a given cell (that's the specific failure mode the 1.5B model hits: it fills the grid but replaces some of the fixed digits with wrong values).
 
 Sudoku requires holding all 27 constraints in mind while reasoning about each empty cell. Small models fail not because they ignore instructions but because the reasoning load genuinely exceeds their capacity. A 27B cloud model solves it on the first attempt.
 
@@ -257,10 +255,9 @@ This is exactly the SOFAI value proposition made concrete: **run cheaply against
 
 The code follows exactly the same pattern as graph coloring. Only the puzzle and validator change — the SOFAI wiring, the `instruct()` call, and the retry loop are identical.
 
-**Additional prerequisites:** a free [OpenRouter](https://openrouter.ai) API key, and one more model:
+**Additional prerequisites:** a free [OpenRouter](https://openrouter.ai) API key (`granite4:1b-h` is already pulled from Step 1 above):
 
 ```bash
-ollama pull granite4:1b-h       # 1.5B — S1 solver
 export OPENROUTER_API_KEY=<your-key>
 ```
 
