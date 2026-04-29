@@ -129,9 +129,9 @@ def check_graph_coloring(ctx) -> ValidationResult:
 Now wire it together with SOFAI. The session backend is set to the fast model — SOFAI swaps to the slow model internally when it escalates:
 
 ```python
-# Any Ollama-compatible model pair works (e.g. llama3.1:8b + llama3.1:70b, mistral:7b + mixtral:8x7b)
-s1_backend = OllamaModelBackend(model_id="granite4:micro")   # Fast, cheap
-s2_backend = OllamaModelBackend(model_id="granite4:latest")  # Slow, stronger
+# Any Ollama-compatible model pair works (e.g. llama3.2:1b + llama3.2:3b)
+s1_backend = OllamaModelBackend(model_id="granite4:350m-h")  # 350M — fast, cheap
+s2_backend = OllamaModelBackend(model_id="granite4:1b-h")    # 1.5B — slower, more capable
 
 sofai = SOFAISamplingStrategy(
     s1_solver_backend=s1_backend,
@@ -160,16 +160,18 @@ print(f"Attempts: {len(result.sample_generations)}")
 Example output when S1 fails twice and S2 resolves it:
 
 ```text
-Attempt 1 — S1 (granite4:micro): FAIL
-  Reason: Adjacent nodes A–B both have color 'Red'
-Attempt 2 — S1 (granite4:micro): FAIL
-  Reason: Adjacent nodes C–D both have color 'Blue'
-Attempt 3 — S2 (granite4:latest): PASS
+Attempt 1 — S1 (granite4:350m-h): FAIL
+  Reason: Invalid colors {'Yellow'}. Use: Red, Blue, Green
+Attempt 2 — S1 (granite4:350m-h): FAIL
+  Reason: Invalid colors {'Yellow'}. Use: Red, Blue, Green
+Attempt 3 — S2 (granite4:1b-h): PASS
   {"A": "Red", "B": "Blue", "C": "Red", "D": "Blue", "E": "Green"}
 
 Success: True
 Attempts: 3
 ```
+
+The 350M model keeps reaching for "Yellow" despite being explicitly told to use only Red, Blue, and Green. The 1.5B model receives that failure reason alongside the bad attempt, understands the constraint, and solves it cleanly.
 
 When S1 succeeds on the first or second attempt, you pay nothing for the large model at all.
 
@@ -196,22 +198,22 @@ For LLM-based validation instead of a custom function, pass a `judge_backend` an
 **Before — single model for everything:**
 
 ```python
-# All requests go to the large model.
-m = mellea.MelleaSession(backend=OllamaModelBackend("granite4:latest"))
+# All requests go to the larger model.
+m = mellea.MelleaSession(backend=OllamaModelBackend("granite4:1b-h"))
 result = m.instruct(prompt, requirements=requirements)
 ```
 
-Cost: large-model tokens for every request, including the easy ones.
+Cost: 1.5B-model tokens for every request, including the easy ones.
 
 **After — SOFAI dual-model escalation:**
 
 ```python
 sofai = SOFAISamplingStrategy(
-    s1_solver_backend=OllamaModelBackend("granite4:micro"),
-    s2_solver_backend=OllamaModelBackend("granite4:latest"),
+    s1_solver_backend=OllamaModelBackend("granite4:350m-h"),
+    s2_solver_backend=OllamaModelBackend("granite4:1b-h"),
     loop_budget=3,
 )
-m = mellea.MelleaSession(backend=OllamaModelBackend("granite4:micro"), ctx=ChatContext())
+m = mellea.MelleaSession(backend=OllamaModelBackend("granite4:350m-h"), ctx=ChatContext())
 result = m.instruct(prompt, requirements=requirements, strategy=sofai)
 ```
 
@@ -240,9 +242,9 @@ You'll need [uv](https://docs.astral.sh/uv/getting-started/installation/) (fast 
 # Install uv — https://docs.astral.sh/uv/getting-started/installation/
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Pull the two models into Ollama
-ollama pull granite4:micro
-ollama pull granite4:latest
+# Pull the two models into Ollama (~2 GB total)
+ollama pull granite4:350m-h  # 350M model — S1 fast solver
+ollama pull granite4:1b-h    # 1.5B model — S2 slow solver
 
 # Create a project, install Mellea, and download the example
 uv init sofai-example
