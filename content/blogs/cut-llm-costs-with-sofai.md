@@ -58,7 +58,17 @@ Validate                                       │
 
 ## A Working Example: Graph Coloring
 
-Graph coloring is a canonical constraint satisfaction problem — useful for demos because small models fail on it often enough to exercise the escalation path, while larger models solve it more reliably. Assign colors to nodes so that no two adjacent nodes share a color.
+Graph coloring is a canonical constraint satisfaction problem — useful for demos because small models fail on it often enough to exercise the escalation path, while larger models solve it more reliably. The task: assign a color to each node so that no two adjacent nodes share the same color.
+
+We'll use a 5-node cycle (pentagon) — each node connected to its two neighbours. An odd cycle requires at least 3 colors, which makes it a genuine challenge for smaller models:
+
+```text
+    A
+   / \
+  E   B
+  |   |
+  D - C
+```
 
 Here's the full setup:
 
