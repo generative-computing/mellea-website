@@ -245,7 +245,25 @@ Graph coloring is a great introduction to the pattern — but the Granite 4 hybr
 
 For that, **Sudoku** is the real test.
 
-Sudoku requires holding 27 simultaneous constraints in mind (9 rows, 9 columns, 9 boxes) while filling a partially-specified grid without overwriting the given values. Small models fail at this not because they ignore instructions, but because the reasoning load genuinely exceeds their capacity — they produce plausible-looking grids that violate the constraints in subtle ways. A 1.5B local model consistently overwrites fixed cells with wrong values. A 27B cloud model solves it on the first attempt.
+The rules: fill every empty cell in a 9×9 grid so that each row, each column, and each 3×3 box contains every digit from 1 to 9 exactly once. Given cells (the bold digits below) are fixed — you must work around them:
+
+```text
+5 3 . | . 7 . | . . .
+6 . . | 1 9 5 | . . .
+. 9 8 | . . . | . 6 .
+------+-------+------
+8 . . | . 6 . | . . 3
+4 . . | 8 . 3 | . . 1
+7 . . | . 2 . | . . 6
+------+-------+------
+. 6 . | . . . | 2 8 .
+. . . | 4 1 9 | . . 5
+. . . | . 8 . | . 7 9
+```
+
+A correct solution fills every `.` with a digit such that no row, column, or box repeats. There are 27 constraints to satisfy simultaneously — and you must not overwrite a given cell (that's the specific failure mode the 1.5B model hits: it fills the grid, but replaces some of those fixed bold digits with wrong values).
+
+Sudoku requires holding all 27 constraints in mind while reasoning about each empty cell. Small models fail not because they ignore instructions but because the reasoning load genuinely exceeds their capacity. A 27B cloud model solves it on the first attempt.
 
 This is exactly the SOFAI value proposition made concrete: **run cheaply against a local model for the easy cases, pay for cloud inference only when you genuinely need the reasoning power.** For most workloads, the majority of requests won't need the cloud at all — and when they do, SOFAI escalates automatically with the full context of what S1 tried and where it failed.
 
