@@ -20,7 +20,7 @@ Mellea's `SOFAISamplingStrategy` implements this pattern as a first-class sampli
 
 The name comes from Daniel Kahneman's dual-process thinking model (System 1: fast and automatic; System 2: slow and deliberate), formalized by IBM Research into an [AI architecture for LLMs](https://www.nature.com/articles/s44387-025-00027-5). The core idea: decide *when* to invoke the expensive solver — and most of the time, the fast one is good enough.
 
-Mellea's implementation brings that into a Python library you can use today, with any Ollama-compatible, OpenAI-compatible, or WatsonX backend.
+Mellea's implementation brings that into a Python library you can use today, with any Ollama-compatible or OpenAI-compatible backend.
 
 ## How the Loop Works
 
