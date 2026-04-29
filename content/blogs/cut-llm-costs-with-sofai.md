@@ -224,12 +224,24 @@ SOFAI is a good fit for tasks with verifiable outputs — code generation, struc
 
 ## Get Started
 
-The full runnable example is in the repository:
+You'll need [uv](https://docs.astral.sh/uv/getting-started/installation/) (fast Python package manager) and [Ollama](https://ollama.ai) running locally with two models pulled.
 
 ```bash
-pip install mellea
-# with Ollama running and granite4:micro + granite4:latest pulled:
-python docs/examples/sofai/sofai_graph_coloring.py
+# Install uv — https://docs.astral.sh/uv/getting-started/installation/
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Pull the two models into Ollama
+ollama pull granite4:micro
+ollama pull granite4:latest
+
+# Create a project, install Mellea, and download the example
+uv init sofai-example
+cd sofai-example
+uv add mellea
+curl -O https://raw.githubusercontent.com/generative-computing/mellea/main/docs/examples/sofai/sofai_graph_coloring.py
+
+# Run it
+uv run python sofai_graph_coloring.py
 ```
 
 - **Source:** [`mellea/stdlib/sampling/sofai.py`](https://github.com/generative-computing/mellea/blob/main/mellea/stdlib/sampling/sofai.py)
