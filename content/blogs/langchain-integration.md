@@ -73,10 +73,12 @@ print(result.content)
 Most LangChain applications follow this pattern:
 
 ```python
+# Note: Requires langchain-ollama package
+# pip install langchain-ollama
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 
-model = ChatOpenAI()
+model = ChatOllama(model="granite4:micro")
 prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a helpful assistant"),
     ("human", "{query}")
@@ -92,6 +94,8 @@ print(result.content)  # May or may not meet quality standards
 You end up writing retry logic like this:
 
 ```python
+# Note: Requires langchain-ollama package
+# pip install langchain-ollama
 max_attempts = 5
 for attempt in range(max_attempts):
     result = chain.invoke({"query": "Write a professional email"})
@@ -115,20 +119,29 @@ This is tedious. Each new validation rule requires code changes, and each failur
 **Guardrails AI** handles format-based checks (length, regex, schema):
 
 ```python
-from guardrails import Guard
+# Note: Requires guardrails-ai package
+# pip install guardrails-ai
+from guardrails import Guard, Validator, register_validator
+from guardrails.validator_base import FailResult, PassResult, ValidationResult
 
-guardrail = Guard.from_rail_string("""
-<rail version="0.1">
-<output>
-    <string name="response"
-            validators="length: 50 300"
-            on-fail="reask"/>
-</output>
-</rail>
-""")
+@register_validator(name="length_check", data_type="string")
+class LengthCheck(Validator):
+    def __init__(self, min_len: int = 50, max_len: int = 300, **kwargs):
+        super().__init__(**kwargs)
+        self.min_len = min_len
+        self.max_len = max_len
 
+    def validate(self, value: str, metadata: dict) -> ValidationResult:
+        word_count = len(value.split())
+        if self.min_len <= word_count <= self.max_len:
+            return PassResult()
+        return FailResult(
+            error_message=f"Length {word_count} not in range [{self.min_len}, {self.max_len}]"
+        )
+
+guard = Guard().use(LengthCheck(min_len=50, max_len=300))
 result = chain.invoke({"query": "Write a professional email"})
-validated = guardrail.validate(result.content)
+validated = guard.validate(result.content)
 ```
 
 But it validates *after* generation completes, so retries lose context. You still need to write retry logic, and semantic checks (tone, clarity, logical flow) aren't part of the system. What you really need is validation *during* generation, not after.
@@ -144,10 +157,12 @@ Let's say you're building a customer service email generator. Here's how pure La
 **Pure LangChain with Manual Retry:**
 
 ```python
+# Note: Requires langchain-ollama package
+# pip install langchain-ollama
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+from langchain_ollama import ChatOllama
 
-model = ChatOpenAI()
+model = ChatOllama(model="granite4:micro")
 prompt = ChatPromptTemplate.from_messages([
     ("system", "You are a professional customer service representative."),
     ("human", "Write a response to this customer issue: {issue}")
