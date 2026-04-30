@@ -31,7 +31,7 @@ pip install https://github.com/generative-computing/mellea-contribs/releases/dow
 pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-langchain/v0.1.0/mellea_langchain-0.1.0-py3-none-any.whl
 ```
 
-> **Note:** Some code examples in this blog post have additional dependencies indicated as comments in each example. Install them as needed to run those specific blocks.
+> **Note:** Some examples depend on `langchain-ollama` and `guardrails-ai` packages to demonstrate LangChain implementation patterns. These packages are **not necessary** for the Mellea LangChain integration itself. Install them only if you plan to run through all examples in this blog.
 
 ### Your First Validated Chain
 
