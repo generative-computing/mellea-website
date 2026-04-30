@@ -381,7 +381,8 @@ m = mellea.MelleaSession(backend=s1_backend, ctx=ChatContext())
 result = m.instruct(
     f"Solve this Sudoku. Fill every empty cell (shown as '.') so each row, "
     f"column, and 3×3 box contains 1–9 exactly once.\n\n{puzzle_str()}\n\n"
-    "Return ONLY a JSON 2D array — 9 rows of 9 integers:\n[[5,3,4,...],...]",
+    "Return ONLY a JSON 2D array with exactly 9 rows and 9 integers per row:\n"
+    "[[r1c1,r1c2,r1c3,r1c4,r1c5,r1c6,r1c7,r1c8,r1c9],[r2c1,...,r2c9],...,[r9c1,...,r9c9]]",
     requirements=[req("Valid Sudoku solution.", validation_fn=check_sudoku)],
     strategy=sofai,
     return_sampling_results=True,  # expose per-attempt results (generations + validations)
@@ -417,14 +418,14 @@ You should see S1 fail with specific cell violations, then S2 step in and solve 
 
 ```text
 Attempt 1 — S1 (granite4:1b-h): FAIL
-  Reason: Cell [3][8] must be 6, got 7 | Cell [5][6] must be 3, got 7 | Cell [6][9] must be 6, got 5
+  Reason: Cell [3][8] must be 6, got 7 | Cell [6][9] must be 6, got 5
 Attempt 2 — S2 (llama-3.3-70b-versatile): PASS
 
 Success: True
 Attempts: 2
 ```
 
-The 1.5B model *almost* solves the puzzle — it produces a plausible-looking grid but overwrites a few fixed cells with wrong values. The cloud model solves it from scratch on its single attempt (`fresh_start` — S2 sees only the original prompt). The cloud API was called once.
+The 1.5B model *almost* solves the puzzle — it produces a plausible-looking grid but overwrites a couple of fixed cells with wrong values. The cloud model solves it cleanly on its single attempt (`fresh_start` — S2 sees only the original prompt). The cloud API was called once.
 
 Mellea backends are interchangeable — the same setup works with any OpenAI-compatible endpoint via `base_url`, or `BedrockBackend` for AWS. Groq offers 1,000 free requests per day at [console.groq.com](https://console.groq.com) — no credit card required. See also [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for combining SOFAI with backend failover.
 
