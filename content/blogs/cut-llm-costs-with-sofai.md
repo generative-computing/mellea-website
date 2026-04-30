@@ -1,6 +1,6 @@
 ---
 title: "Cut LLM Costs Without Sacrificing Quality: The SOFAI Pattern in Mellea"
-date: "2026-05-06"
+date: "2026-05-01"
 author: "Nigel Jones"
 excerpt: "Route most requests to a small model and escalate only hard cases to a larger one — Mellea's SOFAISamplingStrategy makes the dual-model pattern a one-line strategy swap."
 tags: ["sofai", "sampling", "cost", "ollama"]
@@ -268,13 +268,13 @@ The rules: fill every empty cell in a 9×9 grid so that each row, each column, a
 . . . | . 8 . | . 7 9
 ```
 
-A correct solution fills every `.` with a digit such that no row, column, or box repeats. There are 27 constraints to satisfy simultaneously — and you must not overwrite a given cell (that's the specific failure mode the 1.5B model hits: it fills the grid but replaces some of the fixed digits with wrong values).
+A correct solution fills every `.` with a digit such that no row, column, or box repeats. There are 27 constraints to satisfy simultaneously — and you must not overwrite a given cell.
 
 Sudoku requires holding all 27 constraints in mind while reasoning about each empty cell. Small models fail not because they ignore instructions but because the reasoning load genuinely exceeds their capacity. A 70B cloud model (llama-3.3-70b-versatile via Groq) solves it on the first attempt.
 
-This is exactly the SOFAI value proposition made concrete: **run cheaply against a local model for the easy cases, pay for cloud inference only when you genuinely need the reasoning power.**
+This is exactly the SOFAI value proposition made concrete: **run cheaply on a local model for the easy cases, pay for cloud inference only when you genuinely need the reasoning power.**
 
-The code follows exactly the same pattern as graph coloring. Only the puzzle and validator change — the SOFAI wiring, the `instruct()` call, and the retry loop are identical.
+The code follows the same pattern as graph coloring. Only the puzzle, validator, and one tuning parameter change — `loop_budget` drops from 3 to 1 because the 1.5B model has no useful chance of self-repair on this task, so there's no point letting it try twice before escalating.
 
 **This is an optional, more involved example** — you can skip it if you'd prefer to stay local-only. It requires a cloud API key. You can use any OpenAI-compatible provider by changing `base_url` and `model_id`; see [Backends and Configuration](https://docs.mellea.ai/how-to/backends-and-configuration) for the full list (OpenAI, Bedrock, LiteLLM, and more).
 
@@ -427,7 +427,7 @@ Attempts: 2
 
 The 1.5B model *almost* solves the puzzle — it produces a plausible-looking grid but overwrites a couple of fixed cells with wrong values. The cloud model solves it cleanly on its single attempt (`fresh_start` — S2 sees only the original prompt). The cloud API was called once.
 
-Mellea backends are interchangeable — the same setup works with any OpenAI-compatible endpoint via `base_url`, or `BedrockBackend` for AWS. Groq offers 1,000 free requests per day at [console.groq.com](https://console.groq.com) — no credit card required. See also [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for combining SOFAI with backend failover.
+Mellea backends are interchangeable — the same setup works with any OpenAI-compatible endpoint via `base_url`, or `BedrockBackend` for AWS. See also [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for combining SOFAI with backend failover.
 
 ## Is SOFAI Right for Your Workload?
 
