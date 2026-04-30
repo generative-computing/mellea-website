@@ -25,11 +25,12 @@ Mellea makes this a one-line change to your existing pipeline. Let's see it in a
 
 If you haven't used Mellea before at all, the [Getting Started with Mellea](/blogs/getting-started-with-mellea) post covers the basics end-to-end.
 
-**Step 1 — Pull the two models** (~2 GB total download, ~4 GB RAM required to run):
+**Step 1 — Pull the models** (~4 GB total download):
 
 ```bash
-ollama pull granite4:350m-h  # 340M params, Q8_0 — S1 fast solver
-ollama pull granite4:1b-h    # 1.5B params, Q8_0 — S2 slow solver
+ollama pull granite4:350m-h  # 340M params, Q8_0 — graph coloring S1
+ollama pull granite4:3b      # 3B params — graph coloring S2
+ollama pull granite4:1b-h    # 1.5B params, Q8_0 — Sudoku S1
 ```
 
 **Step 2 — Create a project and install Mellea:**
@@ -40,14 +41,10 @@ cd sofai-example
 uv add mellea
 ```
 
-**Step 3 — The example problem:** the script solves a **graph coloring** task: assign a color to each node of a pentagon so that no two adjacent nodes share the same color. It's a constraint satisfaction problem with an objectively right answer — perfect for SOFAI because we can validate correctness programmatically. The 340M model tries first; the 1.5B model steps in only if it fails.
+**Step 3 — The example problem:** the script solves a **graph coloring** task: assign one of three colors (Red, Blue, Green) to each node of a 9-node ring graph so that no two neighboring nodes share the same color. It's a constraint satisfaction problem with an objectively correct answer — perfect for SOFAI because we can validate correctness programmatically. The 340M model tries first; the 3B model steps in only if it fails.
 
 ```text
-    A
-   / \
-  E   B
-  |   |
-  D - C
+A – B – C – D – E – F – G – H – I – A  (ring: each node adjacent to its two neighbors)
 ```
 
 **Step 4 — Save this as `sofai_graph_coloring.py`:**
@@ -63,7 +60,11 @@ from mellea.stdlib.requirements import ValidationResult, req
 from mellea.stdlib.sampling import SOFAISamplingStrategy
 
 # ── Problem definition ─────────────────────────────────────────────────────
-graph = {"A": ["B", "E"], "B": ["A", "C"], "C": ["B", "D"], "D": ["C", "E"], "E": ["D", "A"]}
+graph = {
+    "A": ["B", "I"], "B": ["A", "C"], "C": ["B", "D"], "D": ["C", "E"],
+    "E": ["D", "F"], "F": ["E", "G"], "G": ["F", "H"], "H": ["G", "I"],
+    "I": ["H", "A"],
+}
 colors = ["Red", "Blue", "Green"]
 
 # ── Validator: your domain logic goes here ────────────────────────────────
@@ -73,7 +74,7 @@ def check_graph_coloring(ctx) -> ValidationResult:
     if output is None:
         return ValidationResult(False, reason="No output. Expected JSON like {\"A\": \"Red\", ...}")
     raw = str(output.value).strip()
-    if raw.startswith("```"):
+    if "```" in raw:
         raw = raw.split("```")[1].lstrip("json").strip()
     try:
         coloring = json.loads(raw)
@@ -97,20 +98,20 @@ def check_graph_coloring(ctx) -> ValidationResult:
 
 # ── Mellea: this part is always the same ──────────────────────────────────
 s1_backend = OllamaModelBackend(model_id="granite4:350m-h")
-s2_backend = OllamaModelBackend(model_id="granite4:1b-h")
+s2_backend = OllamaModelBackend(model_id="granite4:3b")
 
 sofai = SOFAISamplingStrategy(
     s1_solver_backend=s1_backend,
     s2_solver_backend=s2_backend,
-    s2_solver_mode="best_attempt",  # S2 sees S1's best attempt + failure reason
+    s2_solver_mode="fresh_start",  # default — S2 sees only the original prompt, not S1's attempts
     loop_budget=3,
 )
 
 m = mellea.MelleaSession(backend=s1_backend, ctx=ChatContext())
 result = m.instruct(
-    "Color the nodes of the graph (A, B, C, D, E) using only the colors "
+    "Color the nodes of this graph (A, B, C, D, E, F, G, H, I) using only the colors "
     "Red, Blue, or Green. Adjacent nodes must have different colors. "
-    "Adjacencies: A-B, B-C, C-D, D-E, E-A. "
+    "Adjacencies: A-B, B-C, C-D, D-E, E-F, F-G, G-H, H-I, I-A. "
     'Return JSON: {"A": "Red", "B": "Green", ...}',
     requirements=[req("Valid graph coloring.", validation_fn=check_graph_coloring)],
     strategy=sofai,
@@ -118,8 +119,28 @@ result = m.instruct(
     model_options={"temperature": 0.1, "seed": 42},
 )
 
-print(f"Success: {result.success}")
-print(f"Attempts: {len(result.sample_generations)}")
+total = len(result.sample_generations)
+s2_escalated = (
+    total > 1 and not all(bool(v) for _, v in result.sample_validations[total - 2])
+    if total > 1 else False
+)
+for i, validations in enumerate(result.sample_validations, 1):
+    is_s2 = s2_escalated and i == total
+    label = f"S2 ({s2_backend.model_id})" if is_s2 else f"S1 ({s1_backend.model_id})"
+    passed = all(bool(v) for _, v in validations)
+    print(f"Attempt {i} — {label}: {'PASS' if passed else 'FAIL'}")
+    if not passed:
+        for _, v in validations:
+            if not bool(v):
+                print(f"  Reason: {v.reason}")
+    else:
+        raw = str(result.sample_generations[i - 1].value).strip()
+        if "```" in raw:
+            raw = raw.split("```")[1].lstrip("json").strip()
+        print(f"  {raw}")
+
+print(f"\nSuccess: {result.success}")
+print(f"Attempts: {total}")
 ```
 
 **Step 5 — Run it:**
@@ -132,11 +153,11 @@ You should see output like this — the small model fails twice, the larger one 
 
 ```text
 Attempt 1 — S1 (granite4:350m-h): FAIL
-  Reason: Invalid colors {'Yellow'}. Use: Red, Blue, Green
+  Reason: Output is not valid JSON.
 Attempt 2 — S1 (granite4:350m-h): FAIL
-  Reason: Invalid colors {'Yellow'}. Use: Red, Blue, Green
-Attempt 3 — S2 (granite4:1b-h): PASS
-  {"A": "Red", "B": "Blue", "C": "Red", "D": "Blue", "E": "Green"}
+  Reason: Output is not valid JSON.
+Attempt 3 — S2 (granite4:3b): PASS
+  {"A": "Red", "B": "Blue", "C": "Red", "D": "Green", "E": "Blue", "F": "Red", "G": "Green", "H": "Blue", "I": "Green"}
 
 Success: True
 Attempts: 3
@@ -146,7 +167,7 @@ Read on for a breakdown of what happened.
 
 ## What Just Happened
 
-You just saw SOFAI in action. The 340M model tried and failed twice — then the 1.5B model stepped in and solved it. Here's what each part of the script does.
+You just saw SOFAI in action. The 340M model tried and failed twice — then the 3B model stepped in and solved it. Here's what each part of the script does.
 
 **The validator** is the most important piece. It checks three things — are all nodes present, are only valid colors used, are adjacent nodes different colors — and returns a *specific reason string* for every failure:
 
@@ -158,13 +179,13 @@ return ValidationResult(False, reason=" | ".join(errors))
 
 That reason string is what SOFAI feeds directly into the repair prompt. The model knows exactly what it got wrong, not just that it failed.
 
-**The SOFAI strategy** wraps your two backends with escalation logic. The two Granite 4 hybrid models (Q8_0, ~2 GB total, ~4 GB RAM) give a genuine capability split at minimal footprint:
+**The SOFAI strategy** wraps your two backends with escalation logic. The two Granite 4 models give a genuine capability split at modest footprint:
 
 ```python
 sofai = SOFAISamplingStrategy(
     s1_solver_backend=OllamaModelBackend("granite4:350m-h"),  # 340M — fast, cheap
-    s2_solver_backend=OllamaModelBackend("granite4:1b-h"),    # 1.5B — slower, more capable
-    s2_solver_mode="best_attempt",
+    s2_solver_backend=OllamaModelBackend("granite4:3b"),      # 3B — slower, more capable
+    s2_solver_mode="fresh_start",  # default — S2 sees only the original prompt
     loop_budget=3,
 )
 ```
@@ -173,7 +194,7 @@ Then pass it as `strategy=sofai` to `m.instruct()`. That's the *only* change to 
 
 > **You don't write the retry loop.** The repair prompt construction, failure detection, S2 context handoff, and loop termination all happen inside `SOFAISamplingStrategy`. Your code calls `instruct()` and gets back a result — no custom orchestration needed.
 
-The 340M model keeps reaching for "Yellow" despite being told to use only Red, Blue, and Green — a typical failure mode for very small models on structured tasks. The 1.5B model receives that specific failure reason alongside the bad attempt, understands the constraint, and solves it cleanly. When S1 *does* succeed on the first or second attempt, you pay nothing for the larger model at all.
+The 340M model outputs prose with markdown code fences instead of the required JSON — a typical failure mode for very small models on structured output tasks. The 3B model solves it cleanly from the same original prompt. When S1 *does* succeed on the first or second attempt, you pay nothing for the larger model at all.
 
 ## How SOFAI Works
 
@@ -207,7 +228,7 @@ Validate                                     │
          S2 (slow) → Validate → Result
 ```
 
-SOFAI passes `ValidationResult.reason` *directly* into the repair prompt — the "Adjacent nodes C and D both have color 'Red'" failure reason you saw above is exactly what the model receives. **Specific failure reasons are what make the repair loop useful** — a vague "validation failed" gives the model nothing to act on.
+SOFAI passes `ValidationResult.reason` *directly* into the repair prompt — the "Output is not valid JSON." or "Adjacent nodes A–I both have color 'Red'" failure reason you saw above is exactly what the model receives on each retry. **Specific failure reasons are what make the repair loop useful** — a vague "validation failed" gives the model nothing to act on.
 
 The name comes from Daniel Kahneman's dual-process thinking model (System 1: fast and automatic; System 2: slow and deliberate), formalized by IBM Research into an [AI architecture for LLMs](https://www.nature.com/articles/s44387-025-00027-5). The core idea: decide *when* to invoke the expensive solver — and most of the time, the fast one is good enough.
 
@@ -249,16 +270,16 @@ The rules: fill every empty cell in a 9×9 grid so that each row, each column, a
 
 A correct solution fills every `.` with a digit such that no row, column, or box repeats. There are 27 constraints to satisfy simultaneously — and you must not overwrite a given cell (that's the specific failure mode the 1.5B model hits: it fills the grid but replaces some of the fixed digits with wrong values).
 
-Sudoku requires holding all 27 constraints in mind while reasoning about each empty cell. Small models fail not because they ignore instructions but because the reasoning load genuinely exceeds their capacity. A 27B cloud model solves it on the first attempt.
+Sudoku requires holding all 27 constraints in mind while reasoning about each empty cell. Small models fail not because they ignore instructions but because the reasoning load genuinely exceeds their capacity. A 70B cloud model (llama-3.3-70b-versatile via Groq) solves it on the first attempt.
 
-This is exactly the SOFAI value proposition made concrete: **run cheaply against a local model for the easy cases, pay for cloud inference only when you genuinely need the reasoning power.** For most workloads, the majority of requests won't need the cloud at all — and when they do, SOFAI escalates automatically with the full context of what S1 tried and where it failed.
+This is exactly the SOFAI value proposition made concrete: **run cheaply against a local model for the easy cases, pay for cloud inference only when you genuinely need the reasoning power.** For most workloads, the majority of requests won't need the cloud at all — and when they do, SOFAI escalates to the cloud automatically.
 
 The code follows exactly the same pattern as graph coloring. Only the puzzle and validator change — the SOFAI wiring, the `instruct()` call, and the retry loop are identical.
 
-**Additional prerequisites:** a free [OpenRouter](https://openrouter.ai) API key (`granite4:1b-h` is already pulled from Step 1 above):
+**Additional prerequisites:** a free [Groq](https://console.groq.com) API key — no credit card required (`granite4:1b-h` is already pulled from Step 1 above):
 
 ```bash
-export OPENROUTER_API_KEY=<your-key>
+export GROQ_API_KEY=<your-key>
 ```
 
 **Save this as `sofai_sudoku_cloud.py` and run it:**
@@ -303,7 +324,7 @@ def check_sudoku(ctx) -> ValidationResult:
     if output is None:
         return ValidationResult(False, reason="No output.")
     raw = str(output.value).strip()
-    if raw.startswith("```"):
+    if "```" in raw:
         raw = raw.split("```")[1].lstrip("json").strip()
     try:
         grid = json.loads(raw)
@@ -342,16 +363,16 @@ def check_sudoku(ctx) -> ValidationResult:
 
 s1_backend = OllamaModelBackend(model_id="granite4:1b-h")
 s2_backend = OpenAIBackend(
-    model_id="google/gemma-3-27b-it:free",  # free tier — see openrouter.ai/models?q=free
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.environ["OPENROUTER_API_KEY"],
+    model_id="llama-3.3-70b-versatile",
+    base_url="https://api.groq.com/openai/v1",
+    api_key=os.environ["GROQ_API_KEY"],
 )
 
 sofai = SOFAISamplingStrategy(
     s1_solver_backend=s1_backend,
     s2_solver_backend=s2_backend,
-    s2_solver_mode="best_attempt",
-    loop_budget=3,
+    s2_solver_mode="fresh_start",  # default — S2 sees only the original prompt
+    loop_budget=1,
 )
 
 m = mellea.MelleaSession(backend=s1_backend, ctx=ChatContext())
@@ -362,11 +383,26 @@ result = m.instruct(
     requirements=[req("Valid Sudoku solution.", validation_fn=check_sudoku)],
     strategy=sofai,
     return_sampling_results=True,
-    model_options={"temperature": 0.1},
+    model_options={"temperature": 0.5, "seed": 0},
 )
 
-print(f"Success: {result.success}")
-print(f"Attempts: {len(result.sample_generations)}")
+total = len(result.sample_generations)
+s2_escalated = (
+    total > 1 and not all(bool(v) for _, v in result.sample_validations[total - 2])
+    if total > 1 else False
+)
+for i, validations in enumerate(result.sample_validations, 1):
+    is_s2 = s2_escalated and i == total
+    label = f"S2 ({s2_backend.model_id})" if is_s2 else f"S1 ({s1_backend.model_id})"
+    passed = all(bool(v) for _, v in validations)
+    print(f"Attempt {i} — {label}: {'PASS' if passed else 'FAIL'}")
+    if not passed:
+        for _, v in validations:
+            if not bool(v):
+                print(f"  Reason: {v.reason}")
+
+print(f"\nSuccess: {result.success}")
+print(f"Attempts: {total}")
 ```
 
 ```bash
@@ -376,19 +412,17 @@ uv run python sofai_sudoku_cloud.py
 You should see S1 fail with specific cell violations, then S2 step in and solve it:
 
 ```text
-Attempt 1 — granite4:1b-h: FAIL
-  Reason: Cell [3][8] must be 6, got 7 | Cell [5][6] must be 3, got 7
-Attempt 2 — granite4:1b-h: FAIL
-  Reason: Cell [3][8] must be 6, got 7 | Cell [5][6] must be 3, got 7
-Attempt 3 — google/gemma-3-27b-it:free: PASS
+Attempt 1 — S1 (granite4:1b-h): FAIL
+  Reason: Cell [3][8] must be 6, got 7 | Cell [5][6] must be 3, got 7 | Cell [6][9] must be 6, got 5
+Attempt 2 — S2 (llama-3.3-70b-versatile): PASS
 
 Success: True
-Attempts: 3
+Attempts: 2
 ```
 
-The 1.5B model *almost* solves the puzzle — it produces a plausible-looking grid but overwrites a few fixed cells with wrong values. The cloud model receives those exact violations, corrects them, and returns a valid solution. The cloud API was called once.
+The 1.5B model *almost* solves the puzzle — it produces a plausible-looking grid but overwrites a few fixed cells with wrong values. The cloud model solves it from scratch on its single attempt (`fresh_start` — S2 sees only the original prompt). The cloud API was called once.
 
-Mellea backends are interchangeable — the same setup works with any OpenAI-compatible endpoint via `base_url`, or `BedrockBackend` for AWS. Free model availability on OpenRouter changes — check [openrouter.ai/models?q=free](https://openrouter.ai/models?q=free) for current options. See also [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for combining SOFAI with backend failover.
+Mellea backends are interchangeable — the same setup works with any OpenAI-compatible endpoint via `base_url`, or `BedrockBackend` for AWS. Groq offers 1,000 free requests per day at [console.groq.com](https://console.groq.com) — no credit card required. See also [LLM Provider Failover with Mellea](/blogs/blog-llm-provider-failover-mellea) for combining SOFAI with backend failover.
 
 ## Is SOFAI Right for Your Workload?
 
@@ -402,7 +436,7 @@ A few things worth knowing before you ship it:
 - **`ChatContext` is required.** The repair loop is multi-turn — stateless contexts will error.
 - **S2 is one attempt.** If S2 also fails, the best S1 result is returned. Design your pipeline accordingly.
 
-To tune further: `s2_solver_mode` controls how much context S2 receives (`"best_attempt"` is the right default for most constraint problems); `judge_backend` and `feedback_strategy` let you use an LLM as the validator instead of a custom function. Full details in the docs below.
+To tune further: `s2_solver_mode` controls how much context S2 receives — `"fresh_start"` (default, original prompt only), `"continue_chat"` (full S1 conversation history), or `"best_attempt"` (S1's best output + failure summary; best for constraint problems). `judge_backend` and `feedback_strategy` let you use an LLM as the validator instead of a custom function. Full details in the docs below.
 
 - **Source:** [`mellea/stdlib/sampling/sofai.py`](https://github.com/generative-computing/mellea/blob/main/mellea/stdlib/sampling/sofai.py)
 - **API reference:** [`SOFAISamplingStrategy`](https://docs.mellea.ai/api/mellea/stdlib/sampling/sofai) · [`ValidationResult`](https://docs.mellea.ai/api/mellea/core/requirement) · [Requirements system](https://docs.mellea.ai/concepts/requirements-system)
