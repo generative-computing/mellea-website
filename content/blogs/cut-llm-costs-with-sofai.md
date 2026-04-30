@@ -49,7 +49,7 @@ A – B – C – D – E – F – G – H – I – A  (ring: each node adjace
 
 **Step 4 — Save this as `sofai_graph_coloring.py`:**
 
-> The script is about 30 lines of problem-specific constraint logic (the validator), plus about 10 lines of Mellea. The validator is yours to write for any task — the Mellea parts are always the same.
+> The script is about 30 lines of problem-specific constraint logic (the validator), plus about 10 lines of Mellea. The validator is yours to write for any task — the Mellea parts are always the same. `req()` wraps your validator into a `Requirement` that Mellea can evaluate and feed into the repair loop.
 
 ```python
 import json
@@ -115,11 +115,13 @@ result = m.instruct(
     'Return JSON: {"A": "Red", "B": "Green", ...}',
     requirements=[req("Valid graph coloring.", validation_fn=check_graph_coloring)],
     strategy=sofai,
-    return_sampling_results=True,
+    return_sampling_results=True,  # expose per-attempt results (generations + validations)
     model_options={"temperature": 0.1, "seed": 42},
 )
 
 total = len(result.sample_generations)
+# Infer whether S2 was used: if the second-to-last attempt failed, the last was S2.
+# Assumes S1 exhausts its budget or exits early — works for all normal escalation paths.
 s2_escalated = (
     total > 1 and not all(bool(v) for _, v in result.sample_validations[total - 2])
     if total > 1 else False
@@ -135,7 +137,7 @@ for i, validations in enumerate(result.sample_validations, 1):
                 print(f"  Reason: {v.reason}")
     else:
         raw = str(result.sample_generations[i - 1].value).strip()
-        if "```" in raw:
+        if "```" in raw:  # some models wrap JSON in a code fence even when not asked
             raw = raw.split("```")[1].lstrip("json").strip()
         print(f"  {raw}")
 
@@ -192,7 +194,7 @@ sofai = SOFAISamplingStrategy(
 
 Then pass it as `strategy=sofai` to `m.instruct()`. That's the *only* change to your application code.
 
-> **You don't write the retry loop.** The repair prompt construction, failure detection, S2 context handoff, and loop termination all happen inside `SOFAISamplingStrategy`. Your code calls `instruct()` and gets back a result — no custom orchestration needed.
+> **You don't write the retry loop.** Without Mellea, you'd need roughly 40–50 lines of orchestration: call S1, parse the validation result, format the failure reason into a repair prompt, retry up to N times, detect stalled progress, hand off to S2 with the right context, and return the best result. `SOFAISamplingStrategy` handles all of that. Your code calls `instruct()` with `strategy=sofai` and gets back a result.
 
 The 340M model outputs prose with markdown code fences instead of the required JSON — a typical failure mode for very small models on structured output tasks. The 3B model solves it cleanly from the same original prompt. When S1 *does* succeed on the first or second attempt, you pay nothing for the larger model at all.
 
@@ -248,9 +250,7 @@ How much this saves depends entirely on your task distribution and the cost gap 
 
 ## Going Further: A Harder Problem
 
-Graph coloring is a great introduction to the pattern — but the Granite 4 hybrid architecture is *surprisingly capable* at structured tasks for its size, and the 1.5B model handles graph coloring reliably. That's actually good news in production, but it means the demo doesn't fully stress the capability gap.
-
-For that, **Sudoku** is the real test.
+Graph coloring is a good first example, but it only exercises two local models — it doesn't demonstrate the full capability gap that SOFAI is designed for in production. For that, **Sudoku** is the real test.
 
 The rules: fill every empty cell in a 9×9 grid so that each row, each column, and each 3×3 box contains every digit from 1 to 9 exactly once. The given cells are fixed — you must work around them:
 
@@ -272,7 +272,7 @@ A correct solution fills every `.` with a digit such that no row, column, or box
 
 Sudoku requires holding all 27 constraints in mind while reasoning about each empty cell. Small models fail not because they ignore instructions but because the reasoning load genuinely exceeds their capacity. A 70B cloud model (llama-3.3-70b-versatile via Groq) solves it on the first attempt.
 
-This is exactly the SOFAI value proposition made concrete: **run cheaply against a local model for the easy cases, pay for cloud inference only when you genuinely need the reasoning power.** For most workloads, the majority of requests won't need the cloud at all — and when they do, SOFAI escalates to the cloud automatically.
+This is exactly the SOFAI value proposition made concrete: **run cheaply against a local model for the easy cases, pay for cloud inference only when you genuinely need the reasoning power.**
 
 The code follows exactly the same pattern as graph coloring. Only the puzzle and validator change — the SOFAI wiring, the `instruct()` call, and the retry loop are identical.
 
@@ -384,11 +384,13 @@ result = m.instruct(
     "Return ONLY a JSON 2D array — 9 rows of 9 integers:\n[[5,3,4,...],...]",
     requirements=[req("Valid Sudoku solution.", validation_fn=check_sudoku)],
     strategy=sofai,
-    return_sampling_results=True,
+    return_sampling_results=True,  # expose per-attempt results (generations + validations)
     model_options={"temperature": 0.5, "seed": 0},
 )
 
 total = len(result.sample_generations)
+# Infer whether S2 was used: if the second-to-last attempt failed, the last was S2.
+# Assumes S1 exhausts its budget or exits early — works for all normal escalation paths.
 s2_escalated = (
     total > 1 and not all(bool(v) for _, v in result.sample_validations[total - 2])
     if total > 1 else False
@@ -436,7 +438,7 @@ A few things worth knowing before you ship it:
 - **Validator quality drives repair quality.** The repair loop is only as good as your `ValidationResult.reason` string. Specific failure messages ("Row 3 missing [4, 8]") give the model something to fix; generic ones ("failed") don't.
 - **Every request pays S1 latency.** If your workload is uniformly hard, you're adding generation time before every S2 call with no saving.
 - **`ChatContext` is required.** The repair loop is multi-turn — stateless contexts will error.
-- **S2 is one attempt.** If S2 also fails, the best S1 result is returned. Design your pipeline accordingly.
+- **S2 is one attempt.** If S2 also fails, S2's result is returned as-is. Design your pipeline accordingly.
 
 To tune further: `s2_solver_mode` controls how much context S2 receives — `"fresh_start"` (default, original prompt only), `"continue_chat"` (full S1 conversation history), or `"best_attempt"` (S1's best output + failure summary; best for constraint problems). `judge_backend` and `feedback_strategy` let you use an LLM as the validator instead of a custom function. Full details in the docs below.
 
