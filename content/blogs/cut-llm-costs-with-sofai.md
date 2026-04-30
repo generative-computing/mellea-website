@@ -139,7 +139,7 @@ for i, validations in enumerate(result.sample_validations, 1):
         raw = str(result.sample_generations[i - 1].value).strip()
         if "```" in raw:  # some models wrap JSON in a code fence even when not asked
             raw = raw.split("```")[1].lstrip("json").strip()
-        print(f"  {raw}")
+        print(f"  {json.dumps(json.loads(raw))}")
 
 print(f"\nSuccess: {result.success}")
 print(f"Attempts: {total}")
