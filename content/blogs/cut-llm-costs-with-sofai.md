@@ -276,7 +276,9 @@ This is exactly the SOFAI value proposition made concrete: **run cheaply against
 
 The code follows exactly the same pattern as graph coloring. Only the puzzle and validator change — the SOFAI wiring, the `instruct()` call, and the retry loop are identical.
 
-**Additional prerequisites:** a free [Groq](https://console.groq.com) API key — no credit card required (`granite4:1b-h` is already pulled from Step 1 above):
+**This is an optional, more involved example** — you can skip it if you'd prefer to stay local-only. It requires a cloud API key. You can use any OpenAI-compatible provider by changing `base_url` and `model_id`; see [Backends and Configuration](https://docs.mellea.ai/how-to/backends-and-configuration) for the full list (OpenAI, Bedrock, LiteLLM, and more).
+
+The example below uses a free [Groq](https://console.groq.com) account — 1,000 requests/day, no credit card required:
 
 ```bash
 export GROQ_API_KEY=<your-key>
