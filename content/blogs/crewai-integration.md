@@ -1,6 +1,6 @@
 ---
 title: "Structured Generative Programming for CrewAI: Multi-Agent Validation with Mellea"
-date: "2026-04-28"
+date: "2026-05-04"
 author: "Akihiko Kuroda"
 excerpt: "Mellea brings structured validation and automatic repair to CrewAI multi-agent systems through the instruct-validate-repair pattern."
 tags: ["crewai", "multi-agent", "validation", "integration"]
@@ -11,6 +11,48 @@ CrewAI makes it easy to build multi-agent workflows. One bad agent response casc
 **Mellea** adds automatic validation, structured requirements, and intelligent retry logic to your multi-agent crews.
 
 > **Before you start:** Mellea trades latency and API costs for output quality. Expect 2-5x slower responses due to validation retries, and higher token usage. Streaming is not supported—responses return as a single chunk. This is ideal for batch processing and quality-critical applications, but not for real-time interaction or latency-sensitive systems.
+
+## The Problem
+
+Most CrewAI applications follow this pattern:
+
+```python
+from crewai import Agent, Task, Crew
+
+agent = Agent(
+    role="Researcher",
+    goal="Provide accurate information",
+    backstory="You are an expert researcher"
+)
+
+task = Task(
+    description="Research AI trends",
+    agent=agent,
+    expected_output="A research summary"
+)
+
+crew = Crew(agents=[agent], tasks=[task])
+result = crew.kickoff()  # Generates once, returns whatever it gets
+```
+
+**CrewAI generates once and returns whatever it gets.** When one agent fails, the next gets bad input. Add inconsistent validation scattered across tasks and no feedback on what went wrong, and multi-agent workflows fall apart quickly.
+
+You end up writing retry logic like this:
+
+```python
+max_attempts = 5
+for attempt in range(max_attempts):
+    result = crew.kickoff()
+    
+    # Manual validation checks
+    if validates_research(result):
+        break
+    # Otherwise retry
+else:
+    print("Failed after max attempts")
+```
+
+Each agent needs custom validation logic, and you lose all context about what failed when you retry.
 
 ## Installation
 
@@ -35,7 +77,7 @@ pip install https://github.com/generative-computing/mellea-contribs/releases/dow
 from mellea import start_session
 from mellea_crewai import MelleaLLM
 from mellea.stdlib.requirements import req
-from mellea.stdlib.sampling import RejectionSamplingStrategy
+from mellea.stdlib.sampling import RejectionSamplingStrategy, MultiTurnStrategy
 from crewai import Agent, Task, Crew
 
 # Create Mellea session
@@ -70,94 +112,9 @@ result = crew.kickoff()
 print(result)
 ```
 
-Multi-agent example:
-
-```python
-# Create specialized agents
-researcher = Agent(
-    role="Researcher",
-    goal="Conduct thorough research",
-    llm=MelleaLLM(
-        mellea_session=m,
-        requirements=[req("Must cite sources"), req("Must include data")],
-        strategy=RejectionSamplingStrategy(loop_budget=5)
-    )
-)
-
-writer = Agent(
-    role="Writer",
-    goal="Write engaging content",
-    llm=MelleaLLM(
-        mellea_session=m,
-        requirements=[req("Must be well-structured"), req("Must be engaging")],
-        strategy=MultiTurnStrategy(loop_budget=3)
-    )
-)
-
-# Create tasks with dependencies
-research_task = Task(
-    description="Research AI trends",
-    agent=researcher,
-    expected_output="Research summary"
-)
-
-writing_task = Task(
-    description="Write blog post based on research",
-    agent=writer,
-    expected_output="Blog post",
-    context=[research_task]  # Depends on research
-)
-
-# Execute validated crew
-crew = Crew(agents=[researcher, writer], tasks=[research_task, writing_task])
-result = crew.kickoff()
-```
-
-## The Problem
-
-Most CrewAI applications follow this pattern:
-
-```python
-from crewai import Agent, Task, Crew
-
-agent = Agent(
-    role="Researcher",
-    goal="Provide accurate information",
-    backstory="You are an expert researcher"
-)
-
-task = Task(
-    description="Research AI trends",
-    agent=agent,
-    expected_output="A research summary"
-)
-
-crew = Crew(agents=[agent], tasks=[task])
-result = crew.kickoff()  # Generates once, returns whatever it gets
-```
-
-**CrewAI generates once and returns whatever it gets.** With cascading failures, inconsistent validation scattered across tasks, and no feedback on what failed, multi-agent workflows break fast. A researcher's sloppy output becomes the writer's bad input.
-
-You end up writing retry logic like this:
-
-```python
-max_attempts = 5
-for attempt in range(max_attempts):
-    result = crew.kickoff()
-    
-    # Manual validation checks
-    if validates_research(result):
-        break
-    # Otherwise retry
-else:
-    print("Failed after max attempts")
-```
-
-Each agent needs custom validation logic, and you lose all context about what failed when you retry.
-
 ## How Mellea Works
 
-Mellea bakes validation into the generation loop itself. See the [Mellea docs](https://docs.mellea.ai/) for the full instruct-validate-repair pattern.
+Mellea embeds validation directly into the generation loop. See the [Mellea docs](https://docs.mellea.ai/) for the full instruct-validate-repair pattern.
 
 ### Side-by-Side: CrewAI vs. Mellea
 
@@ -320,11 +277,11 @@ result = crew.kickoff()
 print(result)
 ```
 
-The difference: Mellea generates → validates → retries up to loop_budget. Standard CrewAI generates once. If all retries fail, Mellea returns the first attempt.
+The difference: Mellea generates → validates → retries up to loop_budget. Standard CrewAI generates once. If all retries fail, Mellea returns the best attempt based on the strategy.
 
 ### Sampling Strategies
 
-Different strategies trade compute for quality. Pick the right one for your use case:
+Different strategies trade compute for quality. Pick the right one for your use case. (The examples below use `m` from the session created earlier.)
 
 ```python
 from mellea.stdlib.sampling import (
@@ -364,11 +321,11 @@ repair_agent = Agent(
 )
 ```
 
-All trade 2–5x more API calls and latency for higher quality output.
+All require 2–5x more API calls and latency in exchange for higher quality output.
 
 ### Mixing Semantic and Deterministic Checks
 
-Mix semantic checks (LLM-powered) with deterministic ones (Python rules):
+Mix semantic checks (LLM-powered) with deterministic ones (Python rules). (Continuing with the session from above.)
 
 ```python
 from mellea.stdlib.requirements import req, check, simple_validate
@@ -400,7 +357,7 @@ analyst = Agent(
 
 ## Reusable Requirements
 
-Define validation rules once and reuse them across agents. Each agent can have its own strategy.
+Define validation rules once and reuse them across agents. Each agent can have its own strategy. (Still using the session `m` from earlier.)
 
 ```python
 # Define reusable requirement sets
@@ -450,11 +407,12 @@ writer = Agent(
 Use Mellea requirements as guardrails in CrewAI tasks:
 
 ```python
-from mellea_crewai import create_guardrail
+from mellea_crewai import create_guardrail, create_guardrails
 
-# Step 1: Create a validation function (lambda with __doc__ for description)
-word_count_check = lambda x: 30 <= len(x.split()) <= 200
-word_count_check.__doc__ = "Must be between 30-200 words"
+# Step 1: Create a validation function using simple_validate
+from mellea.stdlib.requirements import simple_validate
+
+word_count_check = simple_validate(lambda x: 30 <= len(x.split()) <= 200, "Must be between 30-200 words")
 
 # Step 2: Convert to a CrewAI guardrail
 guardrail = create_guardrail(word_count_check)
@@ -504,9 +462,9 @@ task = Task(
 
 ## When to Use Mellea
 
-Mellea fits batch processing, multi-agent workflows, and complex tasks where you control latency and each token counts. Don't use it for real-time interaction or streaming (not supported).
+Mellea is built for batch processing, multi-agent workflows, and quality-critical tasks where you control latency. It's not for real-time interaction or streaming (not supported).
 
-LLM-based validation requires extra API calls, so the accuracy of your requirements matters. Use Mellea when you have strict quality or compliance needs. The latency trade-off is worth it.
+LLM-based validation means extra API calls and latency. Use Mellea when your quality or compliance requirements justify the cost.
 
 **Good fit if:**
 
