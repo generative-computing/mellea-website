@@ -1,9 +1,9 @@
 ---
 title: "What Mellea Brings to LangChain: Structured Generative Programming for Reliable AI Applications"
-date: "2026-04-29"
+date: "2026-04-30"
 author: "Akihiko Kuroda"
 excerpt: "Learn how Mellea's generative programming patterns add structured validation, automatic retry, and inference-time scaling to LangChain applications."
-tags: ["langchain", "mellea", "generative-programming", "llm", "validation", "reliability"]
+tags: ["langchain", "generative-programming", "llm", "validation", "reliability"]
 ---
 
 LangChain makes it easy to build LLM applications with chains, agents, and tools. But outputs rarely meet requirements on the first try.
@@ -30,6 +30,8 @@ pip install https://github.com/generative-computing/mellea-contribs/releases/dow
 # 3. Install mellea-langchain
 pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-langchain/v0.1.0/mellea_langchain-0.1.0-py3-none-any.whl
 ```
+
+> **Note:** Some code examples in this blog post have additional dependencies indicated as comments in each example. Install them as needed to run those specific blocks.
 
 ### Your First Validated Chain
 
@@ -338,6 +340,17 @@ model_with_requirements = chat_model.bind(
         "strategy": RejectionSamplingStrategy(loop_budget=5),
     }
 )
+
+# Define prompts for different use cases
+prompt1 = ChatPromptTemplate.from_messages([
+    ("system", "You are a customer service representative."),
+    ("human", "Write a response to {customer}'s issue: {issue}")
+])
+
+prompt2 = ChatPromptTemplate.from_messages([
+    ("system", "You are a professional document writer."),
+    ("human", "Write an internal memo about: {topic}")
+])
 
 # Use in multiple chains
 customer_email_chain = prompt1 | model_with_requirements
