@@ -6,7 +6,7 @@ excerpt: "Mellea brings structured validation and automatic repair to CrewAI mul
 tags: ["crewai", "multi-agent", "validation", "integration"]
 ---
 
-In multi-agent pipelines, one agent returns junk, the next agent takes it as input, and your pipeline silently produces garbage. CrewAI has no built-in validation—it generates once and returns whatever it gets.
+In multi-agent pipelines, one agent returns junk, the next agent takes it as input, and your pipeline silently produces garbage. CrewAI has no built-in validation: it generates once and returns whatever it gets.
 
 **Mellea** adds automatic validation and intelligent retry logic directly into your agents, so bad outputs never leave the pipeline.
 
@@ -35,7 +35,7 @@ crew = Crew(agents=[agent], tasks=[task])
 result = crew.kickoff()  # Generates once, returns whatever it gets
 ```
 
-**CrewAI generates once and returns whatever it gets.** When one agent fails, the next gets bad input. Add inconsistent validation scattered across tasks and no feedback on what went wrong, and multi-agent workflows fall apart quickly.
+**CrewAI generates once and returns whatever it gets.** When one agent fails, the next gets bad input. Without consistent validation and feedback, multi-agent workflows fall apart quickly.
 
 You end up writing retry logic like this:
 
@@ -121,11 +121,11 @@ print(result)
 
 ## How Mellea Works
 
-Mellea embeds validation directly into the generation loop. For each agent:
+Mellea embeds validation directly into the generation loop using three steps:
 
-1. **Instruct** — Embed requirements in the system prompt so the model tries to meet them upfront
-2. **Validate** — After generation, check if the output meets all requirements (using LLM or Python checks)
-3. **Repair** — If validation fails, retry with the failure reason, up to a configurable budget
+1. **Instruct**: Embed requirements in the system prompt so the model tries to meet them upfront
+2. **Validate**: After generation, check if the output meets all requirements using LLM or Python checks
+3. **Repair**: If validation fails, retry with the failure reason up to a configurable budget
 
 Here's what it looks like in practice:
 
@@ -139,7 +139,7 @@ See the [Mellea docs](https://docs.mellea.ai/) for the full instruct-validate-re
 
 ### Side-by-Side: CrewAI vs. Mellea
 
-Building a research-to-content pipeline shows the difference. With pure CrewAI:
+Building a research-to-content pipeline shows the difference. Pure CrewAI looks like this:
 
 ```python
 from crewai import Agent, Task, Crew
@@ -186,7 +186,7 @@ else:
     print("Failed after max attempts")
 ```
 
-**With Mellea:**
+With Mellea, requirements move into the agent definition:
 
 ```python
 from mellea import start_session
@@ -256,8 +256,6 @@ print(result)
 
 ### Automatic Validation and Retry
 
-Define requirements your agents must meet, and Mellea validates and retries automatically:
-
 ```python
 from mellea import start_session
 from mellea_crewai import MelleaLLM
@@ -300,7 +298,7 @@ print(result)
 
 ### Sampling Strategies
 
-Different strategies trade compute for quality. Pick the right one for your use case. (The examples below use `m` from the session created earlier.)
+Different strategies trade compute for quality. Pick one that matches your constraints. (Examples below use `m` from the earlier session.)
 
 ```python
 from mellea.stdlib.sampling import (
@@ -388,11 +386,9 @@ analyst = Agent(
 )
 ```
 
-`req()` and `check()` use the LLM to validate semantic properties. `validation_fn` runs Python code for objective checks like word count. The key difference: `req()` embeds the requirement in the instruction prompt so the model tries to meet it upfront (use for things the model should actively target, like "Must cite sources"), while `check()` only validates after generation without priming the model (use for constraints you want to verify without shaping the output, like "Avoid speculation"). Deterministic checks are fast; semantic checks are flexible but slower. Negative constraints (`check()`) are harder for LLMs to satisfy reliably than positive ones.
+`req()` and `check()` use the LLM for semantic validation, while `validation_fn` runs Python for objective checks like word count. The key difference: `req()` embeds the requirement in the instruction prompt so the model tries to meet it upfront (use for things the model should actively target, like "Must cite sources"), while `check()` only validates after generation without shaping the output (use for constraints you want to verify independently, like "Avoid speculation"). Deterministic checks are fast but rigid; semantic checks are flexible but slower. Negative constraints (`check()`) are also harder for LLMs to satisfy reliably than positive ones.
 
 ## Reusable Requirements
-
-Define validation rules once and reuse them across agents. Each agent can have its own strategy. (Still using the session `m` from earlier.)
 
 ```python
 # Define reusable requirement sets
@@ -406,7 +402,7 @@ accuracy_requirements = [
     req("Must cite sources"),
 ]
 
-# Compose once, use across agents
+# Compose and attach to agents
 researcher_requirements = accuracy_requirements + [
     req("Between 300-400 words", 
         validation_fn=simple_validate(lambda x: 300 <= len(x.split()) <= 400, reason="Must be 300-400 words"))
@@ -442,8 +438,6 @@ writer = Agent(
 ```
 
 ### Task-Level Guardrails
-
-Use Mellea requirements as guardrails in CrewAI tasks:
 
 ```python
 from mellea_crewai import create_guardrail, create_guardrails
@@ -507,9 +501,7 @@ task = Task(
 
 ## When to Use Mellea
 
-Mellea is built for batch processing, multi-agent workflows, and quality-critical tasks where you control latency. It's not for real-time interaction or streaming (not supported).
-
-LLM-based validation means extra API calls and latency. Use Mellea when your quality or compliance requirements justify the cost.
+Mellea is built for batch processing, multi-agent workflows, and quality-critical tasks where you control latency. It's not for real-time interaction or streaming (not supported). LLM-based validation means extra API calls and latency, so use it when your quality or compliance requirements justify the cost.
 
 **Good fit if:**
 
@@ -528,8 +520,6 @@ LLM-based validation means extra API calls and latency. Use Mellea when your qua
 
 ## Next Steps
 
-If one bad agent silently breaks your pipeline, validated crews are a drop-in fix. Copy the "Your First Validated Crew" example above and run it.
+If one bad agent silently breaks your pipeline, validated crews are a drop-in fix. Start with the "Your First Validated Crew" example above.
 
-For more, see the [Mellea docs](https://docs.mellea.ai/), [CrewAI integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/crewai_backend/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord).
-
-This integration lives in [mellea-contribs](https://github.com/generative-computing/mellea-contribs).
+For more details, see the [Mellea docs](https://docs.mellea.ai/), [CrewAI integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/crewai_backend/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord). This integration lives in [mellea-contribs](https://github.com/generative-computing/mellea-contribs).
