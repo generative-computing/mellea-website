@@ -140,7 +140,7 @@ See the [Mellea docs](https://docs.mellea.ai/) for the full instruct-validate-re
 
 ### How It Compares
 
-Pure CrewAI requires manual retry logic around the crew; with Mellea, validation moves into each agent's LLM config. The differences show up across the board:
+Pure CrewAI requires manual retry logic around the crew; with Mellea, validation moves into each agent's LLM config:
 
 | Feature | CrewAI Alone | With Mellea |
 | ------- | ------------ | ----------- |
