@@ -483,6 +483,7 @@ task = Task(
 # Output will be validated to ensure:
 # - Mentions "AI" or "machine learning"
 # - Between 100-500 words
+```
 
 ## Feature Comparison
 
