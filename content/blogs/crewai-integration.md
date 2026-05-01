@@ -8,7 +8,7 @@ tags: ["crewai", "multi-agent", "validation", "integration"]
 
 In multi-agent pipelines, one agent returns junk, the next agent takes it as input, and your pipeline silently produces garbage. CrewAI has no built-in validation: it generates once and returns whatever it gets.
 
-**Mellea** adds automatic validation and intelligent retry logic directly into your agents, so bad outputs never leave the pipeline.
+**Mellea** adds automatic validation and retry logic directly into your agents, so bad outputs never leave the pipeline.
 
 > **Before you start:** Mellea trades latency and API costs for output quality. Expect 2-5x slower responses due to validation retries, and higher token usage. Streaming is not supported—responses return as a single chunk. This is ideal for batch processing and quality-critical applications, but not for real-time interaction or latency-sensitive systems.
 
@@ -118,6 +118,7 @@ print(result)
 # Example: Enterprise search engines retrieve relevant documents, then GPT-4
 # synthesizes answers. Benefits include reduced hallucination, cited sources,
 # and real-time knowledge updates without model retraining.
+```
 
 ## How Mellea Works
 
@@ -137,122 +138,22 @@ Attempt 3 → PASS (Output meets all requirements)
 
 See the [Mellea docs](https://docs.mellea.ai/) for the full instruct-validate-repair pattern.
 
-### Side-by-Side: CrewAI vs. Mellea
+### How It Compares
 
-Building a research-to-content pipeline shows the difference. Pure CrewAI looks like this:
+Pure CrewAI requires manual retry logic around the crew; with Mellea, validation moves into each agent's LLM config. The differences show up across the board:
 
-```python
-from crewai import Agent, Task, Crew
-
-researcher = Agent(
-    role="Researcher",
-    goal="Provide accurate information",
-    backstory="You are an expert researcher"
-)
-
-writer = Agent(
-    role="Writer",
-    goal="Write engaging content",
-    backstory="You are an expert writer"
-)
-
-research_task = Task(
-    description="Research recent AI trends",
-    agent=researcher,
-    expected_output="Research summary"
-)
-
-writing_task = Task(
-    description="Write blog post based on research",
-    agent=writer,
-    expected_output="Blog post",
-    context=[research_task]
-)
-
-# Manual retry logic for the whole crew
-max_attempts = 5
-for attempt in range(max_attempts):
-    crew = Crew(agents=[researcher, writer], tasks=[research_task, writing_task])
-    result = crew.kickoff()
-    
-    # Manual validation checks
-    is_good_research = "data" in result.lower() and len(result.split()) > 300
-    is_well_written = len(result.split()) > 400 and "conclusion" in result.lower()
-    
-    if is_good_research and is_well_written:
-        print(result)
-        break
-else:
-    print("Failed after max attempts")
-```
-
-With Mellea, requirements move into the agent definition:
-
-```python
-from mellea import start_session
-from mellea_crewai import MelleaLLM
-from mellea.stdlib.requirements import req, simple_validate
-from mellea.stdlib.sampling import RejectionSamplingStrategy
-from crewai import Agent, Task, Crew
-
-m = start_session()
-
-# Define specialized agents with requirements
-researcher = Agent(
-    role="Researcher",
-    goal="Provide accurate information",
-    backstory="You are an expert researcher",
-    llm=MelleaLLM(
-        mellea_session=m,
-        requirements=[
-            req("Must include specific data points or statistics"),
-            req("Must cite sources"),
-            req("Between 300-400 words", 
-                validation_fn=simple_validate(lambda x: 300 <= len(x.split()) <= 400, reason="Must be 300-400 words")),
-        ],
-        strategy=RejectionSamplingStrategy(loop_budget=5),
-    )
-)
-
-writer = Agent(
-    role="Writer",
-    goal="Write engaging content",
-    backstory="You are an expert writer",
-    llm=MelleaLLM(
-        mellea_session=m,
-        requirements=[
-            req("Must have clear section headings"),
-            req("Must be engaging and readable"),
-            req("Between 400-600 words",
-                validation_fn=simple_validate(lambda x: 400 <= len(x.split()) <= 600, reason="Must be 400-600 words")),
-        ],
-        strategy=RejectionSamplingStrategy(loop_budget=3),
-    )
-)
-
-research_task = Task(
-    description="Research recent AI trends",
-    agent=researcher,
-    expected_output="Research summary"
-)
-
-writing_task = Task(
-    description="Write blog post based on research",
-    agent=writer,
-    expected_output="Blog post",
-    context=[research_task]
-)
-
-# Automatic validation at each step
-crew = Crew(agents=[researcher, writer], tasks=[research_task, writing_task])
-result = crew.kickoff()
-print(result)
-
-# Output example:
-# ## The Evolution of Language Models in 2024-2025
-# Recent breakthroughs in large language models have reshaped AI development.
-# GPT-4 and Llama 2 show 82% accuracy on MMLU benchmarks, with improved reasoning.
-# [Full structured blog post with sections, citations, and 450+ words...]
+| Feature | CrewAI Alone | With Mellea |
+| ------- | ------------ | ----------- |
+| **Agent Output Validation** | Manual, external | Built-in, automatic |
+| **Retry Logic** | Manual implementation | Built-in sampling strategies |
+| **Requirements** | Embedded in prompts | First-class, composable objects |
+| **Validation Feedback** | None | Detailed results and reasoning |
+| **Inference-Time Scaling** | Not supported | Multiple strategies (Rejection, MultiTurn, Repair) |
+| **Task Guardrails** | Basic validation | Mellea requirements as guardrails |
+| **Agent Specialization** | Same LLM config | Different validation per agent |
+| **Semantic Validation** | Not available | LLM-as-a-judge built-in |
+| **Deterministic Checks** | Manual | `simple_validate()` for fast checks |
+| **Multi-Backend Support** | Limited | Ollama, OpenAI, WatsonX, HuggingFace, etc. |
 
 ### Automatic Validation and Retry
 
@@ -295,6 +196,7 @@ print(result)
 # and multimodal models handle images + text. These advances enable production systems
 # in healthcare diagnostics, financial analysis, and scientific research.
 # Conclusion: The next frontier is efficient inference and specialized domain models.
+```
 
 ### Sampling Strategies
 
@@ -390,6 +292,8 @@ analyst = Agent(
 
 ## Reusable Requirements
 
+(Continuing with the session from above.)
+
 ```python
 # Define reusable requirement sets
 professional_requirements = [
@@ -442,18 +346,15 @@ writer = Agent(
 ```python
 from mellea_crewai import create_guardrail, create_guardrails
 
-# Step 1: Create a validation function using simple_validate
-from mellea.stdlib.requirements import simple_validate
-
-word_count_check = simple_validate(
-    lambda x: 30 <= len(x.split()) <= 200,
-    reason="Must be between 30-200 words",
-)
+# Step 1: Create a validation function as a plain callable
+word_count_check = lambda x: 30 <= len(x.split()) <= 200
+word_count_check.__doc__ = "Must be between 30-200 words"
 
 # Step 2: Convert to a CrewAI guardrail
 guardrail = create_guardrail(word_count_check)
 
 # Step 3: Use the guardrail in your CrewAI task
+# (Assuming agent defined in an earlier section)
 task = Task(
     description="Write a summary about AI",
     expected_output="Brief AI summary",
@@ -484,21 +385,6 @@ task = Task(
 # - Mentions "AI" or "machine learning"
 # - Between 100-500 words
 ```
-
-## Feature Comparison
-
-| Feature | CrewAI Alone | With Mellea |
-| ------- | ------------ | ----------- |
-| **Agent Output Validation** | Manual, external | Built-in, automatic |
-| **Retry Logic** | Manual implementation | Sophisticated sampling strategies |
-| **Requirements** | Embedded in prompts | First-class, composable objects |
-| **Validation Feedback** | None | Detailed results and reasoning |
-| **Inference-Time Scaling** | Not supported | Multiple strategies (Rejection, MultiTurn, Repair) |
-| **Task Guardrails** | Basic validation | Mellea requirements as guardrails |
-| **Agent Specialization** | Same LLM config | Different validation per agent |
-| **Semantic Validation** | Not available | LLM-as-a-judge built-in |
-| **Deterministic Checks** | Manual | `simple_validate()` for fast checks |
-| **Multi-Backend Support** | Limited | Ollama, OpenAI, WatsonX, HuggingFace, etc. |
 
 ## When to Use Mellea
 
