@@ -129,7 +129,7 @@ Mellea embeds validation directly into the generation loop. For each agent:
 
 Here's what it looks like in practice:
 
-```
+```text
 Attempt 1 → FAIL (Reason: Missing specific data points)
 Attempt 2 → FAIL (Reason: Word count too low)
 Attempt 3 → PASS (Output meets all requirements)
