@@ -61,14 +61,15 @@ First, follow [Mellea's Getting Started guide](https://docs.mellea.ai/getting-st
 Then install the CrewAI integration:
 
 ```bash
-# 1. Install mellea and crewai
-pip install mellea crewai
+# 1. Initialize project and install core packages
+uv init crewai-example && cd crewai-example
+uv add mellea crewai
 
-# 2. Install mellea-integration-core
-pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-integration-core/v0.1.0/mellea_integration_core-0.1.0-py3-none-any.whl
-
-# 3. Install mellea-crewai
-pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-crewai/v0.1.0/mellea_crewai-0.1.0-py3-none-any.whl
+# 2. Install wheel packages from releases
+# Check https://github.com/generative-computing/mellea-contribs/releases for the latest versions
+# and replace the version numbers below (currently v0.1.0)
+uv pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-integration-core/v0.1.0/mellea_integration_core-0.1.0-py3-none-any.whl
+uv pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-crewai/v0.1.0/mellea_crewai-0.1.0-py3-none-any.whl
 ```
 
 ## Your First Validated Crew
@@ -110,9 +111,13 @@ task = Task(
 crew = Crew(agents=[agent], tasks=[task])
 result = crew.kickoff()
 print(result)
-```
 
-## How Mellea Works
+# Output example:
+# Retrieval-Augmented Generation (RAG) combines document search with LLM generation.
+# RAG improves accuracy by 42% vs baseline LLMs on knowledge-intensive tasks.
+# Example: Enterprise search engines retrieve relevant documents, then GPT-4
+# synthesizes answers. Benefits include reduced hallucination, cited sources,
+# and real-time knowledge updates without model retraining.
 
 Mellea embeds validation directly into the generation loop. See the [Mellea docs](https://docs.mellea.ai/) for the full instruct-validate-repair pattern.
 
@@ -187,7 +192,7 @@ researcher = Agent(
             req("Must include specific data points or statistics"),
             req("Must cite sources"),
             req("Between 300-400 words", 
-                validation_fn=simple_validate(lambda x: 300 <= len(x.split()) <= 400)),
+                validation_fn=simple_validate(lambda x: 300 <= len(x.split()) <= 400, reason="Must be 300-400 words")),
         ],
         strategy=RejectionSamplingStrategy(loop_budget=5),
     )
@@ -203,7 +208,7 @@ writer = Agent(
             req("Must have clear section headings"),
             req("Must be engaging and readable"),
             req("Between 400-600 words",
-                validation_fn=simple_validate(lambda x: 400 <= len(x.split()) <= 600)),
+                validation_fn=simple_validate(lambda x: 400 <= len(x.split()) <= 600, reason="Must be 400-600 words")),
         ],
         strategy=RejectionSamplingStrategy(loop_budget=3),
     )
@@ -226,7 +231,12 @@ writing_task = Task(
 crew = Crew(agents=[researcher, writer], tasks=[research_task, writing_task])
 result = crew.kickoff()
 print(result)
-```
+
+# Output example:
+# ## The Evolution of Language Models in 2024-2025
+# Recent breakthroughs in large language models have reshaped AI development.
+# GPT-4 and Llama 2 show 82% accuracy on MMLU benchmarks, with improved reasoning.
+# [Full structured blog post with sections, citations, and 450+ words...]
 
 **What changed:**
 
@@ -275,9 +285,13 @@ task = Task(
 crew = Crew(agents=[validated_agent], tasks=[task])
 result = crew.kickoff()
 print(result)
-```
 
-The difference: Mellea generates → validates → retries up to loop_budget. Standard CrewAI generates once. If all retries fail, Mellea returns the best attempt based on the strategy.
+# Output example:
+# Large language models (LLMs) represent one of the most significant AI breakthroughs.
+# Key data: GPT-4 achieves 86% accuracy on MMLU, Llama 2 shows 2x faster inference,
+# and multimodal models handle images + text. These advances enable production systems
+# in healthcare diagnostics, financial analysis, and scientific research.
+# Conclusion: The next frontier is efficient inference and specialized domain models.
 
 ### Sampling Strategies
 
@@ -289,6 +303,7 @@ from mellea.stdlib.sampling import (
     MultiTurnStrategy,
     RepairTemplateStrategy
 )
+from mellea.stdlib.requirements import req
 
 # Rejection Sampling: Keep trying until requirements are met (up to loop_budget)
 rejection_agent = Agent(
@@ -296,6 +311,10 @@ rejection_agent = Agent(
     goal="Write quality content",
     llm=MelleaLLM(
         mellea_session=m,
+        requirements=[
+            req("Response must be well-written and clear"),
+            req("Response must include specific examples"),
+        ],
         strategy=RejectionSamplingStrategy(loop_budget=5)
     )
 )
@@ -306,6 +325,10 @@ multi_turn_agent = Agent(
     goal="Refine content through iteration",
     llm=MelleaLLM(
         mellea_session=m,
+        requirements=[
+            req("Response must be polished and professional"),
+            req("Response must flow naturally"),
+        ],
         strategy=MultiTurnStrategy(loop_budget=3)
     )
 )
@@ -316,6 +339,10 @@ repair_agent = Agent(
     goal="Ensure quality standards",
     llm=MelleaLLM(
         mellea_session=m,
+        requirements=[
+            req("Response must meet quality standards"),
+            req("Response must be accurate and factual"),
+        ],
         strategy=RepairTemplateStrategy(loop_budget=3)
     )
 )
@@ -337,7 +364,7 @@ requirements = [
     
     # Fast rule-based checks
     req("Between 50-400 words",
-        validation_fn=simple_validate(lambda x: 50 <= len(x.split()) <= 400)),
+        validation_fn=simple_validate(lambda x: 50 <= len(x.split()) <= 400, reason="Must be 50-400 words")),
     req("Must mention AI",
         validation_fn=simple_validate(lambda x: "AI" in x.lower())),
 ]
@@ -374,12 +401,12 @@ accuracy_requirements = [
 # Compose once, use across agents
 researcher_requirements = accuracy_requirements + [
     req("Between 300-400 words", 
-        validation_fn=simple_validate(lambda x: 300 <= len(x.split()) <= 400))
+        validation_fn=simple_validate(lambda x: 300 <= len(x.split()) <= 400, reason="Must be 300-400 words"))
 ]
 
 writer_requirements = professional_requirements + [
     req("Between 400-600 words",
-        validation_fn=simple_validate(lambda x: 400 <= len(x.split()) <= 600))
+        validation_fn=simple_validate(lambda x: 400 <= len(x.split()) <= 600, reason="Must be 400-600 words"))
 ]
 
 # Attach to agents
@@ -412,7 +439,7 @@ from mellea_crewai import create_guardrail, create_guardrails
 # Step 1: Create a validation function using simple_validate
 from mellea.stdlib.requirements import simple_validate
 
-word_count_check = simple_validate(lambda x: 30 <= len(x.split()) <= 200, "Must be between 30-200 words")
+word_count_check = simple_validate(lambda x: 30 <= len(x.split()) <= 200, reason="Must be between 30-200 words")
 
 # Step 2: Convert to a CrewAI guardrail
 guardrail = create_guardrail(word_count_check)
@@ -425,6 +452,7 @@ task = Task(
     guardrails=[guardrail],
     guardrail_max_retries=3  # Retry up to 3 times if validation fails
 )
+# Output will be validated to ensure 30-200 words
 
 # Create multiple guardrails for comprehensive validation
 keyword_check = lambda x: any(kw in x for kw in ["AI", "machine learning"])
@@ -443,7 +471,9 @@ task = Task(
     guardrails=guardrails,
     guardrail_max_retries=3
 )
-```
+# Output will be validated to ensure:
+# - Mentions "AI" or "machine learning"
+# - Between 100-500 words
 
 ## Feature Comparison
 
