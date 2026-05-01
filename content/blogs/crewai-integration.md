@@ -288,7 +288,7 @@ analyst = Agent(
 )
 ```
 
-`req()` and `check()` use the LLM for semantic validation, while `validation_fn` runs Python for objective checks like word count. The key difference: `req()` embeds the requirement in the instruction prompt so the model tries to meet it upfront (use for things the model should actively target, like "Must cite sources"), while `check()` only validates after generation without shaping the output (use for constraints you want to verify independently, like "Avoid speculation"). Deterministic checks are fast but rigid; semantic checks are flexible but slower. Negative constraints (`check()`) are also harder for LLMs to satisfy reliably than positive ones.
+`req()` and `check()` use the LLM for semantic validation, while `validation_fn` runs Python for objective checks like word count. The key difference is *when* each one acts: `req()` embeds the requirement in the instruction prompt so the model sees it upfront and tries to meet it (use for things the model should actively target, like "Must cite sources"); `check()` only validates after generation, without priming the model (use for constraints you want to verify without shaping the output, like "Avoid speculation"). Deterministic checks are fast but rigid; semantic checks are flexible but slower. Negative constraints are also harder for LLMs to satisfy reliably than positive ones.
 
 ## Reusable Requirements
 
