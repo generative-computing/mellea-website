@@ -1,14 +1,14 @@
 ---
-title: "Structured Generative Programming for CrewAI: Multi-Agent Validation with Mellea"
+title: "Validate Every CrewAI Agent Output: Automatic Retry with Mellea"
 date: "2026-05-04"
 author: "Akihiko Kuroda"
 excerpt: "Mellea brings structured validation and automatic repair to CrewAI multi-agent systems through the instruct-validate-repair pattern."
 tags: ["crewai", "multi-agent", "validation", "integration"]
 ---
 
-CrewAI makes it easy to build multi-agent workflows. One bad agent response cascades through the pipeline because CrewAI doesn't validate outputs.
+In multi-agent pipelines, one agent returns junk, the next agent takes it as input, and your pipeline silently produces garbage. CrewAI has no built-in validation—it generates once and returns whatever it gets.
 
-**Mellea** adds automatic validation, structured requirements, and intelligent retry logic to your multi-agent crews.
+**Mellea** adds automatic validation and intelligent retry logic directly into your agents, so bad outputs never leave the pipeline.
 
 > **Before you start:** Mellea trades latency and API costs for output quality. Expect 2-5x slower responses due to validation retries, and higher token usage. Streaming is not supported—responses return as a single chunk. This is ideal for batch processing and quality-critical applications, but not for real-time interaction or latency-sensitive systems.
 
@@ -119,7 +119,23 @@ print(result)
 # synthesizes answers. Benefits include reduced hallucination, cited sources,
 # and real-time knowledge updates without model retraining.
 
-Mellea embeds validation directly into the generation loop. See the [Mellea docs](https://docs.mellea.ai/) for the full instruct-validate-repair pattern.
+## How Mellea Works
+
+Mellea embeds validation directly into the generation loop. For each agent:
+
+1. **Instruct** — Embed requirements in the system prompt so the model tries to meet them upfront
+2. **Validate** — After generation, check if the output meets all requirements (using LLM or Python checks)
+3. **Repair** — If validation fails, retry with the failure reason, up to a configurable budget
+
+Here's what it looks like in practice:
+
+```
+Attempt 1 → FAIL (Reason: Missing specific data points)
+Attempt 2 → FAIL (Reason: Word count too low)
+Attempt 3 → PASS (Output meets all requirements)
+```
+
+See the [Mellea docs](https://docs.mellea.ai/) for the full instruct-validate-repair pattern.
 
 ### Side-by-Side: CrewAI vs. Mellea
 
@@ -238,17 +254,6 @@ print(result)
 # GPT-4 and Llama 2 show 82% accuracy on MMLU benchmarks, with improved reasoning.
 # [Full structured blog post with sections, citations, and 450+ words...]
 
-**What changed:**
-
-| Aspect | CrewAI | Mellea |
-| ------ | ------ | ------ |
-| **Retry logic** | Manual loop for entire crew | Automatic per-agent via `RejectionSamplingStrategy` |
-| **Validation** | Hardcoded checks in loop | Declarative `req()` statements |
-| **Debugging** | Pass/fail only | See which requirements failed at each attempt |
-| **Reusability** | Validation code specific to this task | Requirements reused across agents |
-| **Semantic validation** | Manual string checks | LLM-based validation via `req()` |
-| **Agent specialization** | All agents same config | Each agent has custom rules |
-
 ### Automatic Validation and Retry
 
 Define requirements your agents must meet, and Mellea validates and retries automatically:
@@ -309,6 +314,7 @@ from mellea.stdlib.requirements import req
 rejection_agent = Agent(
     role="Writer",
     goal="Write quality content",
+    backstory="You are a careful writer.",
     llm=MelleaLLM(
         mellea_session=m,
         requirements=[
@@ -323,6 +329,7 @@ rejection_agent = Agent(
 multi_turn_agent = Agent(
     role="Editor",
     goal="Refine content through iteration",
+    backstory="You are an experienced editor.",
     llm=MelleaLLM(
         mellea_session=m,
         requirements=[
@@ -337,6 +344,7 @@ multi_turn_agent = Agent(
 repair_agent = Agent(
     role="Reviewer",
     goal="Ensure quality standards",
+    backstory="You are a quality assurance specialist.",
     llm=MelleaLLM(
         mellea_session=m,
         requirements=[
@@ -366,7 +374,7 @@ requirements = [
     req("Between 50-400 words",
         validation_fn=simple_validate(lambda x: 50 <= len(x.split()) <= 400, reason="Must be 50-400 words")),
     req("Must mention AI",
-        validation_fn=simple_validate(lambda x: "AI" in x.lower())),
+        validation_fn=simple_validate(lambda x: "ai" in x.lower())),
 ]
 
 analyst = Agent(
@@ -412,6 +420,8 @@ writer_requirements = professional_requirements + [
 # Attach to agents
 researcher = Agent(
     role="Researcher",
+    goal="Research recent AI trends",
+    backstory="You are a senior analyst.",
     llm=MelleaLLM(
         mellea_session=m,
         requirements=researcher_requirements,
@@ -421,6 +431,8 @@ researcher = Agent(
 
 writer = Agent(
     role="Writer",
+    goal="Write engaging, well-structured content",
+    backstory="You are a skilled content writer.",
     llm=MelleaLLM(
         mellea_session=m,
         requirements=writer_requirements,
@@ -439,7 +451,10 @@ from mellea_crewai import create_guardrail, create_guardrails
 # Step 1: Create a validation function using simple_validate
 from mellea.stdlib.requirements import simple_validate
 
-word_count_check = simple_validate(lambda x: 30 <= len(x.split()) <= 200, reason="Must be between 30-200 words")
+word_count_check = simple_validate(
+    lambda x: 30 <= len(x.split()) <= 200,
+    reason="Must be between 30-200 words",
+)
 
 # Step 2: Convert to a CrewAI guardrail
 guardrail = create_guardrail(word_count_check)
@@ -506,14 +521,14 @@ LLM-based validation means extra API calls and latency. Use Mellea when your qua
 
 **Skip it if:**
 
-- You need sub-second responses
-- API budgets are tight
-- You need streaming
-- Output quality doesn't matter much
+- You need sub-second responses (latency-sensitive systems)
+- API budgets are tight and cost per token is your primary constraint
+- You need streaming (not supported)
+- Your pipeline already meets its quality bar and the extra calls aren't justified
 
 ## Next Steps
 
-Copy the "Your First Validated Crew" example at the top, save it as `validated_crew.py`, and run it.
+If one bad agent silently breaks your pipeline, validated crews are a drop-in fix. Copy the "Your First Validated Crew" example above and run it.
 
 For more, see the [Mellea docs](https://docs.mellea.ai/), [CrewAI integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/crewai_backend/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord).
 
