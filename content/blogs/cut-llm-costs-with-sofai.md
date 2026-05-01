@@ -25,13 +25,14 @@ Mellea makes this a one-line change to your existing pipeline. Let's see it in a
 
 If you haven't used Mellea before at all, the [Getting Started with Mellea](/blogs/getting-started-with-mellea) post covers the basics end-to-end.
 
-**Step 1 — Pull the models** (~4 GB total download):
+**Step 1 — Pull the models for the graph coloring example** (~2 GB download):
 
 ```bash
 ollama pull granite4:350m-h  # 340M params, Q8_0 — graph coloring S1
 ollama pull granite4:3b      # 3B params — graph coloring S2
-ollama pull granite4:1b-h    # 1.5B params, Q8_0 — Sudoku S1
 ```
+
+> The Sudoku example further down uses a different S1 model and a cloud S2 — you'll pull that one only if you choose to run it.
 
 **Step 2 — Create a project and install Mellea:**
 
@@ -121,7 +122,7 @@ result = m.instruct(
 
 total = len(result.sample_generations)
 # Infer whether S2 was used: if the second-to-last attempt failed, the last was S2.
-# Assumes S1 exhausts its budget or exits early — works for all normal escalation paths.
+# Assumes S1 never succeeds on a late attempt — valid when S1 reliably fails before escalating.
 s2_escalated = (
     total > 1 and not all(bool(v) for _, v in result.sample_validations[total - 2])
     if total > 1 else False
@@ -278,9 +279,10 @@ The code follows the same pattern as graph coloring. Only the puzzle, validator,
 
 **This is an optional, more involved example** — you can skip it if you'd prefer to stay local-only. It requires a cloud API key. You can use any OpenAI-compatible provider by changing `base_url` and `model_id`; see [Backends and Configuration](https://docs.mellea.ai/how-to/backends-and-configuration) for the full list (OpenAI, Bedrock, LiteLLM, and more).
 
-The example below uses a free [Groq](https://console.groq.com) account — 1,000 requests/day, no credit card required:
+The example below uses a free [Groq](https://console.groq.com) account — 1,000 requests/day, no credit card required. Pull the Sudoku S1 model and set your key:
 
 ```bash
+ollama pull granite4:1b-h    # 1.5B params, Q8_0 — Sudoku S1
 export GROQ_API_KEY=<your-key>
 ```
 
@@ -391,7 +393,7 @@ result = m.instruct(
 
 total = len(result.sample_generations)
 # Infer whether S2 was used: if the second-to-last attempt failed, the last was S2.
-# Assumes S1 exhausts its budget or exits early — works for all normal escalation paths.
+# Assumes S1 never succeeds on a late attempt — valid when S1 reliably fails before escalating.
 s2_escalated = (
     total > 1 and not all(bool(v) for _, v in result.sample_validations[total - 2])
     if total > 1 else False
