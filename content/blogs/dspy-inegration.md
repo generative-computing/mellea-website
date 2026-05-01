@@ -1,9 +1,9 @@
 ---
 title: "What Mellea Brings to DSPy: Structured Validation for Reliable AI Programs"
-date: "2026-04-29"
-author: "Mellea Team"
+date: "2026-05-07"
+author: "Akihiko Kuroda"
 excerpt: "Add semantic validation and quality guarantees to DSPy programs with Mellea's integration for structured prompting and runtime verification."
-tags: ["framework-integration", "reliability", "validation"]
+tags: ["dspy", "generative-programming", ""llm", "validation", "reliability"]
 ---
 
 DSPy has revolutionized how developers build LLM applications through structured prompting with signatures and modular programs. But as applications move to production, a critical challenge remains: **how do you ensure that structured outputs consistently meet quality requirements?**
