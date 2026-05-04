@@ -1,0 +1,67 @@
+name: Scheduled Merge
+
+# Enables scheduling a PR merge by adding `/schedule YYYY-MM-DD` to the PR body.
+# The PR must already be approved; this workflow only enables auto-merge, which
+# then goes through the normal merge queue like any other PR.
+#
+# Usage: add this line anywhere in the PR description:
+#   /schedule 2026-05-15
+#
+# Runs daily at 9–10am Eastern (10am EDT / 9am EST). Use workflow_dispatch to trigger immediately.
+
+on:
+  schedule:
+    - cron: '0 14 * * *'  # 10am EDT / 9am EST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge-scheduled-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge scheduled PRs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          TODAY=$(TZ='America/New_York' date +%Y-%m-%d)
+          echo "Today (Eastern): $TODAY"
+
+          pr_numbers=$(
+            gh pr list --repo "$REPO" --state open --json number,body \
+              --jq '[.[] | select(.body | test("/schedule [0-9]{4}-[0-9]{2}-[0-9]{2}"))] | .[].number'
+          )
+
+          if [[ -z "$pr_numbers" ]]; then
+            echo "No scheduled PRs found."
+            exit 0
+          fi
+
+          for pr in $pr_numbers; do
+            body=$(gh pr view "$pr" --repo "$REPO" --json body --jq '.body')
+            scheduled=$(printf '%s' "$body" | grep -oP '(?<=/schedule )[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+
+            [[ -z "$scheduled" ]] && continue
+
+            echo "PR #$pr is scheduled for $scheduled"
+
+            if [[ "$scheduled" > "$TODAY" ]]; then
+              echo "  Not yet due, skipping."
+              continue
+            fi
+
+            echo "  Enabling auto-merge..."
+            if gh pr merge "$pr" --repo "$REPO" --auto --squash; then
+              echo "  Done."
+              gh pr comment "$pr" --repo "$REPO" \
+                --body "Scheduled merge for \`$scheduled\` — added to the merge queue."
+            else
+              echo "  Warning: could not enable auto-merge."
+              gh pr comment "$pr" --repo "$REPO" \
+                --body ":warning: Scheduled merge for \`$scheduled\` could not be enabled. Please check that the PR has the required approvals."
+            fi
+          done

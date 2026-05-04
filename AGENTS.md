@@ -143,6 +143,14 @@ tags: ["tag1", "tag2", "etc"]
 
 Use **US spelling** throughout (`color` not `colour`, `organized` not `organised`). This applies regardless of the author's locale — consistency across posts matters more than author preference.
 
+**Scheduling a publish date** — if you want to delay merging until a specific date, optionally add this line anywhere in the PR description:
+
+```text
+/schedule 2026-05-15
+```
+
+The PR must be approved before the scheduled date; the workflow runs daily at ~9am Eastern and will add the PR to the merge queue when the date arrives.
+
 Verify with `npm run build` — no config changes or code edits needed.
 
 ## 9. Common Issues
