@@ -49,7 +49,6 @@ m = start_session()  # Uses Ollama by default
 # Step 2: Configure MelleaLM with requirements
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     requirements=[
         "Must be clear",
         "Must mention structured approaches or automation",
@@ -77,7 +76,6 @@ print(result.answer)
 # With generation parameters
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     temperature=0.7,      # Control randomness
     max_tokens=2000       # Maximum output length
 )
@@ -85,14 +83,13 @@ lm = MelleaLM(
 # With default requirements (applied to all generations)
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     requirements=["Must be concise", "Must be helpful"]
 )
 ```
 
 ## What Makes Mellea + DSPy Different?
 
-DSPy gives you structure; Mellea adds validation. Here's the difference:
+DSPy gives you structure; Mellea adds validation:
 
 ### The Core Innovation: Signatures + Requirements
 
@@ -106,7 +103,6 @@ from mellea.stdlib.sampling import RejectionSamplingStrategy
 m = start_session()
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     requirements=["Must be concise", "Must be accurate", "Must be helpful"],
     strategy=RejectionSamplingStrategy(loop_budget=3)
 )
@@ -137,7 +133,6 @@ result = qa(text="Long article...")  # May exceed length or miss key points
 # With Mellea
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     requirements=[
         "Must be under 50 words",
         "Must mention key points",
@@ -162,7 +157,6 @@ from mellea.stdlib.sampling import RejectionSamplingStrategy
 # Configure LM with semantic requirements
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     requirements=[
         "Must be professional and empathetic",
         "Must address the customer's concern",
@@ -257,7 +251,6 @@ from mellea.stdlib.sampling import RejectionSamplingStrategy
 # Configure LM with requirements
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     requirements=[
         "Must be under 100 words",
         "Must capture main points"
@@ -290,7 +283,6 @@ from mellea.stdlib.sampling import RejectionSamplingStrategy
 # Configure LM with requirements
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     requirements=[
         "Must show clear reasoning steps",
         "Must include concrete examples",
@@ -324,7 +316,6 @@ class ValidatedQA(dspy.Module):
 m = start_session()
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     requirements=[
         "Must be informative and clear",
         "Must be helpful"
@@ -370,7 +361,6 @@ from mellea.stdlib.sampling import RejectionSamplingStrategy
 # Configure with guaranteed quality requirements
 lm = MelleaLM(
     mellea_session=m,
-    model="mellea-ollama",
     requirements=[
         "Must be under 200 words",
         "Must include usage examples and explain parameters",
@@ -406,7 +396,7 @@ Skip it for latency-sensitive paths (sub-100ms p50) or simple Q&A where a user c
 
 ## The Tradeoff
 
-Mellea doesn't replace DSPy—it complements it. You keep all of DSPy's features (signatures, modules, compilation) and gain validation on top. The cost is latency and LLM calls. The benefit is higher quality and fewer manual retries.
+Mellea extends DSPy rather than replacing it. You keep all of DSPy's features (signatures, modules, compilation) and gain validation on top. The cost is latency and LLM calls. The benefit is higher quality and fewer manual retries.
 
 ## Next Steps
 
