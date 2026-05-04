@@ -74,11 +74,6 @@ print(result.answer)
 ### Configuration Options
 
 ```python
-# model= is a metadata label for response objects, not a backend selector.
-# To use a different backend, configure a different mellea_session.
-# lm_ollama = MelleaLM(mellea_session=m, model="mellea-ollama")
-# lm_openai = MelleaLM(mellea_session=m, model="mellea-openai")
-
 # With generation parameters
 lm = MelleaLM(
     mellea_session=m,
