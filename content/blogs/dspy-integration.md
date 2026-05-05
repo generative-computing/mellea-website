@@ -188,8 +188,8 @@ best_of_5 = MelleaBestOfN(
     module=qa,
     N=5,  # Generate 5 candidates
     requirements=[
-        "Must be under 3 words",
-        "Must be professional"
+        "Must be under 3 words",      # routes to _create_max_words_reward
+        "Must be professional"         # routes to _create_professional_reward
     ],
     threshold=0.8
 )
@@ -200,6 +200,15 @@ print(result.answer)  # "Brussels"
 ```
 
 This trades compute for quality. It's a form of inference-time scaling.
+
+**Note on requirements:** BestOfN and Refine use rule-based pattern matching in `verification.py`. Requirements must match specific patterns to work correctly:
+
+- Length: "Must be under X words", "at least X words", "between X and Y words", "under X characters"
+- Content: "Must mention X", "Must include X", "Must not mention X" (single terms only)
+- Format: "Must be in bullet points", "numbered list", "valid JSON"
+- Quality: "Must be concise", "detailed", "professional"
+
+Requirements that don't match these patterns fall back to substring matching, which may not work as expected.
 
 ### Iterative Refinement
 
@@ -217,7 +226,7 @@ refiner = MelleaRefine(
     N=3,  # Up to 3 refinement iterations
     requirements=[
         "Must be under 50 words",
-        "Must mention AI and validation"
+        "Must mention AI"              # single term — extracts "ai", substring match
     ],
     threshold=0.9
 )
