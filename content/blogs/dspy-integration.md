@@ -230,7 +230,7 @@ result = refiner(text="Long article about AI...")
 
 ### Choosing the Right Strategy
 
-Reach for **RejectionSamplingStrategy** when you want the default — regenerate until requirements pass. Use **MelleaBestOfN** when compute is cheap and you want the best of N attempts at higher temperature. Choose **MelleaRefine** when the output needs to be improved, not resampled.
+**RejectionSamplingStrategy** is the default: regenerate until requirements pass. **MelleaBestOfN** makes sense when compute is cheap: generate N candidates at higher temperature and pick the best. **MelleaRefine** is for improving an existing output, not generating a new one.
 
 ## How Mellea Enhances DSPy Patterns
 
