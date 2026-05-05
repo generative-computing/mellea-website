@@ -28,6 +28,7 @@ Then install the DSPy integration:
 # 1. Install mellea and dspy
 uv pip install mellea dspy
 
+# Latest releases: https://github.com/generative-computing/mellea-contribs/releases
 # 2. Install mellea-integration-core
 uv pip install https://github.com/generative-computing/mellea-contribs/releases/download/mellea-integration-core/v0.1.0/mellea_integration_core-0.1.0-py3-none-any.whl
 
@@ -65,7 +66,9 @@ qa = dspy.ChainOfThought("question -> answer")
 result = qa(question="What is generative programming?")
 
 print(result.answer)
-# Output validated against requirements
+# Generative programming is a structured approach to software development
+# where formal specifications drive the automated production of code or other
+# artifacts, enabling systematic automation of repetitive programming tasks.
 ```
 
 **Note:** Keep this first snippet running in your session. All the code examples below assume `m` (the Mellea session), `dspy`, and the required imports are already in scope. You can copy each example and run it after the setup above.
@@ -94,25 +97,12 @@ DSPy gives you structure; Mellea adds validation:
 ### The Core Innovation: Signatures + Requirements
 
 ```python
-import dspy
-from mellea import start_session
-from mellea_dspy import MelleaLM
-from mellea.stdlib.sampling import RejectionSamplingStrategy
-
-# Create Mellea session with requirements and strategy
-m = start_session()
-lm = MelleaLM(
-    mellea_session=m,
-    requirements=["Must be concise", "Must be accurate", "Must be helpful"],
-    strategy=RejectionSamplingStrategy(loop_budget=3)
-)
-dspy.configure(lm=lm)
-
 # Define structured signature - requirements automatically applied
 qa = dspy.Predict("question -> answer")
 result = qa(question="What is the capital of France?")
 
-print(result.answer)  # "Paris"
+print(result.answer)
+# Paris
 ```
 
 Mellea validates the output against your requirements and automatically retries if they're not met. Standard DSPy doesn't do this.
@@ -187,8 +177,8 @@ best_of_5 = MelleaBestOfN(
     module=qa,
     N=5,  # Generate 5 candidates
     requirements=[
-        "Must be one word",
-        "Must be a proper noun"
+        "Must be under 3 words",
+        "Must be professional"
     ],
     threshold=0.8
 )
@@ -224,6 +214,10 @@ refiner = MelleaRefine(
 result = refiner(text="Long article about AI...")
 # Iteratively refines until requirements are met
 ```
+
+### Choosing the Right Strategy
+
+Reach for **RejectionSamplingStrategy** when you want the default — regenerate until requirements pass. Use **MelleaBestOfN** when compute is cheap and you want the best of N attempts at higher temperature. Choose **MelleaRefine** when the output needs to be improved, not resampled.
 
 ## How Mellea Enhances DSPy Patterns
 
@@ -382,7 +376,7 @@ result = doc_gen(code="def factorial(n): ...")
 | -------------------------- | ----------------------------- | ------------------------------------------ |
 | **Output Structure**       | Signatures define structure   | ✓ Same                                     |
 | **Output Validation**      | Not built-in                  | ✓ Automatic requirements validation        |
-| **Semantic Checks**        | Not available                 | ✓ LLM-as-a-judge validation                |
+| **Semantic Checks**        | Not available                 | ✓ Rule-based + LLM-driven validation       |
 | **Runtime Verification**   | Not available                 | ✓ BestOfN and Refine strategies            |
 | **Quality Guarantees**     | Hope for the best             | ✓ Requirements must be met                 |
 | **Validation Feedback**    | None                          | ✓ Detailed pass/fail results               |
