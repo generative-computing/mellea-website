@@ -701,6 +701,13 @@ a {
   color: var(--text-secondary);
 }
 
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem auto;
+}
+
 .prose strong {
   color: var(--text-primary);
   font-weight: 600;
