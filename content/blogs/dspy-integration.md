@@ -176,6 +176,12 @@ Single generations can fail. BestOfN generates N candidates and picks the one th
 ```python
 from mellea_dspy import MelleaBestOfN
 
+# Configure LM
+lm = MelleaLM(
+    mellea_session=m
+)
+dspy.configure(lm=lm)
+
 # Define your DSPy module
 qa = dspy.ChainOfThought("question -> answer")
 
