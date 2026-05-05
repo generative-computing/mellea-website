@@ -177,9 +177,7 @@ Single generations can fail. BestOfN generates N candidates and picks the one th
 from mellea_dspy import MelleaBestOfN
 
 # Configure LM
-lm = MelleaLM(
-    mellea_session=m
-)
+lm = MelleaLM(mellea_session=m)
 dspy.configure(lm=lm)
 
 # Define your DSPy module
