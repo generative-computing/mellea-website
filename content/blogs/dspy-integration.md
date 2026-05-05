@@ -97,6 +97,13 @@ DSPy gives you structure; Mellea adds validation:
 ### The Core Innovation: Signatures + Requirements
 
 ```python
+lm = MelleaLM(
+    mellea_session=m,
+    requirements=["Must be concise", "Must be accurate", "Must be helpful"],
+    strategy=RejectionSamplingStrategy(loop_budget=3)
+)
+dspy.configure(lm=lm)
+
 # Define structured signature - requirements automatically applied
 qa = dspy.Predict("question -> answer")
 result = qa(question="What is the capital of France?")
