@@ -7,12 +7,15 @@ import ImageCompare from '@/components/ImageCompare';
 import InstallCommand from '@/components/InstallCommand';
 import CodeShowcase from '@/components/CodeShowcase';
 import { getAllBlogs } from '@/lib/blogs';
+import { getAllNews } from '@/lib/news';
+import NewsHighlights from '@/components/NewsHighlights';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 export default function HomePage() {
   const blogs = getAllBlogs();
   const recent = blogs.slice(0, 3);
+  const news = getAllNews();
 
   return (
     <>
@@ -51,23 +54,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="feature-strip">
-            <div className="feature-item">
-              <span className="feature-number">Unit</span>
-              <span className="feature-label">testable</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-number">100%</span>
-              <span className="feature-label">Open source</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-number">Typed</span>
-              <span className="feature-label">constrained output</span>
-            </div>
-            <div className="feature-item">
-              <span className="feature-number">Any</span>
-              <span className="feature-label">LLM provider</span>
-            </div>
+          <div className="news-section">
+            <p className="news-section-label">Latest News</p>
+            <NewsHighlights items={news} />
           </div>
         </div>
       </section>
