@@ -382,11 +382,13 @@ catalog or an explicit `unknown`:
 ![Line-item material list with per-row prices or unknown](/images/small-models-rock/chart2.png)
 
 The grand total ($7,885.04) is the sum of *known* items only. Lumber items
-the answerability adapter couldn't confidently price stay as `unknown`
-rather than as fabricated numbers, and the lumber row in the top-line
+have no catalog wired up in this run, so they short-circuit to `unknown`
+before the adapter is ever called — and the lumber row in the top-line
 table is annotated *excluding unknown items* so the gap is visible at a
-glance. That's the property worth checking — not that every row gets a
-price, but that unsupported rows fail loudly.
+glance. The same outcome applies when a catalog is present but the
+answerability adapter isn't confident: the row stays `unknown` rather
+than getting a fabricated price. That's the property worth checking —
+not that every row gets a price, but that unsupported rows fail loudly.
 
 ## Small Models, Production-Ready Output
 
