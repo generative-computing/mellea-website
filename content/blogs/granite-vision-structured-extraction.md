@@ -46,7 +46,7 @@ on Ollama. No API key, no cloud bill:
 
 ```bash
 ollama pull granite-vision-4.1
-pip install mellea pillow
+uv add mellea pillow
 ```
 
 ## The problem
@@ -71,7 +71,7 @@ print(result)
 
 Output:
 
-```
+```text
 "This receipt is from Grove Street Deli in Portland, dated March 15th 2026.
  It shows two drip coffees at $3.50 each, an avocado toast for $10.50, and
  a blueberry muffin for $3.95, with a $1.00 loyalty discount applied. The
@@ -169,7 +169,7 @@ Line-item arithmetic is the natural case here: the items should sum to the subto
 discount makes this a real test — the model has to correctly treat `-$1.00` as negative:
 
 ```python
-from mellea.stdlib.requirements import req
+from mellea.stdlib.requirements import req, simple_validate
 from mellea.stdlib.sampling import RejectionSamplingStrategy
 
 
@@ -187,7 +187,7 @@ result = m.instruct(
     format=Receipt,
     requirements=[
         "total must be a positive number",
-        req("line items match subtotal", validation_fn=check_line_totals),
+        req("line items match subtotal", validation_fn=simple_validate(check_line_totals)),
     ],
     strategy=RejectionSamplingStrategy(loop_budget=3),
 )
@@ -217,3 +217,27 @@ m = MelleaSession(OpenAIBackend("ibm-granite/granite-vision-4.1-4b",
 
 The `instruct` call — `images=`, `format=`, `requirements=`, `strategy=` — is identical
 across all backends.
+
+## What we covered
+
+- `ImageBlock.from_pil_image()` loads any PIL image for use with vision-capable backends
+- `format=` on `m.instruct()` uses constrained decoding to guarantee a valid Pydantic object
+  back — no JSON parsing errors to handle
+- `requirements=` adds plain-English semantic constraints with automatic repair on failure
+- `simple_validate(fn)` wraps a `str → (bool, str)` function into the form `validation_fn=`
+  expects, enabling programmatic checks like arithmetic verification
+- The whole pipeline — structured output, requirements, IVR — composes with any backend;
+  only the session setup changes
+
+**Going further:**
+
+- [Use Images and Vision Models](https://docs.mellea.ai/how-to/use-images-and-vision) —
+  image loading, backend configuration, multi-image prompts
+- [Enforce Structured Output](https://docs.mellea.ai/how-to/enforce-structured-output) —
+  `format=`, `@generative`, and constrained decoding in detail
+- [The Requirements System](https://docs.mellea.ai/concepts/requirements-system) —
+  how `Requirement`, `ValidationResult`, and `simple_validate` work together
+- [Instruct-Validate-Repair](https://docs.mellea.ai/concepts/instruct-validate-repair) —
+  the IVR loop, sampling strategies, and repair prompts explained
+- [Write Custom Verifiers](https://docs.mellea.ai/how-to/write-custom-verifiers) —
+  validation functions beyond simple string checks
