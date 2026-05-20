@@ -165,19 +165,20 @@ If you have a concrete verifiable property — something independent of the imag
 `validation_fn`. Mellea runs it on each attempt and feeds the failure reason back into the
 repair prompt if it fails.
 
-Line-item arithmetic is the natural case here: the items should sum to the subtotal. The
-discount makes this a real test — the model has to correctly treat `-$1.00` as negative:
+Receipt arithmetic is the natural case here: subtotal plus tax should equal the total.
+The model extracts all three values independently, so it's possible for them to be
+internally inconsistent even when each looks plausible in isolation:
 
 ```python
 from mellea.stdlib.requirements import req, simple_validate
 from mellea.stdlib.sampling import RejectionSamplingStrategy
 
 
-def check_line_totals(json_str: str) -> tuple[bool, str]:
+def check_totals_add_up(json_str: str) -> tuple[bool, str]:
     r = Receipt.model_validate_json(json_str)
-    computed = round(sum(i.quantity * i.unit_price for i in r.items), 2)
-    if abs(computed - r.subtotal) > 0.01:
-        return False, f"line items sum to ${computed:.2f}, subtotal shows ${r.subtotal:.2f}"
+    computed = round(r.subtotal + r.tax, 2)
+    if abs(computed - r.total) > 0.01:
+        return False, f"subtotal {r.subtotal} + tax {r.tax} = {computed}, total shows {r.total}"
     return True, ""
 
 
@@ -187,7 +188,7 @@ result = m.instruct(
     format=Receipt,
     requirements=[
         "total must be a positive number",
-        req("line items match subtotal", validation_fn=simple_validate(check_line_totals)),
+        req("subtotal + tax = total", validation_fn=simple_validate(check_totals_add_up)),
     ],
     strategy=RejectionSamplingStrategy(loop_budget=3),
 )
@@ -218,16 +219,21 @@ m = MelleaSession(OpenAIBackend("ibm-granite/granite-vision-4.1-4b",
 The `instruct` call — `images=`, `format=`, `requirements=`, `strategy=` — is identical
 across all backends.
 
-## What we covered
+## From narration to data
 
-- `ImageBlock.from_pil_image()` loads any PIL image for use with vision-capable backends
-- `format=` on `m.instruct()` uses constrained decoding to guarantee a valid Pydantic object
-  back — no JSON parsing errors to handle
-- `requirements=` adds plain-English semantic constraints with automatic repair on failure
-- `simple_validate(fn)` wraps a `str → (bool, str)` function into the form `validation_fn=`
-  expects, enabling programmatic checks like arithmetic verification
-- The whole pipeline — structured output, requirements, IVR — composes with any backend;
-  only the session setup changes
+The gap this closes is a real one. Vision models are already good at reading documents —
+they just default to telling you about them rather than handing you the data. Mellea's
+`format=` parameter shifts that: the return type becomes a contract, constrained decoding
+enforces it, and you get a typed Python object the rest of your code can actually use.
+
+`requirements=` and `validation_fn` extend that contract beyond structure. Plain-English
+requirements catch semantic problems the type system can't — negative totals, badly
+formatted dates, values that are plausible individually but wrong together. A `validation_fn`
+pushes further still, running the kind of check you'd write in post-processing anyway and
+folding it directly into the generation loop rather than bolting it on after.
+
+All of this composes with any backend. Swap from a local model to a cloud endpoint, or to a
+different local runtime, and the extraction logic doesn't change — only the session setup does.
 
 **Going further:**
 
