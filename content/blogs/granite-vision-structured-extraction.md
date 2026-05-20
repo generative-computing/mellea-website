@@ -19,14 +19,23 @@ There's a cleaner path.
 
 > **EDITORIAL NOTE — remove before publishing**
 >
-> Granite Vision 4.1 is not yet in the Ollama library. The blog is written for Ollama
-> (that's the final published form — don't change the code examples). For testing and review,
+> **Status:** Draft — scenario is still being iterated to produce a compelling IVR repair
+> demonstration. Code structure and Mellea API usage are stable; receipt values and the exact
+> IVR check may change before publication.
+>
+> **Model availability:** This blog is written for Ollama (final published form — don't change
+> the code examples). Granite Vision 4.1 is not yet in the Ollama library, but is expected
+> there soon; it is also available in safetensors form on Hugging Face. For testing and review,
 > run the code against mlx-vlm instead:
 >
 > ```bash
-> pip install mlx-vlm mellea pillow
-> python -m mlx_vlm.server --model ibm-granite/granite-vision-4.1-4b
-> # Serves at http://localhost:8080/v1 — model downloads (~3 GB) on first run
+> mkdir granite-vision-test && cd granite-vision-test
+> uv init --bare --python 3.12
+> uv add mlx-vlm mellea pillow
+> uv run python -m mlx_vlm.server --model ibm-granite/granite-vision-4.1-4b
+> # Serves at http://localhost:8080/v1 — model downloads (~8 GB) on first run.
+> # This is the full bfloat16 safetensors weights, not a quantized GGUF —
+> # expect roughly double the size you'd see from an Ollama pull.
 > ```
 >
 > Then change the session setup in each code block from:
@@ -51,7 +60,8 @@ uv add mellea pillow
 
 ## The problem
 
-Here's the receipt we'll work with — a small deli order with a loyalty discount:
+Here's the receipt we'll work with — a deli order with non-trivial quantities and a
+partially smudged subtotal (thermal printer wear):
 
 ![Sample deli receipt](/images/blogs/granite-vision-structured-extraction-receipt.jpg)
 
@@ -72,10 +82,11 @@ print(result)
 Output:
 
 ```text
-"This receipt is from Grove Street Deli in Portland, dated March 15th 2026.
- It shows two drip coffees at $3.50 each, an avocado toast for $10.50, and
- a blueberry muffin for $3.95, with a $1.00 loyalty discount applied. The
- subtotal comes to $20.45 with 8.5% tax of $1.74, for a total of $22.19."
+"This receipt is from Grove Street Deli in Portland, dated March 22nd 2026,
+ order #2231. It lists three cold brew coffees at $4.75 each, two grain bowls
+ at $12.95 each, four granola bars at $2.95 each, three oat milk add-ons at
+ $0.75 each, one avocado toast at $11.50, and two blueberry muffins at $3.95
+ each. The subtotal is $73.60, tax at 8.5% is $6.26, for a total of $79.86."
 ```
 
 Readable. Useless as data. You can't do `result.total` or `result.items[0].unit_price`.
@@ -115,17 +126,13 @@ result = m.instruct("Extract the receipt data.", images=[img], format=Receipt)
 receipt = Receipt.model_validate_json(str(result))
 
 print(receipt.vendor)            # "Grove Street Deli"
-print(receipt.total)             # 22.19
-print(receipt.items[0].quantity) # 2
+print(receipt.total)             # 79.86
+print(receipt.items[0].quantity) # 3
 ```
 
 `ImageBlock.from_pil_image()` converts any PIL image to the base64 PNG the backends expect.
 `format=Receipt` switches the model into constrained decoding. `model_validate_json` gives you
 a fully typed Python object with IDE autocomplete on every field.
-
-Notice the discount line on the receipt (`unit_price: -1.00`). The model needs to handle
-negative values correctly — structured output forces it to produce a proper float, which we
-can verify programmatically.
 
 ## When the type isn't enough
 
@@ -147,7 +154,7 @@ result = m.instruct(
     requirements=[
         "total must be a positive number",
         "date must be in ISO 8601 format (YYYY-MM-DD)",
-        "each item's unit_price must be positive except for discounts",
+        "each item's unit_price must be a positive number",
     ],
     strategy=RejectionSamplingStrategy(loop_budget=3),
 )
@@ -156,7 +163,7 @@ receipt = Receipt.model_validate_json(str(result))
 
 Worth being clear about the limit: requirements validate the *extracted values*, not whether
 they match what's physically in the image. A requirement catches the model hallucinating a
-negative total; it can't verify the number on screen was $22.19 rather than $21.19. For that
+negative total; it can't verify the number on screen was $79.86 rather than $78.86. For that
 you need an external check.
 
 ## When to reach for IVR
@@ -165,20 +172,22 @@ If you have a concrete verifiable property — something independent of the imag
 `validation_fn`. Mellea runs it on each attempt and feeds the failure reason back into the
 repair prompt if it fails.
 
-Receipt arithmetic is the natural case here: subtotal plus tax should equal the total.
-The model extracts all three values independently, so it's possible for them to be
-internally inconsistent even when each looks plausible in isolation:
+Receipt arithmetic is the natural case here: the sum of every line item (quantity × unit price)
+must equal the subtotal. The model reads each line independently, so with non-round quantities
+like `3 × $4.75` and `4 × $2.95`, it's easy for the accumulated total to drift — especially
+when the printed subtotal is partially obscured. The validation function catches it and tells
+the model exactly what went wrong:
 
 ```python
 from mellea.stdlib.requirements import req, simple_validate
 from mellea.stdlib.sampling import RejectionSamplingStrategy
 
 
-def check_totals_add_up(json_str: str) -> tuple[bool, str]:
+def check_line_items(json_str: str) -> tuple[bool, str]:
     r = Receipt.model_validate_json(json_str)
-    computed = round(r.subtotal + r.tax, 2)
-    if abs(computed - r.total) > 0.01:
-        return False, f"subtotal {r.subtotal} + tax {r.tax} = {computed}, total shows {r.total}"
+    computed = round(sum(i.quantity * i.unit_price for i in r.items), 2)
+    if abs(computed - r.subtotal) > 0.01:
+        return False, f"line items sum to {computed}, subtotal shows {r.subtotal}"
     return True, ""
 
 
@@ -188,12 +197,16 @@ result = m.instruct(
     format=Receipt,
     requirements=[
         "total must be a positive number",
-        req("subtotal + tax = total", validation_fn=simple_validate(check_totals_add_up)),
+        req("line items sum to subtotal", validation_fn=simple_validate(check_line_items)),
     ],
     strategy=RejectionSamplingStrategy(loop_budget=3),
 )
 receipt = Receipt.model_validate_json(str(result))
 ```
+
+When the check fails, Mellea feeds the error string back into the next attempt —
+`"line items sum to 73.60, subtotal shows 70.60"` — so the model knows which numbers
+to revisit rather than starting from scratch.
 
 The general progression: `format=` alone → `requirements=` for semantic constraints →
 `validation_fn` when you have something concrete to verify programmatically. Most image
