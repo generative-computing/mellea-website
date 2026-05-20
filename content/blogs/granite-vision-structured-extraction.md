@@ -145,7 +145,7 @@ it's just wrong.
 Mellea repairs and retries with the failure reason fed back into the prompt:
 
 ```python
-from mellea.stdlib.sampling import RejectionSamplingStrategy
+from mellea.stdlib.sampling import RepairTemplateStrategy
 
 result = m.instruct(
     "Extract the receipt data.",
@@ -156,7 +156,7 @@ result = m.instruct(
         "date must be in ISO 8601 format (YYYY-MM-DD)",
         "each item's unit_price must be a positive number",
     ],
-    strategy=RejectionSamplingStrategy(loop_budget=3),
+    strategy=RepairTemplateStrategy(loop_budget=3),
 )
 receipt = Receipt.model_validate_json(str(result))
 ```
@@ -180,7 +180,7 @@ the model exactly what went wrong:
 
 ```python
 from mellea.stdlib.requirements import req, simple_validate
-from mellea.stdlib.sampling import RejectionSamplingStrategy
+from mellea.stdlib.sampling import RepairTemplateStrategy
 
 
 def check_line_items(json_str: str) -> tuple[bool, str]:
@@ -199,7 +199,7 @@ result = m.instruct(
         "total must be a positive number",
         req("line items sum to subtotal", validation_fn=simple_validate(check_line_items)),
     ],
-    strategy=RejectionSamplingStrategy(loop_budget=3),
+    strategy=RepairTemplateStrategy(loop_budget=3),
 )
 receipt = Receipt.model_validate_json(str(result))
 ```
@@ -245,10 +245,17 @@ formatted dates, values that are plausible individually but wrong together. A `v
 pushes further still, running the kind of check you'd write in post-processing anyway and
 folding it directly into the generation loop rather than bolting it on after.
 
+One thing worth being clear about: detection and repair are separate guarantees. The
+validation layer will always surface a mismatch — if the arithmetic is wrong, you'll know.
+Repair success depends on the model's capacity. A 4b model working from a partially obscured
+image will not always correct itself in three tries; a larger model usually will. The value of
+wiring the check programmatically isn't that repair always succeeds — it's that a silent wrong
+answer is no longer possible.
+
 All of this composes with any backend. Swap from a local model to a cloud endpoint, or to a
 different local runtime, and the extraction logic doesn't change — only the session setup does.
 
-**Going further:**
+## Going further
 
 - [Use Images and Vision Models](https://docs.mellea.ai/how-to/use-images-and-vision) —
   image loading, backend configuration, multi-image prompts
