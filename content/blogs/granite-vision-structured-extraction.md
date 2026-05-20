@@ -53,7 +53,7 @@ pip install mellea pillow
 
 Here's the receipt we'll work with — a small deli order with a loyalty discount:
 
-![Sample deli receipt](/images/blogs/receipt-sample.jpg)
+![Sample deli receipt](/images/blogs/granite-vision-structured-extraction-receipt.jpg)
 
 Start with the naïve approach: ask the model to describe it.
 
