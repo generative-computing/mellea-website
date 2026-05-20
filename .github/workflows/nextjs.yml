@@ -117,8 +117,7 @@ jobs:
     needs: [test-unit, test-e2e, link-check]
     # Allow deploy when link-check was skipped via the override mechanisms above.
     if: |
-      github.ref == 'refs/heads/main' &&
-      (needs.link-check.result == 'success' || needs.link-check.result == 'skipped')
+      needs.link-check.result == 'success' || needs.link-check.result == 'skipped'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -126,3 +125,4 @@ jobs:
     steps:
       - uses: actions/deploy-pages@v5
         id: deployment
+        if: github.ref == 'refs/heads/main'
