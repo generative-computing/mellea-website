@@ -28,6 +28,7 @@
   --accent-cyan: #33b1ff;
   --accent-green: #42be65;
   --accent-purple: #a56eff;
+  --accent-brown: #975d05;
 
   --header-bg: rgba(10, 10, 10, 0.92);
   --code-bg: #0d1117;
@@ -59,6 +60,7 @@
     --accent-cyan: #0072c3;
     --accent-green: #198038;
     --accent-purple: #7c3aed;
+    --accent-brown: #d68d20;
 
     --header-bg: rgba(255, 255, 255, 0.92);
     --code-bg: #f4f4f4;
@@ -849,7 +851,6 @@ a {
   text-decoration: underline;
 }
 
-/* ── Stats / Feature strip ── */
 /* ── News Highlights ── */
 .news-section {
   margin: 3rem -2rem 0;
@@ -925,6 +926,11 @@ a {
 .news-card[data-category="community"] .news-card-category {
   color: var(--accent-cyan);
   background: rgba(51, 177, 255, 0.1);
+}
+
+.news-card[data-category="release"] .news-card-category {
+  color: var(--accent-brown);
+  background: rgba(248, 119, 20, 0.1);
 }
 
 .news-card-date {
