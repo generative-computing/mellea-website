@@ -162,8 +162,8 @@ sufficient. A `check()` that fails with a bare `AssertionError` and no
 message gives the repair prompt nothing to work with. The model sees "your
 code failed a test" and is left to guess which one and how.
 
-That's what QHE assertions still look like today. An
-[open PR](https://github.com/qiskit-community/qiskit-human-eval/pull/88)
+That's what QHE assertions looked like at the time of this benchmark. A
+[QHE PR](https://github.com/qiskit-community/qiskit-human-eval/pull/88)
 adds f-string messages to every assertion, and we benchmarked against that PR:
 
 ```python
@@ -237,8 +237,8 @@ that only covers part of your code's intent, the lift in our benchmark was
 were previously unreachable. The integration cost was a list of
 `Requirement` objects.
 
-The full benchmark code, results, and analysis are in my
-[toolbox repo](https://github.com/ajbozarth/toolbox/tree/main/mellea/qiskit_code_validation/benchmarking#phase-4--check-as-live-ivr-validator-v3-qiskit-model-lsf).
+The full benchmark code, results, and analysis are
+[on GitHub](https://github.com/ajbozarth/toolbox/tree/main/mellea/qiskit_code_validation/benchmarking#phase-4--check-as-live-ivr-validator-v3-qiskit-model-lsf).
 The Qiskit IVR example is in the
 [Mellea repo](https://github.com/generative-computing/mellea/tree/main/docs/examples/instruct_validate_repair/qiskit_code_validation).
 If your codebase has a test suite, a runtime check, or any validator that
