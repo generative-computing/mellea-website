@@ -173,7 +173,7 @@ commits, use `git rebase --signoff <base>` and force-push.
 <details>
 <summary>Developer Certificate of Origin v1.1 (full text)</summary>
 
-```
+```text
 Developer Certificate of Origin
 Version 1.1
 
