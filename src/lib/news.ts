@@ -11,7 +11,7 @@ export interface NewsItem {
   category: string;
   excerpt: string;
   url: string;
-  source: string;
+  source?: string;
 }
 
 export function getAllNews(): NewsItem[] {
