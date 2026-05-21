@@ -89,6 +89,8 @@ Output:
  each. The subtotal is $73.60, tax at 8.5% is $6.26, for a total of $79.86."
 ```
 
+Output will vary — models describe the same receipt differently. The structure of the problem is the same.
+
 Readable. Useless as data. You can't do `result.total` or `result.items[0].unit_price`.
 
 ## The return type is the extraction schema
@@ -234,26 +236,15 @@ across all backends.
 
 ## From narration to data
 
-The gap this closes is a real one. Vision models are already good at reading documents —
-they just default to telling you about them rather than handing you the data. Mellea's
-`format=` parameter shifts that: the return type becomes a contract, constrained decoding
-enforces it, and you get a typed Python object the rest of your code can actually use.
+Vision models are already good at reading documents — they just default to telling you about
+them rather than handing you the data. `format=` shifts that.
 
-`requirements=` and `validation_fn` extend that contract beyond structure. Plain-English
-requirements catch semantic problems the type system can't — negative totals, badly
-formatted dates, values that are plausible individually but wrong together. A `validation_fn`
-pushes further still, running the kind of check you'd write in post-processing anyway and
-folding it directly into the generation loop rather than bolting it on after.
-
-One thing worth being clear about: detection and repair are separate guarantees. The
-validation layer will always surface a mismatch — if the arithmetic is wrong, you'll know.
-Repair success depends on the model's capacity. A 4b model working from a partially obscured
-image will not always correct itself in three tries; a larger model usually will. The value of
-wiring the check programmatically isn't that repair always succeeds — it's that a silent wrong
-answer is no longer possible.
-
-All of this composes with any backend. Swap from a local model to a cloud endpoint, or to a
-different local runtime, and the extraction logic doesn't change — only the session setup does.
+The more important thing to understand about `requirements=` and `validation_fn` is what they
+guarantee. Detection is reliable: the validation layer always surfaces a mismatch — if the
+arithmetic is wrong, you'll know. Repair depends on model capacity. A 4b model working from a
+partially obscured image will not always correct itself in three tries; a larger model usually
+will. The point of wiring the check programmatically is that a silent wrong answer is no longer
+possible. Repair success is a separate question.
 
 ## Going further
 
