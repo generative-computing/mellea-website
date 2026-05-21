@@ -1,4 +1,3 @@
-# Mellea Website
 
 Landing page and developer blog for **[Mellea](https://github.com/generative-computing/mellea)** — a composable, multi-agent framework for building reliable AI agents at production scale.
 
