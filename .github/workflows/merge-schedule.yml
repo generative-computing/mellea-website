@@ -1,11 +1,12 @@
-name: Scheduled Merge
+name: Scheduled Merge Reminder
 
-# Enables scheduling a PR merge by adding `/schedule YYYY-MM-DD` to the PR body.
-# The PR must already be approved; this workflow only enables auto-merge, which
-# then goes through the normal merge queue like any other PR.
+# Posts a reminder comment on a PR when its scheduled merge date arrives,
+# triggered by `/remind YYYY-MM-DD` (or the legacy `/schedule YYYY-MM-DD`)
+# in the PR body. The author then enables auto-merge manually so the
+# merge_group event fires under a human actor and CI runs on the queued ref.
 #
 # Usage: add this line anywhere in the PR description:
-#   /schedule 2026-05-15
+#   /remind 2026-05-15
 #
 # Runs daily at 9–10am Eastern (10am EDT / 9am EST). Use workflow_dispatch to trigger immediately.
 
@@ -15,9 +16,8 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
   pull-requests: write
 
 jobs:
-  merge-scheduled-prs:
-    uses: generative-computing/.github/.github/workflows/merge-schedule.yml@b8cf2e2d426256f94f9d908e5fc1bcc134b776a1
+  remind-scheduled-prs:
+    uses: generative-computing/.github/.github/workflows/merge-schedule.yml@d04be3163e78797e20d222e23addb93d74729750

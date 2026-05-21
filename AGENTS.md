@@ -141,15 +141,17 @@ tags: ["tag1", "tag2", "etc"]
 | `excerpt` | Yes      | Shown on cards and listing page |
 | `tags`    | No       | Array of strings                |
 
+Set `date` to a future date matching when the post will go live, not when it was drafted — PRs typically take days to review.
+
 Use **US spelling** throughout (`color` not `colour`, `organized` not `organised`). This applies regardless of the author's locale — consistency across posts matters more than author preference.
 
-**Scheduling a publish date** — if you want to delay merging until a specific date, optionally add this line anywhere in the PR description:
+**Publish-date reminder** — include this line in the PR description, matching the front matter `date`:
 
 ```text
-/schedule 2026-05-15
+/remind 2026-05-15
 ```
 
-The PR must be approved before the scheduled date; the workflow runs daily at ~9am Eastern and will add the PR to the merge queue when the date arrives.
+A workflow runs daily at ~9am Eastern and posts a reminder comment on the PR once the date arrives, asking the author to enable auto-merge. The PR should be approved by then so it can be enqueued immediately.
 
 Verify with `npm run build` — no config changes or code edits needed.
 

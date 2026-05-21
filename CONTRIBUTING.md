@@ -42,13 +42,13 @@ There are two distinct ways to contribute:
 5. Open a PR against `main` on this repository. A member of the
    **mellea-maintainers** team must approve the PR before it can be merged.
 
-   To delay merging until a specific publish date, optionally add this line anywhere in the PR description:
+   Include this line in the PR description to get a reminder when the post is due to publish:
 
    ```text
-   /schedule 2026-05-15
+   /remind 2026-05-15
    ```
 
-   The PR must be approved before the scheduled date. A workflow runs daily at ~9am Eastern and will add the PR to the merge queue automatically when the date arrives.
+   Use the same date as the front matter `date` field. A workflow runs daily at ~9am Eastern and posts a reminder comment on the PR once the date arrives, asking you to enable auto-merge. The PR should be approved by then so it can be enqueued immediately.
 
 6. Once merged, the CI pipeline builds and deploys the site automatically —
    your post will be live at `mellea.ai/blogs/your-slug` within a few minutes.
@@ -62,6 +62,8 @@ There are two distinct ways to contribute:
 | `author`      | Yes      | Author display name                                  |
 | `excerpt`     | Yes      | Short summary shown on cards and the listing page    |
 | `tags`        | No       | Array of tag strings                                 |
+
+Set `date` to a future date that reflects when the post will go live, not when it was drafted — PRs typically take days to review.
 
 ### Adding images
 
