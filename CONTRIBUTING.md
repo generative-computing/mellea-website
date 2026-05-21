@@ -1,8 +1,9 @@
 # Contributing
 
-There are two distinct ways to contribute:
+There are three ways to contribute:
 
 - **Writing a blog post** — add a Markdown file and verify it renders. [Jump to that section.](#adding-a-blog-post)
+- **Adding a news highlight** — add a short Markdown file to surface events, releases, or features. [Jump to that section.](#adding-a-news-item)
 - **Changing the site** — UI, CI, or dependencies. Requires a full dev setup. [Jump to that section.](#development-setup)
 
 ---
@@ -72,6 +73,71 @@ Place image files in `public/images/` and reference them with an absolute path f
 ```
 
 No config changes or code edits are needed — just the Markdown file and any images.
+
+---
+
+## Adding a news item
+
+News items are short highlights that appear on the landing page to draw attention to things that matter to users — upcoming events (conferences, meetups, webinars), new releases, notable integrations or features, community milestones, or any other timely announcement. Unlike blog posts, news items link out to an external URL and do not have their own page on the site.
+
+### Steps
+
+1. Fork the repository.
+
+2. Create a new file in `content/news/your-slug.md`.
+   The filename is internal only (not a public URL), but keep it descriptive.
+
+3. Fill in the YAML front matter:
+
+   ```md
+   ---
+   title: "Short Headline"
+   date: "YYYY-MM-DD"
+   category: "Release"
+   excerpt: "One sentence description shown on the card."
+   url: "https://example.com/full-link"
+   source: "GitHub"
+   ---
+   ```
+
+   No markdown body content is needed — only the front matter is used.
+
+4. Verify locally:
+
+   ```bash
+   npm install
+   npm run build   # must succeed with no errors
+   npm run dev     # check the landing page at http://localhost:4000
+   ```
+
+5. Open a PR against `main`. A member of the **mellea-maintainers** team must approve before merge.
+
+6. Once merged, the news item will appear in the "Latest News" section on the landing page within a few minutes.
+
+### News front matter fields
+
+| Field      | Required | Description                                                                  |
+| ---------- | -------- | ---------------------------------------------------------------------------- |
+| `title`    | Yes      | Short headline for the card                                                  |
+| `date`     | Yes      | Date (`YYYY-MM-DD`), used for sort order                                     |
+| `category` | Yes      | One of: `Release`, `Event`, `Integration`, `Community`, `Feature`            |
+| `excerpt`  | Yes      | One sentence shown on the card                                               |
+| `url`      | Yes      | External link target (must be a full URL starting with `https://`)           |
+| `source`   | No       | Label shown on the link (e.g. "GitHub", "PyCon"); defaults to "Read more"    |
+
+### Categories
+
+Each category gets a distinct accent color on the card to help users scan at a glance:
+
+| Category      | Color  | Use for                                        |
+| ------------- | ------ | ---------------------------------------------- |
+| `Release`     | Blue   | New versions, changelogs                       |
+| `Event`       | Green  | Conferences, meetups, webinars                 |
+| `Integration` | Purple | New framework or tool integrations             |
+| `Community`   | Cyan   | Community milestones, spotlights               |
+| `Feature`     | Blue   | Notable new capabilities                       |
+
+No config changes or code edits are needed — just the Markdown file.
 
 ---
 

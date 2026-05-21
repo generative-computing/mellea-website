@@ -74,15 +74,21 @@ test('GitHub stats section renders', async ({ page }) => {
   await expect(hero.getByText('Forks')).toBeVisible();
 });
 
-// ── Feature Strip ──
+// ── News Highlights ──
 
-test('feature strip shows key attributes', async ({ page }) => {
+test('news section renders with cards linking externally', async ({ page }) => {
   await page.goto('/');
   const hero = page.getByRole('region', { name: /Hero/i });
-  // Use text unique to the feature strip (not shared with eyebrow or body copy)
-  await expect(hero.getByText('100%')).toBeVisible();
-  await expect(hero.getByText(/constrained output/i)).toBeVisible();
-  await expect(hero.getByText(/LLM provider/i)).toBeVisible();
+  await expect(hero.getByText('Latest News')).toBeVisible();
+
+  const cards = hero.locator('.news-card');
+  const count = await cards.count();
+  expect(count).toBeGreaterThanOrEqual(1);
+
+  for (const card of await cards.all()) {
+    await expect(card).toHaveAttribute('target', '_blank');
+    await expect(card).toHaveAttribute('href', /^https?:\/\//);
+  }
 });
 
 // ── How It Works Section ──

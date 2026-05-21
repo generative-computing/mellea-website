@@ -10,6 +10,8 @@ This is the **Next.js website** for Mellea — the landing page and developer bl
 
 **Adding or editing a blog post** → go to [§ Adding Blog Posts](#8-adding-blog-posts). No dev environment, no code changes needed.
 
+**Adding a news highlight** → go to [§ Adding News Items](#9-adding-news-items). No dev environment, no code changes needed.
+
 **Changing the site** (UI, components, CI, dependencies) → read everything below.
 
 ---
@@ -38,6 +40,7 @@ npm run build         # Static export to ./out/
 | `src/lib/` | Server-side utilities (blog parsing, etc.) |
 | `src/config/` | Site-wide configuration (`site.ts`) |
 | `content/blogs/` | Markdown blog posts with YAML front matter |
+| `content/news/` | Markdown news/highlights items with YAML front matter |
 | `public/` | Static assets (images, CNAME) |
 | `tests/unit/` | Vitest unit tests |
 | `tests/e2e/` | Playwright E2E tests |
@@ -97,7 +100,7 @@ If you rename or remove a CSS class, check `tests/e2e/` for selectors that refer
 
 ### Data flow
 
-- **Build-time** (Server Components): `getAllBlogs()` → landing page + blog listing; `getAllBlogSlugs()` + `getBlog(slug)` → individual post pages
+- **Build-time** (Server Components): `getAllBlogs()` → landing page + blog listing; `getAllBlogSlugs()` + `getBlog(slug)` → individual post pages; `getAllNews()` → landing page news highlights
 - **Client-side** (Client Components): GitHub API stats via `useGitHubStats` hook on mount; image compare slider via `react-compare-slider`
 
 ### Styling
@@ -153,7 +156,37 @@ The PR must be approved before the scheduled date; the workflow runs daily at ~9
 
 Verify with `npm run build` — no config changes or code edits needed.
 
-## 9. Common Issues
+## 9. Adding News Items
+
+Drop a `.md` file in `content/news/`. News items appear in the "Latest News" highlights strip on the landing page hero section, sorted by date descending. Unlike blog posts, news items link to an external URL (opened in a new tab) — they do not have their own page on the site.
+
+Required front matter:
+
+```md
+---
+title: "Short Headline"
+date: "YYYY-MM-DD"
+category: "Release"
+excerpt: "One sentence description shown on the card."
+url: "https://example.com/full-link"
+source: "GitHub"
+---
+```
+
+| Field      | Required | Notes                                                                        |
+| ---------- | -------- | ---------------------------------------------------------------------------- |
+| `title`    | Yes      | Short headline for the card                                                  |
+| `date`     | Yes      | `YYYY-MM-DD`, used for sorting                                               |
+| `category` | Yes      | One of: `Release`, `Event`, `Integration`, `Community`, `Feature`            |
+| `excerpt`  | Yes      | One sentence shown on the card                                               |
+| `url`      | Yes      | External link (must be a full URL)                                           |
+| `source`   | No       | Display label for the link (e.g. "GitHub", "PyCon"); defaults to "Read more" |
+
+The `category` field controls the visual styling — each category gets a distinct accent color on the card's left border and category badge. No markdown body content is needed (only frontmatter is used).
+
+Verify with `npm run build` — no config changes or code edits needed.
+
+## 10. Common Issues
 
 | Problem | Fix |
 | --- | --- |
