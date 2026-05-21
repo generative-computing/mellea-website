@@ -173,13 +173,13 @@ source: "GitHub"
 ---
 ```
 
-| Field      | Required | Notes                                                                 |
-| ---------- | -------- | --------------------------------------------------------------------- |
-| `title`    | Yes      | Short headline for the card                                           |
-| `date`     | Yes      | `YYYY-MM-DD`, used for sorting                                        |
-| `category` | Yes      | One of: `Release`, `Event`, `Integration`, `Community`, `Feature`     |
-| `excerpt`  | Yes      | One sentence shown on the card                                        |
-| `url`      | Yes      | External link (must be a full URL)                                    |
+| Field      | Required | Notes                                                                        |
+| ---------- | -------- | ---------------------------------------------------------------------------- |
+| `title`    | Yes      | Short headline for the card                                                  |
+| `date`     | Yes      | `YYYY-MM-DD`, used for sorting                                               |
+| `category` | Yes      | One of: `Release`, `Event`, `Integration`, `Community`, `Feature`            |
+| `excerpt`  | Yes      | One sentence shown on the card                                               |
+| `url`      | Yes      | External link (must be a full URL)                                           |
 | `source`   | No       | Display label for the link (e.g. "GitHub", "PyCon"); defaults to "Read more" |
 
 The `category` field controls the visual styling — each category gets a distinct accent color on the card's left border and category badge. No markdown body content is needed (only frontmatter is used).

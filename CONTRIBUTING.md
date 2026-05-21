@@ -80,7 +80,7 @@ No config changes or code edits are needed — just the Markdown file and any im
 
 News items are short highlights that appear on the landing page to draw attention to things that matter to users — upcoming events (conferences, meetups, webinars), new releases, notable integrations or features, community milestones, or any other timely announcement. Unlike blog posts, news items link out to an external URL and do not have their own page on the site.
 
-### Submission steps
+### Steps
 
 1. Fork the repository.
 
@@ -114,16 +114,16 @@ News items are short highlights that appear on the landing page to draw attentio
 
 6. Once merged, the news item will appear in the "Latest News" section on the landing page within a few minutes.
 
-### Front matter fields
+### News front matter fields
 
-| Field      | Required | Description                                                                 |
-| ---------- | -------- | --------------------------------------------------------------------------- |
-| `title`    | Yes      | Short headline for the card                                                 |
-| `date`     | Yes      | Date (`YYYY-MM-DD`), used for sort order                                    |
-| `category` | Yes      | One of: `Release`, `Event`, `Integration`, `Community`, `Feature`           |
-| `excerpt`  | Yes      | One sentence shown on the card                                              |
-| `url`      | Yes      | External link target (must be a full URL starting with `https://`)          |
-| `source`   | No       | Label shown on the link (e.g. "GitHub", "PyCon"); defaults to "Read more"  |
+| Field      | Required | Description                                                                  |
+| ---------- | -------- | ---------------------------------------------------------------------------- |
+| `title`    | Yes      | Short headline for the card                                                  |
+| `date`     | Yes      | Date (`YYYY-MM-DD`), used for sort order                                     |
+| `category` | Yes      | One of: `Release`, `Event`, `Integration`, `Community`, `Feature`            |
+| `excerpt`  | Yes      | One sentence shown on the card                                               |
+| `url`      | Yes      | External link target (must be a full URL starting with `https://`)           |
+| `source`   | No       | Label shown on the link (e.g. "GitHub", "PyCon"); defaults to "Read more"    |
 
 ### Categories
 
