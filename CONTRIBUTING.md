@@ -88,8 +88,8 @@ News items are short highlights that appear on the landing page to draw attentio
 
 1. Fork the repository.
 
-2. Create a new file in `content/news/your-slug.md`.
-   The filename is internal only (not a public URL), but keep it descriptive.
+2. Create a new file in `content/news/news-n.md`.
+   The filename is internal only (not a public URL), to make it easier and only update the frontmatter content, keep the name pattern to `news-n.md`.
 
 3. Fill in the YAML front matter:
 
