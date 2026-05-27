@@ -20,4 +20,4 @@ permissions:
 
 jobs:
   remind-scheduled-prs:
-    uses: generative-computing/.github/.github/workflows/merge-schedule.yml@d04be3163e78797e20d222e23addb93d74729750
+    uses: generative-computing/.github/.github/workflows/merge-schedule.yml@5339cc8ebf099db35748980658ea9f093bffdbdc
