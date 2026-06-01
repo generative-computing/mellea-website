@@ -6,6 +6,8 @@ excerpt: "Granite Switch bakes a curated set of Granite intrinsics into a single
 tags: ["granite", "intrinsics", "adapters", "switch", "vllm"]
 ---
 
+<img src="/images/granite-switch/main.svg" alt="Granite Switch in Mellea — one checkpoint serving multiple intrinsics" style="background-color: white;" />
+
 Running Mellea intrinsics on Granite today means managing adapter weights. You pick
 the right `granitelib-*` repo, download a PEFT checkpoint, keep it version-aligned
 with your base model, load and unload it at inference time. For a handful of
