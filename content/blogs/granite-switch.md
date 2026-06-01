@@ -87,10 +87,8 @@ pip install 'mellea[switch]'
 ```
 
 > **Reviewer note:** vLLM on Linux with the above steps is the validated path.
-> macOS alternatives that support `chat_template_kwargs` — `omlx` and `vmlx` (both
-> Apple Silicon MLX servers) — are being investigated but have not yet been validated
-> against Granite Switch 4.1. Expand this section if a macOS path is confirmed before
-> merge.
+> Switch doesn't run under Ollama, so a macOS option is still being investigated —
+> nothing confirmed yet. Expand this section if a macOS path lands before merge.
 
 ## Running answerability and hallucination detection
 
