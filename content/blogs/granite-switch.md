@@ -2,58 +2,50 @@
 title: "Granite Switch in Mellea: intrinsics without adapter wrangling"
 date: "2026-06-01"
 author: "Nigel Jones"
-excerpt: "Granite Switch bakes a curated set of Granite intrinsics into a single vLLM-served checkpoint. From a Mellea program, calling answerability or hallucination detection looks exactly the same as before — but there are no adapter binaries to download or version to track."
+excerpt: "With Granite Switch, adding validation to a Mellea program — checking that an answer is grounded, that a requirement is met, that nothing in the response was hallucinated — is a single function call against the backend you're already using. One checkpoint, a dozen drop-in validations, no second pipeline to stand up."
 tags: ["granite", "intrinsics", "adapters", "switch", "vllm"]
 ---
 
 <img src="/images/granite-switch/main.svg" alt="Granite Switch in Mellea — one checkpoint serving multiple intrinsics" style="background-color: white;" />
 
-Running Mellea intrinsics on Granite today means managing adapter weights. For every
-capability you want — answerability checking, hallucination detection, citations,
-requirement validation — you pick the right `granitelib-*` repo, download a PEFT
-checkpoint, and keep it version-aligned with your base model. For a handful of
-intrinsics on a single host this is manageable. Add more intrinsics, scale to more
-hosts, or roll out a new base model version, and you're maintaining a matrix of
-adapter files rather than building your application.
+Imagine you're writing a Mellea program and the model has just produced a
+response. You want to validate it: is the answer grounded in the documents
+you retrieved? Does it satisfy the requirements you set? Is anything in the
+output hallucinated? Each of those checks would normally mean standing up a
+separate validation pipeline — a second model call with a tuned prompt, an
+LLM-as-judge harness, sometimes a classifier you trained yourself.
 
-Granite Switch collapses that matrix. A Switch checkpoint is a single set of Granite
-4.1 weights with a dozen intrinsics baked in. Your Mellea program calls the same
-`rag.check_answerability(...)` or `rag.flag_hallucinated_content(...)` it always did
-— the right adapter fires via a control token injected by the chat template. One model
-to serve. Zero adapter files to manage. And as you scale your serving fleet, every
-host automatically has every embedded intrinsic — no per-host adapter sync required.
+Granite Switch makes every one of those validations a single function call
+against the backend you're already using:
+
+```python
+from mellea.stdlib.components.intrinsic import rag, core
+
+rag.check_answerability(question, documents, context, backend)
+rag.flag_hallucinated_content(response, documents, context, backend)
+core.requirement_check(context, backend, requirement)
+```
+
+Same shape every time — swap the function name, get a different validation.
+One Granite Switch checkpoint serves a dozen of these: answerability,
+hallucination detection, requirement checks, citations, query rewriting, and
+more. Adding a validation step to your program is a code change, not an
+infrastructure change.
 
 > **What you'll need:** the `granite-switch` plugin package and vLLM on the server
 > side (see setup below); `pip install 'mellea[switch]'` in your application
 > environment. All snippets are in
 > [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
 
-## Intrinsics and Switch: what each one is
+## How it works
 
-**Intrinsics** are the capability: small task-specific adapters over a Granite base
-model that answer questions like "can these documents answer this question?"
-(`check_answerability`), "which sentences in this response aren't grounded in the
-retrieved documents?" (`flag_hallucinated_content`), "does this output meet this
-requirement?" (`core.requirement_check`), and more. They ship as the
-[`granitelib-rag`](https://huggingface.co/ibm-granite/granitelib-rag-r1.0),
-[`granitelib-core`](https://huggingface.co/ibm-granite/granitelib-core-r1.0), and
-[`granitelib-guardian`](https://huggingface.co/ibm-granite/granitelib-guardian-r1.0)
-adapter collections on Hugging Face. They landed in
-Mellea in version 0.4.0.
-
-**Granite Switch** is one way to deliver those intrinsics. Instead of downloading
-adapter weights from `ibm-granite/granitelib-*` and loading them at runtime with
-PEFT, Switch publishes a single checkpoint
-(`ibm-granite/granite-switch-4.1-3b-preview`, also 8B and 30B) that contains a
-curated subset of those intrinsic adapters directly in the model weights. Adapter
-selection happens through a control token that vLLM injects via the chat template.
-No PEFT machinery, no adapter hot-swap.
-
-The trade-off is direct: Switch eliminates adapter lifecycle management entirely —
-one checkpoint, all embedded intrinsics, no per-intrinsic weight files, no version
-matrix. The PEFT path gives you the full Granite Libraries, including adapters not
-yet in a Switch checkpoint — it's the right choice when you need something outside
-the curated set.
+Granite Switch is a single Granite 4.1 checkpoint
+(`ibm-granite/granite-switch-4.1-3b-preview`, also 8B and 30B) with a
+curated set of validation capabilities baked directly into the model
+weights. When you call one of the intrinsic functions in
+`mellea.stdlib.components.intrinsic.{rag,core,guardian}`, Mellea picks
+the right behaviour through a control token in the chat template — no
+hot-swapping adapters, no second model to run.
 
 ## Setting it up
 
@@ -158,57 +150,15 @@ Two sentences, two verdicts. The record for each sentence includes `faithfulness
 explanation from the model. Nothing in the calling code changes depending on which
 intrinsic you're running — the dispatch happens inside `OpenAIBackend`.
 
-## What it costs to ship
+## When this fits
 
-With the PEFT path, every intrinsic you ship is a binary on disk — version-pinned to
-the base model, replicated across every host, and rebuilt each time IBM updates the
-Libraries. Five intrinsics across ten hosts means fifty artifact slots in your
-deployment pipeline.
-
-With Switch, you pull one model and you're done. Mellea's client downloads a few
-kilobytes of I/O configuration — `adapter_index.json` and per-adapter `io.yaml` — to
-understand how to format requests and parse responses. No adapter weights are
-transferred; they are already part of the model. Adding a new intrinsic to your
-application is a code change, not an infrastructure change. The relevant code path on
-the Mellea side is `EmbeddedIntrinsicAdapter` in
-`mellea/backends/adapters/adapter.py`.
-
-## Where this is going
-
-The current integration lives in `OpenAIBackend` because vLLM provides the
-chat-template mechanism needed to inject control tokens. That's also what makes the
-architecture compelling for the future: the dispatch mechanism is just a request
-parameter — anything that speaks OpenAI-compatible chat completions and honours
-`chat_template_kwargs` can serve a Switch model. No new protocol. No special client
-library. Just a model that knows how to route.
-
-That opens a clear path to broad runtime support. Issue
-[#1018](https://github.com/generative-computing/mellea/issues/1018) adds Switch
-support to `LocalHFBackend` — running Switch with Hugging Face Transformers for local
-development and embedded deployments. The broader unified-bindings work in
-[epic #929](https://github.com/generative-computing/mellea/issues/929) is
-refactoring the adapter path so embedded adapters work identically across every
-backend that supports them. When that lands, Switch intrinsics will follow the same
-code path whether you're running vLLM in production or Transformers on a laptop.
-
-Today, the supported path is `OpenAIBackend` + vLLM. That's the path that's
-documented, tested, and ready to use.
-
-## When to reach for Switch vs the PEFT path
-
-|                         | Granite Switch                       | PEFT / LocalHFBackend     |
-|-------------------------|--------------------------------------|---------------------------|
-| Runtime                 | vLLM                                 | Hugging Face Transformers |
-| Adapter weights on disk | No — one checkpoint                  | Yes — one per intrinsic   |
-| Adapter set             | Curated (RAG, Core, Guardian subset) | Full Granite Libraries    |
-| Status                  | Preview (3B / 8B / 30B)              | Stable                    |
-
-Switch is the simpler path if vLLM is available and the curated adapter set covers
-your use case. Use `LocalHFBackend` with the granitelib adapters if you need an
-adapter not yet embedded in a Switch checkpoint, or if you can't run vLLM. The
-`-preview` label on Switch model IDs reflects IBM's current release status — the
-Mellea integration is stable, but the model checkpoints are still in active
-development.
+Granite Switch is the simplest path when you can run vLLM and the
+curated validation set covers what you need. The same capabilities are
+also available as standalone adapters through Mellea's `LocalHFBackend`
+if you need something outside the curated set — see the [intrinsics
+overview](https://docs.mellea.ai/advanced/intrinsics) for the full
+picture. Switch model IDs are labelled `-preview`, which makes it a
+great fit for prototyping and evaluation today.
 
 ## Try it
 
