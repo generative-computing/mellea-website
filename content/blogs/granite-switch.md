@@ -17,7 +17,7 @@ hosts, or roll out a new base model version, and you're maintaining a matrix of
 adapter files rather than building your application.
 
 Granite Switch collapses that matrix. A Switch checkpoint is a single set of Granite
-4.1 weights with twelve-plus intrinsics baked in. Your Mellea program calls the same
+4.1 weights with a dozen intrinsics baked in. Your Mellea program calls the same
 `rag.check_answerability(...)` or `rag.flag_hallucinated_content(...)` it always did
 — the right adapter fires via a control token injected by the chat template. One model
 to serve. Zero adapter files to manage. And as you scale your serving fleet, every
@@ -35,7 +35,10 @@ model that answer questions like "can these documents answer this question?"
 (`check_answerability`), "which sentences in this response aren't grounded in the
 retrieved documents?" (`flag_hallucinated_content`), "does this output meet this
 requirement?" (`core.requirement_check`), and more. They ship as the
-`granitelib-{rag,core,guardian}` adapter collections on Hugging Face. They landed in
+[`granitelib-rag`](https://huggingface.co/ibm-granite/granitelib-rag-r1.0),
+[`granitelib-core`](https://huggingface.co/ibm-granite/granitelib-core-r1.0), and
+[`granitelib-guardian`](https://huggingface.co/ibm-granite/granitelib-guardian-r1.0)
+adapter collections on Hugging Face. They landed in
 Mellea in version 0.4.0.
 
 **Granite Switch** is one way to deliver those intrinsics. Instead of downloading
@@ -54,7 +57,8 @@ the curated set.
 
 ## Setting it up
 
-The `granite-switch` plugin package registers the `GraniteSwitchForCausalLM`
+The [`granite-switch`](https://pypi.org/project/granite-switch/) plugin package
+registers the `GraniteSwitchForCausalLM`
 architecture with vLLM. Without it, vLLM refuses to load the model with
 `Model architectures ['GraniteSwitchForCausalLM'] are not supported`. Install it
 in your **vLLM server environment**, matching your vLLM and CUDA versions:
@@ -112,8 +116,8 @@ backend = OpenAIBackend(
 ```
 
 The `load_embedded_adapters=True` flag tells Mellea to fetch the I/O configuration
-files for each intrinsic from the Hugging Face model repo — a few kilobytes of YAML,
-not adapter weights — and register the embedded adapters automatically.
+files for each intrinsic from the Hugging Face model repo — a few kilobytes of JSON
+and YAML, not adapter weights — and register the embedded adapters automatically.
 
 Now run answerability:
 
@@ -210,7 +214,8 @@ development.
 
 ## Try it
 
+- **Mellea**: [generative-computing/mellea](https://github.com/generative-computing/mellea) — repo, issues, releases
 - **Examples**: [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch) — runnable examples for answerability, hallucination detection, and manual adapter loading
-- **Docs**: [Intrinsics with Granite Switch](https://docs.mellea.ai/integrations/openai#intrinsics-with-granite-switch) in the OpenAI backend reference
+- **Docs**: [Intrinsics with Granite Switch](https://docs.mellea.ai/integrations/openai#intrinsics-with-granite-switch) in the OpenAI backend reference, and the [intrinsics overview](https://docs.mellea.ai/advanced/intrinsics) for the full capability surface
 - **Model card**: [`ibm-granite/granite-switch-4.1-3b-preview`](https://huggingface.co/ibm-granite/granite-switch-4.1-3b-preview) — architecture details and the full list of embedded adapters
 - **Install**: `pip install "granite-switch[vllm20]"` (server-side plugin), `pip install 'mellea[switch]'` (client), then `vllm serve ibm-granite/granite-switch-4.1-3b-preview --enable-auto-tool-choice --tool-call-parser granite4`
