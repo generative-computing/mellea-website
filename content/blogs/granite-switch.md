@@ -70,6 +70,12 @@ pip install "granite-switch[vllm20]"   # vLLM 0.20+ / CUDA 13+
 pip install "granite-switch[vllm]"     # vLLM 0.19.x / CUDA 12.x
 ```
 
+> **Reviewer note — `[vllm20]` vs `[vllm]`:** the upstream `granite-switch`
+> README recommends `[vllm]` as the broad-compat default and `[vllm20]` for
+> newer-CUDA performance. We've validated `[vllm20]` end-to-end on IBM LSF;
+> the `[vllm]` path hasn't been re-confirmed. Decide which to lead with
+> before merge — and consider showing only one to keep the install simple.
+
 Start the model with tool-call parsing enabled — this is required for adapter
 selection; without it the model loads but intrinsics won't dispatch:
 
@@ -82,15 +88,24 @@ vllm serve ibm-granite/granite-switch-4.1-3b-preview \
 No `--trust-remote-code`, no quantization flags, no custom chat template — the
 adapters activate via control tokens already in the model's bundled template.
 
+> **Reviewer note — `--enable-auto-tool-choice --tool-call-parser granite4`:**
+> these flags were added after internal testing on IBM LSF (via `bvllm`) where
+> intrinsics didn't dispatch without them. The upstream `granite-switch`
+> README, the HF model card, and `docs/docs/integrations/openai.md` all omit
+> the flags. Re-test against a vanilla `vllm serve <model>` invocation before
+> publish; if dispatch works without them, drop them to match upstream and
+> simplify the snippet.
+
 Install Mellea in your **application environment**:
 
 ```bash
 pip install 'mellea[switch]'
 ```
 
-> **Reviewer note:** vLLM on Linux with the above steps is the validated path.
-> Switch doesn't run under Ollama, so a macOS option is still being investigated —
-> nothing confirmed yet. Expand this section if a macOS path lands before merge.
+> **Reviewer note — macOS path:** vLLM on Linux with the above steps is the
+> validated path. Switch doesn't run under Ollama, so a macOS option is still
+> being investigated — nothing confirmed yet. Expand this section if a macOS
+> path lands before merge.
 
 ## Running answerability and hallucination detection
 
