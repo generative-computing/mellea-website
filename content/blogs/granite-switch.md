@@ -1,5 +1,5 @@
 ---
-title: "Granite Switch in Mellea: intrinsics without adapter wrangling"
+title: "Granite Switch in Mellea: one checkpoint, every intrinsic"
 date: "2026-06-01"
 author: "Nigel Jones"
 excerpt: "With Granite Switch, adding validation to a Mellea program — checking that an answer is grounded, that a requirement is met, that nothing in the response was hallucinated — is a single function call against the backend you're already using. One checkpoint, a dozen drop-in validations, no second pipeline to stand up."
@@ -173,7 +173,7 @@ unfaithful    Green bumble fish are also yellow.
 Two sentences, two verdicts. The record for each sentence includes `faithfulness`,
 `response_text`, character offsets into the original response, and a brief
 explanation from the model. Nothing in the calling code changes depending on which
-intrinsic you're running — the dispatch happens inside `OpenAIBackend`.
+intrinsic you're running.
 
 ## When this fits
 
