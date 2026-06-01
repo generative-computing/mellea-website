@@ -23,8 +23,9 @@ Granite Switch collapses that matrix. A Switch checkpoint is a single set of Gra
 to serve. Zero adapter files to manage. And as you scale your serving fleet, every
 host automatically has every embedded intrinsic — no per-host adapter sync required.
 
-> **What you'll need:** vLLM serving `ibm-granite/granite-switch-4.1-3b-preview` and
-> `pip install 'mellea[switch]'`. All snippets are in
+> **What you'll need:** the `granite-switch` plugin package and vLLM on the server
+> side (see setup below); `pip install 'mellea[switch]'` in your application
+> environment. All snippets are in
 > [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
 
 ## Intrinsics and Switch: what each one is
@@ -55,8 +56,8 @@ the curated set.
 
 The `granite-switch` plugin package registers the `GraniteSwitchForCausalLM`
 architecture with vLLM. Without it, vLLM refuses to load the model with
-`Model architectures ['GraniteSwitchForCausalLM'] are not supported`. Install
-the variant that matches your vLLM and CUDA versions:
+`Model architectures ['GraniteSwitchForCausalLM'] are not supported`. Install it
+in your **vLLM server environment**, matching your vLLM and CUDA versions:
 
 ```bash
 pip install "granite-switch[vllm20]"   # vLLM 0.20+ / CUDA 13+
@@ -75,7 +76,7 @@ vllm serve ibm-granite/granite-switch-4.1-3b-preview \
 No `--trust-remote-code`, no quantization flags, no custom chat template — the
 adapters activate via control tokens already in the model's bundled template.
 
-Install Mellea with the switch extra:
+Install Mellea in your **application environment**:
 
 ```bash
 pip install 'mellea[switch]'
@@ -105,7 +106,7 @@ backend = OpenAIBackend(
     model_id=MODEL,
     formatter=TemplateFormatter(model_id=MODEL),
     base_url="http://localhost:8000/v1",
-    api_key="EMPTY",
+    api_key="EMPTY",  # vLLM doesn't validate API keys — any string works
     load_embedded_adapters=True,
 )
 ```
