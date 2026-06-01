@@ -42,10 +42,20 @@ infrastructure change.
 Granite Switch is a single Granite 4.1 checkpoint
 (`ibm-granite/granite-switch-4.1-3b-preview`, also 8B and 30B) with a
 curated set of validation capabilities baked directly into the model
-weights. When you call one of the intrinsic functions in
-`mellea.stdlib.components.intrinsic.{rag,core,guardian}`, Mellea picks
-the right behaviour through a control token in the chat template — no
-hot-swapping adapters, no second model to run.
+weights — and crucially, the *routing* between them is baked in too.
+This is the architectural shift that makes the simplicity above
+possible. With LoRA hot-swap, an orchestration layer outside the model
+loads the right adapter for each call. With LLM-as-judge, you write a
+second prompt and run the model again. With Granite Switch, the model
+already knows how to be every one of these validators; you just tell
+it which one to be for this call.
+
+That signal is a control token in the chat template, set by Mellea
+when you call an intrinsic function in
+`mellea.stdlib.components.intrinsic.{rag,core,guardian}`. No second
+model to run, no adapter hot-swap, no eval pipeline to orchestrate
+around your program. You serve one checkpoint and pick the behaviour
+you want.
 
 ## Setting it up
 
