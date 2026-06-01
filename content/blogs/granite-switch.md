@@ -64,6 +64,14 @@ Install Mellea with the switch extra:
 pip install mellea[switch]
 ```
 
+> **Reviewer note:** vLLM on Linux is the documented, validated path and is what
+> the examples above use. macOS-native alternatives that also support
+> `chat_template_kwargs` — `omlx` and `vmlx` (both Apple Silicon MLX servers) —
+> are being investigated but have not yet been validated against Granite Switch 4.1.
+> Before publishing, run the examples end-to-end against at least one validated
+> runtime and expand this section if a macOS path is confirmed. Remove this note
+> before merge.
+
 ## Running answerability and hallucination detection
 
 The backend setup is one block of code. After that, calling different intrinsics is
