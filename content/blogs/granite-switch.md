@@ -1,6 +1,6 @@
 ---
 title: "Granite Switch in Mellea: one checkpoint, every intrinsic"
-date: "2026-06-01"
+date: "2026-06-11"
 author: "Nigel Jones"
 excerpt: "With Granite Switch, adding validation to a Mellea program — checking that an answer is grounded, that a requirement is met, that nothing in the response was hallucinated — is a single function call against the backend you're already using. One checkpoint, a dozen drop-in validations, no second pipeline to stand up."
 tags: ["granite", "intrinsics", "adapters", "switch", "vllm"]
