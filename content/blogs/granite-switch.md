@@ -111,7 +111,7 @@ pip install "mellea[hf]"
 
 Mellea downloads the base Granite 4.1 model (~6 GB on first run) and fetches
 adapter weights from the Granite Libraries catalog at runtime. MPS is used
-automatically on Apple Silicon. The intrinsic calls are identical to the vLLM
+automatically on Apple Silicon — 16 GB unified memory recommended. The intrinsic calls are identical to the vLLM
 path — only the backend setup differs (see below). For production serving,
 vLLM on a GPU server is the recommended path.
 
@@ -209,4 +209,4 @@ overview](https://docs.mellea.ai/advanced/intrinsics).
 - **Examples**: [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch) — runnable examples for answerability, hallucination detection, and manual adapter loading
 - **Docs**: [Intrinsics with Granite Switch](https://docs.mellea.ai/integrations/openai#intrinsics-with-granite-switch) in the OpenAI backend reference, and the [intrinsics overview](https://docs.mellea.ai/advanced/intrinsics) for the full capability surface
 - **Model card**: [`ibm-granite/granite-switch-4.1-3b-preview`](https://huggingface.co/ibm-granite/granite-switch-4.1-3b-preview) — architecture details and the full list of embedded adapters
-- **Install**: `pip install "granite-switch[vllm20]"` (server-side plugin), `pip install 'mellea[switch]'` (client), then `vllm serve ibm-granite/granite-switch-4.1-3b-preview --enable-auto-tool-choice --tool-call-parser granite4`
+- **Install**: `pip install "granite-switch[vllm20]"` (server-side plugin), `pip install 'mellea[switch]'` (client), then `vllm serve ibm-granite/granite-switch-4.1-3b-preview --port 8000`
