@@ -32,17 +32,19 @@ hallucination detection, requirement checks, citations, query rewriting, and
 more. Adding a validation step to your program is a code change, not an
 infrastructure change.
 
-> **What you'll need:** the `granite-switch` plugin package and vLLM on the server
-> side (see setup below); `pip install 'mellea[switch]'` in your application
-> environment. All snippets are in
+> **What you'll need:** On Linux with a GPU: the `granite-switch` plugin,
+> vLLM, and `pip install 'mellea[switch]'` (see setup below). On macOS
+> (Apple Silicon): just `pip install "mellea[hf]"` — no server needed.
+> All snippets are in
 > [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
 
 ## How it works
 
 Granite Switch is a single Granite 4.1 checkpoint
 (`ibm-granite/granite-switch-4.1-3b-preview`, also 8B and 30B) with a
-curated set of validation capabilities baked directly into the model
-weights — and crucially, the *routing* between them is baked in too.
+curated set of validation capabilities — called *adapter functions*, or
+*intrinsics* in Mellea's API — baked directly into the model weights,
+and crucially, the *routing* between them is baked in too.
 This is the architectural shift that makes the simplicity above
 possible. With LoRA hot-swap, an orchestration layer outside the model
 loads the right adapter for each call. With LLM-as-judge, you write a
@@ -57,44 +59,41 @@ model to run, no adapter hot-swap, no eval pipeline to orchestrate
 around your program. You serve one checkpoint and pick the behaviour
 you want.
 
+The performance advantage goes beyond convenience. Standard LoRA
+hot-swap clears the KV cache on every adapter switch — multi-step
+pipelines that check answerability, then generate, then verify
+hallucinations have to recompute context from scratch at each step.
+Granite Switch uses activated LoRA (aLoRA), which normalises the KV
+cache so all adapters share the same base representation. Context
+carries forward across intrinsic calls without recomputation, which
+matters when you're chaining several validators in a single request.
+The accuracy improvement is real too: on IFEval, prompting the base
+Granite 4.1 3B model for requirement checking achieves 51% balanced
+accuracy; the embedded requirement-check adapter reaches 84%.
+
 ## Setting it up
 
 The [`granite-switch`](https://pypi.org/project/granite-switch/) plugin package
-registers the `GraniteSwitchForCausalLM`
-architecture with vLLM. Without it, vLLM refuses to load the model with
-`Model architectures ['GraniteSwitchForCausalLM'] are not supported`. Install it
-in your **vLLM server environment**, matching your vLLM and CUDA versions:
+registers the `GraniteSwitchForCausalLM` architecture with vLLM via its entry
+point — without it, vLLM refuses to load the model with
+`Model architectures ['GraniteSwitchForCausalLM'] are not supported`.
+
+The plugin currently supports vLLM 0.19.x and 0.20.x. Install it in your
+**vLLM server environment** using the extra that matches your vLLM version:
 
 ```bash
-pip install "granite-switch[vllm20]"   # vLLM 0.20+ / CUDA 13+
-pip install "granite-switch[vllm]"     # vLLM 0.19.x / CUDA 12.x
+pip install "granite-switch[vllm20]"   # vLLM 0.20.x
+pip install "granite-switch[vllm]"     # vLLM 0.19.x
 ```
 
-> **Reviewer note — `[vllm20]` vs `[vllm]`:** the upstream `granite-switch`
-> README recommends `[vllm]` as the broad-compat default and `[vllm20]` for
-> newer-CUDA performance. We've validated `[vllm20]` end-to-end on IBM LSF;
-> the `[vllm]` path hasn't been re-confirmed. Decide which to lead with
-> before merge — and consider showing only one to keep the install simple.
-
-Start the model with tool-call parsing enabled — this is required for adapter
-selection; without it the model loads but intrinsics won't dispatch:
+Then start the model — no extra flags required, the adapters activate via
+control tokens in the bundled chat template:
 
 ```bash
-vllm serve ibm-granite/granite-switch-4.1-3b-preview \
-    --enable-auto-tool-choice \
-    --tool-call-parser granite4
+vllm serve ibm-granite/granite-switch-4.1-3b-preview --port 8000
 ```
 
-No `--trust-remote-code`, no quantization flags, no custom chat template — the
-adapters activate via control tokens already in the model's bundled template.
-
-> **Reviewer note — `--enable-auto-tool-choice --tool-call-parser granite4`:**
-> these flags were added after internal testing on IBM LSF (via `bvllm`) where
-> intrinsics didn't dispatch without them. The upstream `granite-switch`
-> README, the HF model card, and `docs/docs/integrations/openai.md` all omit
-> the flags. Re-test against a vanilla `vllm serve <model>` invocation before
-> publish; if dispatch works without them, drop them to match upstream and
-> simplify the snippet.
+No `--trust-remote-code`, no quantization flags, no custom chat template.
 
 Install Mellea in your **application environment**:
 
@@ -102,10 +101,19 @@ Install Mellea in your **application environment**:
 pip install 'mellea[switch]'
 ```
 
-> **Reviewer note — macOS path:** vLLM on Linux with the above steps is the
-> validated path. Switch doesn't run under Ollama, so a macOS option is still
-> being investigated — nothing confirmed yet. Expand this section if a macOS
-> path lands before merge.
+**On macOS (Apple Silicon):** vLLM requires a Linux GPU server. To run locally
+on a Mac, skip the `granite-switch` plugin and vLLM steps entirely and install
+the Mellea HuggingFace backend instead:
+
+```bash
+pip install "mellea[hf]"
+```
+
+Mellea downloads the base Granite 4.1 model (~6 GB on first run) and fetches
+adapter weights from the Granite Libraries catalog at runtime. MPS is used
+automatically on Apple Silicon. The intrinsic calls are identical to the vLLM
+path — only the backend setup differs (see below). For production serving,
+vLLM on a GPU server is the recommended path.
 
 ## Running answerability and hallucination detection
 
@@ -133,6 +141,15 @@ backend = OpenAIBackend(
 The `load_embedded_adapters=True` flag tells Mellea to fetch the I/O configuration
 files for each intrinsic from the Hugging Face model repo — a few kilobytes of JSON
 and YAML, not adapter weights — and register the embedded adapters automatically.
+
+**On macOS**, replace the backend setup with two lines — everything after this is
+unchanged:
+
+```python
+from mellea.backends.huggingface import LocalHFBackend
+
+backend = LocalHFBackend(model_id="ibm-granite/granite-4.1-3b")
+```
 
 Now run answerability:
 
@@ -177,13 +194,14 @@ intrinsic you're running.
 
 ## When this fits
 
-Granite Switch is the simplest path when you can run vLLM and the
-curated validation set covers what you need. The same capabilities are
-also available as standalone adapters through Mellea's `LocalHFBackend`
-if you need something outside the curated set — see the [intrinsics
-overview](https://docs.mellea.ai/advanced/intrinsics) for the full
-picture. Switch model IDs are labelled `-preview`, which makes it a
-great fit for prototyping and evaluation today.
+Granite Switch via vLLM is the production path: one composed checkpoint, all
+intrinsics, no per-call overhead. `LocalHFBackend` (also shown above) is the
+right choice for local development on macOS or when no GPU server is available
+— it loads adapters from the Granite Libraries catalog rather than the composed
+checkpoint, but the calling code is identical. Granite Switch is an experimental toolkit and the model IDs are labelled
+`-preview` — it's a great fit for prototyping and evaluation today.
+For the full adapter surface, see the [intrinsics
+overview](https://docs.mellea.ai/advanced/intrinsics).
 
 ## Try it
 
