@@ -32,10 +32,9 @@ hallucination detection, requirement checks, citations, query rewriting, and
 more. Adding a validation step to your program is a code change, not an
 infrastructure change.
 
-> **What you'll need:** On Linux with a GPU: the `granite-switch` plugin,
-> vLLM, and `pip install 'mellea[switch]'` (see setup below). On macOS
-> (Apple Silicon): just `pip install "mellea[hf]"` — no server needed.
-> All snippets are in
+> **What you'll need:** On macOS (Apple Silicon): `pip install "mellea[hf]"` — no
+> server needed. On Linux with a GPU: the `granite-switch` plugin, vLLM, and
+> `pip install "mellea[switch]"` (see setup below). All snippets are in
 > [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
 
 ## How it works
@@ -69,13 +68,24 @@ carries forward across intrinsic calls without recomputation, which
 matters when you're chaining several validators in a single request.
 The accuracy improvement is real too: on IFEval, prompting the base
 Granite 4.1 3B model for requirement checking achieves 51% balanced
-accuracy; the embedded requirement-check adapter reaches 84%.
+accuracy; the embedded requirement-check adapter [reaches 84%](https://research.ibm.com/blog/granite-libraries-project-switch).
 
 ## Setting it up
 
-The [`granite-switch`](https://pypi.org/project/granite-switch/) plugin package
-registers the `GraniteSwitchForCausalLM` architecture with vLLM via its entry
-point — without it, vLLM refuses to load the model with
+**On macOS (Apple Silicon):** install the Mellea HuggingFace backend — no
+server, no plugin:
+
+```bash
+pip install "mellea[hf]"
+```
+
+Mellea downloads the base Granite 4.1 model (~6 GB on first run) and fetches
+adapter weights from the Granite Libraries catalog at runtime. MPS is used
+automatically on Apple Silicon — 16 GB unified memory recommended.
+
+**On Linux with a GPU server:** the [`granite-switch`](https://pypi.org/project/granite-switch/)
+plugin registers the `GraniteSwitchForCausalLM` architecture with vLLM via its
+entry point — without it, vLLM refuses to load the model with
 `Model architectures ['GraniteSwitchForCausalLM'] are not supported`.
 
 The plugin currently supports vLLM 0.19.x and 0.20.x. Install it in your
@@ -98,27 +108,25 @@ No `--trust-remote-code`, no quantization flags, no custom chat template.
 Install Mellea in your **application environment**:
 
 ```bash
-pip install 'mellea[switch]'
+pip install "mellea[switch]"
 ```
-
-**On macOS (Apple Silicon):** vLLM requires a Linux GPU server. To run locally
-on a Mac, skip the `granite-switch` plugin and vLLM steps entirely and install
-the Mellea HuggingFace backend instead:
-
-```bash
-pip install "mellea[hf]"
-```
-
-Mellea downloads the base Granite 4.1 model (~6 GB on first run) and fetches
-adapter weights from the Granite Libraries catalog at runtime. MPS is used
-automatically on Apple Silicon — 16 GB unified memory recommended. The intrinsic calls are identical to the vLLM
-path — only the backend setup differs (see below). For production serving,
-vLLM on a GPU server is the recommended path.
 
 ## Running answerability and hallucination detection
 
-The backend setup is one block of code. After that, calling different intrinsics is
-just calling different functions.
+Pick the backend for your environment. The intrinsic calls are identical for both.
+
+**macOS (Apple Silicon):**
+
+```python
+from mellea.backends.huggingface import LocalHFBackend
+from mellea.stdlib.components import Document, Message
+from mellea.stdlib.components.intrinsic import rag
+from mellea.stdlib.context import ChatContext
+
+backend = LocalHFBackend(model_id="ibm-granite/granite-4.1-3b")
+```
+
+**Linux / vLLM:**
 
 ```python
 from mellea.backends.model_ids import IBM_GRANITE_SWITCH_4_1_3B_PREVIEW
@@ -141,15 +149,6 @@ backend = OpenAIBackend(
 The `load_embedded_adapters=True` flag tells Mellea to fetch the I/O configuration
 files for each intrinsic from the Hugging Face model repo — a few kilobytes of JSON
 and YAML, not adapter weights — and register the embedded adapters automatically.
-
-**On macOS**, replace the backend setup with two lines — everything after this is
-unchanged:
-
-```python
-from mellea.backends.huggingface import LocalHFBackend
-
-backend = LocalHFBackend(model_id="ibm-granite/granite-4.1-3b")
-```
 
 Now run answerability:
 
@@ -209,4 +208,4 @@ overview](https://docs.mellea.ai/advanced/intrinsics).
 - **Examples**: [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch) — runnable examples for answerability, hallucination detection, and manual adapter loading
 - **Docs**: [Intrinsics with Granite Switch](https://docs.mellea.ai/integrations/openai#intrinsics-with-granite-switch) in the OpenAI backend reference, and the [intrinsics overview](https://docs.mellea.ai/advanced/intrinsics) for the full capability surface
 - **Model card**: [`ibm-granite/granite-switch-4.1-3b-preview`](https://huggingface.co/ibm-granite/granite-switch-4.1-3b-preview) — architecture details and the full list of embedded adapters
-- **Install**: `pip install "granite-switch[vllm20]"` (server-side plugin), `pip install 'mellea[switch]'` (client), then `vllm serve ibm-granite/granite-switch-4.1-3b-preview --port 8000`
+- **Install**: `pip install "granite-switch[vllm20]"` (server-side plugin), `pip install "mellea[switch]"` (client), then `vllm serve ibm-granite/granite-switch-4.1-3b-preview --port 8000`
