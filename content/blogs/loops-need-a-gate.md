@@ -84,10 +84,11 @@ and it's a one-line change. The gate stays put.
 
 The gate works. Our [Qiskit case study](/blogs/qiskit-ivr-functional-validation) measured
 it directly: adding structured validation feedback to the IVR loop lifted functional
-correctness from 27.8% to 50.3%. And if you want to understand why the gate doesn't need
-to be expensive, the [SOFAI post](/blogs/cut-llm-costs-with-sofai) explains how small
-models handle validation cheaply — the same approach that makes
-[production pipelines viable with 3B models](/blogs/small-models-rock).
+correctness from 27.8% to 50.3%. And the gate doesn't need to be expensive: the
+[SOFAI post](/blogs/cut-llm-costs-with-sofai) explains how small models handle validation
+cheaply. [**Making Small Models Rock**](/blogs/small-models-rock) is the proof in
+production — a real pipeline where 3B models do the validation work the harness routes to
+them, exactly the gate this post argues for.
 
 ---
 
