@@ -30,8 +30,8 @@ AlphaSignal said it plainest in
 [Most Developers Do Not Need Agent Loops Yet](https://alphasignalai.substack.com/p/most-developers-do-not-need-agent):
 
 > "The loop needs something that can fail the work without you in the room: a test suite,
-> a type checker, a linter, a build. No automated check means you're back in the chair
-> reading every diff."
+> a type checker, a linter, a build. No automated check means you are back in the chair
+> reading every diff, which is the exact job the loop was supposed to remove."
 
 Anthropic's own
 [Building Effective Agents](https://www.anthropic.com/research/building-effective-agents)
@@ -58,7 +58,12 @@ coding agents there's a test suite, if you're lucky. For everything else — str
 extraction, classification, summarisation, decision support — the gate is usually the model
 checking its own work, or nothing at all.
 
-A better loop topology won't fix that.
+And the loop-engineering essays quietly assume the gate is expensive: one frontier model
+critiquing another. But checking is narrower than generating. A deterministic requirement
+costs nothing to run, and where you do need a model in the gate, a small one validating
+against fixed rules is enough. You don't need to pay frontier prices twice.
+
+A better loop topology won't fix that. A gate does.
 
 ---
 
@@ -77,13 +82,12 @@ is constrained during sampling.
 Both work with any backend — Ollama, vLLM, Hugging Face, OpenAI, Watsonx. Swap the model
 and it's a one-line change. The gate stays put.
 
-We started down this path when
-[David Cox wrote about generative computing](/blogs/generative-computing) — treating the
-LLM call as a typed, testable function in ordinary Python, not a prompt you fire off and
-hope for the best. In
-[Making Small Models Rock](/blogs/small-models-rock), Paul and Nathan showed what that looks
-like in production: a harness that decomposes tasks, validates outputs, and routes each step
-to the right model. The verified loop isn't new for us. It's the whole point.
+The gate works. Our [Qiskit case study](/blogs/qiskit-ivr-functional-validation) measured
+it directly: adding structured validation feedback to the IVR loop lifted functional
+correctness from 27.8% to 50.3%. And if you want to understand why the gate doesn't need
+to be expensive, the [SOFAI post](/blogs/cut-llm-costs-with-sofai) explains how small
+models handle validation cheaply — the same approach that makes
+[production pipelines viable with 3B models](/blogs/small-models-rock).
 
 ---
 
