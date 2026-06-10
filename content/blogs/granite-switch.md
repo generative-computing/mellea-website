@@ -1,12 +1,12 @@
 ---
-title: "Granite Switch in Mellea: one checkpoint, every intrinsic"
+title: "Granite Switch in Mellea: one checkpoint, every adapter function"
 date: "2026-06-11"
 author: "Nigel Jones"
 excerpt: "With Granite Switch, adding validation to a Mellea program — checking that an answer is grounded, that a requirement is met, that nothing in the response was hallucinated — is a single function call against the backend you're already using. One checkpoint, a dozen drop-in validations, no second pipeline to stand up."
-tags: ["granite", "intrinsics", "adapters", "switch", "vllm"]
+tags: ["granite", "adapters", "switch", "vllm"]
 ---
 
-<img src="/images/granite-switch/main.svg" alt="Granite Switch in Mellea — one checkpoint serving multiple intrinsics" style="background-color: white;" />
+<img src="/images/granite-switch/main.svg" alt="Granite Switch in Mellea — one checkpoint serving multiple adapter functions" style="background-color: white;" />
 
 Imagine you're writing a Mellea program and the model has just produced a
 response. You want to validate it: is the answer grounded in the documents
@@ -41,8 +41,7 @@ infrastructure change.
 
 Granite Switch is a single Granite 4.1 checkpoint
 (`ibm-granite/granite-switch-4.1-3b-preview`, also 8B and 30B) with a
-curated set of validation capabilities — called *adapter functions*, or
-*intrinsics* in Mellea's API — baked directly into the model weights,
+curated set of validation capabilities — called *adapter functions* — baked directly into the model weights,
 and crucially, the *routing* between them is baked in too.
 This is the architectural shift that makes the simplicity above
 possible. With LoRA hot-swap, an orchestration layer outside the model
@@ -52,7 +51,7 @@ already knows how to be every one of these validators; you just tell
 it which one to be for this call.
 
 That signal is a control token in the chat template, set by Mellea
-when you call an intrinsic function in
+when you call an adapter function in
 `mellea.stdlib.components.intrinsic.{rag,core,guardian}`. No second
 model to run, no adapter hot-swap, no eval pipeline to orchestrate
 around your program. You serve one checkpoint and pick the behaviour
@@ -64,7 +63,7 @@ pipelines that check answerability, then generate, then verify
 hallucinations have to recompute context from scratch at each step.
 Granite Switch uses activated LoRA (aLoRA), which normalises the KV
 cache so all adapters share the same base representation. Context
-carries forward across intrinsic calls without recomputation, which
+carries forward across adapter function calls without recomputation, which
 matters when you're chaining several validators in a single request.
 The accuracy improvement is real too: on IFEval, prompting the base
 Granite 4.1 3B model for requirement checking achieves 51% balanced
@@ -113,7 +112,7 @@ pip install "mellea[switch]"
 
 ## Running answerability and hallucination detection
 
-Pick the backend for your environment. The intrinsic calls are identical for both.
+Pick the backend for your environment. The adapter function calls are identical for both.
 
 **macOS (Apple Silicon):**
 
@@ -147,7 +146,7 @@ backend = OpenAIBackend(
 ```
 
 The `load_embedded_adapters=True` flag tells Mellea to fetch the I/O configuration
-files for each intrinsic from the Hugging Face model repo — a few kilobytes of JSON
+files for each adapter function from the Hugging Face model repo — a few kilobytes of JSON
 and YAML, not adapter weights — and register the embedded adapters automatically.
 
 Now run answerability:
@@ -189,17 +188,17 @@ unfaithful    Green bumble fish are also yellow.
 Two sentences, two verdicts. The record for each sentence includes `faithfulness`,
 `response_text`, character offsets into the original response, and a brief
 explanation from the model. Nothing in the calling code changes depending on which
-intrinsic you're running.
+adapter function you're running.
 
 ## When this fits
 
 Granite Switch via vLLM is the production path: one composed checkpoint, all
-intrinsics, no per-call overhead. `LocalHFBackend` (also shown above) is the
+adapter functions, no per-call overhead. `LocalHFBackend` (also shown above) is the
 right choice for local development on macOS or when no GPU server is available
 — it loads adapters from the Granite Libraries catalog rather than the composed
 checkpoint, but the calling code is identical. Granite Switch is an experimental toolkit and the model IDs are labelled
 `-preview` — it's a great fit for prototyping and evaluation today.
-For the full adapter surface, see the [intrinsics
+For the full adapter surface, see the [adapter functions
 overview](https://docs.mellea.ai/advanced/intrinsics).
 
 ## Try it
