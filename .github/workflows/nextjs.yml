@@ -47,6 +47,7 @@ jobs:
           args: >
             --verbose
             --no-progress
+            --config lychee.toml
             --base-url 'https://mellea.ai'
             --user-agent 'Mozilla/5.0 (compatible; lychee/2.0; +https://github.com/lycheeverse/lychee)'
             --exclude 'localhost'
