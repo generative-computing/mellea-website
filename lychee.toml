@@ -1,0 +1,3 @@
+# lychee link checker configuration
+# Substack blocks automated crawlers with 403 even with a browser User-Agent.
+exclude = [".*\\.substack\\.com"]
