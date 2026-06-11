@@ -32,10 +32,9 @@ hallucination detection, requirement checks, citations, query rewriting, and
 more. Adding a validation step to your program is a code change, not an
 infrastructure change.
 
-> **What you'll need:** On macOS (Apple Silicon): `pip install "mellea[hf]"` — no
-> server needed. On Linux with a GPU: the `granite-switch` plugin, vLLM, and
-> `pip install "mellea[switch]"` (see setup below). All snippets are in
-> [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
+> **What you'll need:** The `granite-switch` plugin, vLLM on a GPU server, and
+> `pip install "mellea[switch]"` (see setup below). The client code runs on macOS or Linux.
+> All snippets are in [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
 
 ## How it works
 
@@ -71,21 +70,12 @@ accuracy; the embedded requirement-check adapter [reaches 84%](https://research.
 
 ## Setting it up
 
-**On macOS (Apple Silicon):** install the Mellea HuggingFace backend — no
-server, no plugin:
-
-```bash
-pip install "mellea[hf]"
-```
-
-Mellea downloads the base Granite 4.1 model (~6 GB on first run) and fetches
-adapter weights from the Granite Libraries catalog at runtime. MPS is used
-automatically on Apple Silicon — 16 GB unified memory recommended.
-
-**On Linux with a GPU server:** the [`granite-switch`](https://pypi.org/project/granite-switch/)
-plugin registers the `GraniteSwitchForCausalLM` architecture with vLLM via its
-entry point — without it, vLLM refuses to load the model with
+Granite Switch requires vLLM for inference — it uses a custom
+`GraniteSwitchForCausalLM` architecture that only vLLM supports, via the
+[`granite-switch`](https://pypi.org/project/granite-switch/) plugin. Without it,
+vLLM refuses to load the model with
 `Model architectures ['GraniteSwitchForCausalLM'] are not supported`.
+The client code runs on macOS or Linux.
 
 The plugin currently supports vLLM 0.19.x and 0.20.x. Install it in your
 **vLLM server environment** using the extra that matches your vLLM version:
@@ -111,21 +101,6 @@ pip install "mellea[switch]"
 ```
 
 ## Running answerability and hallucination detection
-
-Pick the backend for your environment. The adapter function calls are identical for both.
-
-**macOS (Apple Silicon):**
-
-```python
-from mellea.backends.huggingface import LocalHFBackend
-from mellea.stdlib.components import Document, Message
-from mellea.stdlib.components.intrinsic import rag
-from mellea.stdlib.context import ChatContext
-
-backend = LocalHFBackend(model_id="ibm-granite/granite-4.1-3b")
-```
-
-**Linux / vLLM:**
 
 ```python
 from mellea.backends.model_ids import IBM_GRANITE_SWITCH_4_1_3B_PREVIEW
@@ -193,10 +168,8 @@ adapter function you're running.
 ## When this fits
 
 Granite Switch via vLLM is the production path: one composed checkpoint, all
-adapter functions, no per-call overhead. `LocalHFBackend` (also shown above) is the
-right choice for local development on macOS or when no GPU server is available
-— it loads adapters from the Granite Libraries catalog rather than the composed
-checkpoint, but the calling code is identical. Granite Switch is an experimental toolkit and the model IDs are labelled
+adapter functions, no per-call overhead. Inference requires a GPU running vLLM;
+the application client runs on macOS or Linux. Model IDs are labelled
 `-preview` — it's a great fit for prototyping and evaluation today.
 For the full adapter surface, see the [adapter functions
 overview](https://docs.mellea.ai/advanced/intrinsics).
