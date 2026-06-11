@@ -34,7 +34,7 @@ infrastructure change.
 
 > **What you'll need:** The `granite-switch` plugin, vLLM on a GPU server, and
 > `pip install "mellea[switch]"` (see setup below). The client code runs on macOS or Linux.
-> All snippets are in [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
+> All snippets are in the mellea repo at [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
 
 > **Want to try it first?** The [Colab notebooks](https://github.com/generative-computing/granite-switch/tree/main/tutorials) run Granite Switch on free GPU runtimes — no vLLM setup required. Start with "Hello Mellea" (5 min) to see adapter functions in action.
 
@@ -52,8 +52,8 @@ already knows how to be every one of these validators; you just tell
 it which one to be for this call.
 
 That signal is a control token in the chat template, set by Mellea
-when you call an adapter function in
-`mellea.stdlib.components.intrinsic.{rag,core,guardian}`. No second
+when you call an adapter function in `mellea.stdlib.components.intrinsic`
+(`rag`, `core`, or `guardian`). No second
 model to run, no adapter hot-swap, no eval pipeline to orchestrate
 around your program. You serve one checkpoint and pick the behaviour
 you want.
@@ -124,7 +124,7 @@ backend = OpenAIBackend(
 )
 ```
 
-The `load_embedded_adapters=True` flag tells Mellea to fetch the I/O configuration
+The `load_embedded_adapters=True` flag tells Mellea to fetch the adapter metadata
 files for each adapter function from the Hugging Face model repo — a few kilobytes of JSON
 and YAML, not adapter weights — and register the embedded adapters automatically.
 
@@ -171,10 +171,11 @@ adapter function you're running.
 
 ## When this fits
 
-Granite Switch via vLLM is the production path: one composed checkpoint, all
-adapter functions, no per-call overhead. Inference requires a GPU running vLLM;
-the application client runs on macOS or Linux. Model IDs are labelled
-`-preview` — it's a great fit for prototyping and evaluation today.
+Granite Switch is the right choice when your program chains several validation
+steps — answerability, hallucination detection, requirement checking — and you
+want them all against one checkpoint without KV cache resets between steps. The
+alternative is a separate model call per validator. Model IDs are labelled
+`-preview` — solid for prototyping and evaluation today.
 For the full adapter surface, see the [adapter functions
 overview](https://docs.mellea.ai/advanced/intrinsics).
 
