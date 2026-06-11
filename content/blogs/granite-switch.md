@@ -36,6 +36,8 @@ infrastructure change.
 > `pip install "mellea[switch]"` (see setup below). The client code runs on macOS or Linux.
 > All snippets are in [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
 
+> **Want to try it first?** The [Colab notebooks](https://github.com/generative-computing/granite-switch/tree/main/tutorials) run Granite Switch on free GPU runtimes — no vLLM setup required. Start with "Hello Mellea" (5 min) to see adapter functions in action.
+
 ## How it works
 
 Granite Switch is a single Granite 4.1 checkpoint
@@ -101,6 +103,8 @@ pip install "mellea[switch]"
 ```
 
 ## Running answerability and hallucination detection
+
+Set up the backend, then call adapter functions against it:
 
 ```python
 from mellea.backends.model_ids import IBM_GRANITE_SWITCH_4_1_3B_PREVIEW
@@ -178,6 +182,6 @@ overview](https://docs.mellea.ai/advanced/intrinsics).
 
 - **Mellea**: [generative-computing/mellea](https://github.com/generative-computing/mellea) — repo, issues, releases
 - **Examples**: [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch) — runnable examples for answerability, hallucination detection, and manual adapter loading
-- **Docs**: [Intrinsics with Granite Switch](https://docs.mellea.ai/integrations/openai#intrinsics-with-granite-switch) in the OpenAI backend reference, and the [intrinsics overview](https://docs.mellea.ai/advanced/intrinsics) for the full capability surface
+- **Docs**: [Intrinsics with Granite Switch](https://docs.mellea.ai/integrations/openai#intrinsics-with-granite-switch) in the OpenAI backend reference, and the [adapter functions overview](https://docs.mellea.ai/advanced/intrinsics) for the full capability surface
 - **Model card**: [`ibm-granite/granite-switch-4.1-3b-preview`](https://huggingface.co/ibm-granite/granite-switch-4.1-3b-preview) — architecture details and the full list of embedded adapters
 - **Install**: `pip install "granite-switch[vllm20]"` (server-side plugin), `pip install "mellea[switch]"` (client), then `vllm serve ibm-granite/granite-switch-4.1-3b-preview --port 8000`
