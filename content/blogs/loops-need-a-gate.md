@@ -1,6 +1,6 @@
 ---
 title: "The Loop Needs a Gate"
-date: "2026-06-10"
+date: "2026-06-11"
 author: "Nigel Jones"
 excerpt: "The industry just spent a fortnight agreeing you should write loops, not prompts. Everyone also agrees on the catch: a loop is only as good as the gate that can fail its work."
 tags: ["loop-engineering", "harness-engineering", "verification", "IVR", "generative-programming", "requirements"]
@@ -35,7 +35,7 @@ AlphaSignal said it plainest in
 
 Anthropic's own
 [Building Effective Agents](https://www.anthropic.com/research/building-effective-agents)
-names the same shape: the evaluator-optimiser loop, where one model generates and another critiques. Worth noting: the word they use in their prompt chaining diagram
+names the same shape: the evaluator-optimizer loop, where one model generates and another critiques. Worth noting: the word they use in their prompt chaining diagram
 for the output check is "gate" — they named it in December 2024, eighteen months before the
 current wave. A
 [writeup of a recent UC Berkeley harness paper](https://bdtechtalks.substack.com/p/scaling-the-harness-the-next-major)
@@ -55,7 +55,7 @@ rules, every time.
 
 In practice, the gate barely exists in most of the architectures these essays describe. For
 coding agents there's a test suite, if you're lucky. For everything else — structured
-extraction, classification, summarisation, decision support — the gate is usually the model
+extraction, classification, summarization, decision support — the gate is usually the model
 checking its own work, or nothing at all.
 
 And the loop-engineering essays quietly assume the gate is expensive: one frontier model
@@ -86,7 +86,7 @@ The gate works. Our [Qiskit case study](/blogs/qiskit-ivr-functional-validation)
 it directly: adding structured validation feedback to the IVR loop lifted functional
 correctness from 27.8% to 50.3%. And the gate doesn't need to be expensive: the
 [SOFAI post](/blogs/cut-llm-costs-with-sofai) explains how small models handle validation
-cheaply. [**Making Small Models Rock**](/blogs/small-models-rock) is the proof in
+cheaply. **[Making Small Models Rock](/blogs/small-models-rock)** is the proof in
 production — a real pipeline where 3B models do the validation work the harness routes to
 them, exactly the gate this post argues for.
 
@@ -101,10 +101,3 @@ So yes, write loops. Cherny, Steinberger, and Osmani are right. Just give them a
 ---
 
 **Get started**: `pip install mellea` · [docs.mellea.ai](https://docs.mellea.ai) · [github.com/generative-computing/mellea](https://github.com/generative-computing/mellea)
-
-The [getting-started guide](/blogs/getting-started-with-mellea) walks through a full
-working example with IVR, and the
-[small models post](/blogs/small-models-rock) shows requirements and validation applied to
-a real production pipeline.
-
-\#LoopEngineering \#HarnessEngineering \#AIAgents \#GenerativeAI \#ClaudeCode
