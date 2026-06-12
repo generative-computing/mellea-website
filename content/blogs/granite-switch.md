@@ -129,14 +129,18 @@ and YAML, not adapter weights — and register the embedded adapters automatical
 Now run answerability:
 
 ```python
-ctx = ChatContext().add(Message("assistant", "How can I help you?"))
+context = ChatContext().add(Message("assistant", "How can I help you?"))
 docs = [Document("The square root of 4 is 2.")]
 
-print(rag.check_answerability("What is the square root of 4?", docs, ctx, backend))
-# → "answerable"
+print(rag.check_answerability("What is the square root of 4?", docs, context, backend))
+print(rag.check_answerability("What is the capital of France?", docs, context, backend))
+```
 
-print(rag.check_answerability("What is the capital of France?", docs, ctx, backend))
-# → "unanswerable"
+Output:
+
+```text
+answerable
+unanswerable
 ```
 
 The same backend object runs hallucination detection without any change to the setup:
