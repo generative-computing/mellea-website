@@ -1,6 +1,6 @@
 ---
 title: "Granite Switch in Mellea: one checkpoint, every adapter function"
-date: "2026-06-11"
+date: "2026-06-12"
 author: "Nigel Jones"
 excerpt: "With Granite Switch, adding validation to a Mellea program — checking that an answer is grounded, that a requirement is met, that nothing in the response was hallucinated — is a single function call against the backend you're already using. One checkpoint, a dozen drop-in validations, no second pipeline to stand up."
 tags: ["granite", "adapters", "switch", "vllm"]
@@ -35,8 +35,6 @@ infrastructure change.
 > **What you'll need:** The `granite-switch` plugin, vLLM on a GPU server, and
 > `pip install "mellea[switch]"` (see setup below). The client code runs on macOS or Linux.
 > All snippets are in the mellea repo at [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
-
-> **Want to try it first?** The [Colab notebooks](https://github.com/generative-computing/granite-switch/tree/main/tutorials) run Granite Switch on free GPU runtimes — no vLLM setup required. Start with "Hello Mellea" (5 min) to see adapter functions in action.
 
 ## How it works
 
