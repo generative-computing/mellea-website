@@ -18,16 +18,23 @@ There's a cleaner path.
 ---
 
 > **EDITORIAL NOTE — remove before publishing**
->
+> 
 > **Status:** Draft — scenario is still being iterated to produce a compelling IVR repair
 > demonstration. Code structure and Mellea API usage are stable; receipt values and the exact
 > IVR check may change before publication.
->
+> 
 > **Model availability:** This blog is written for Ollama (final published form — don't change
-> the code examples). Granite Vision 4.1 is not yet in the Ollama library, but is expected
-> there soon; it is also available in safetensors form on Hugging Face. For testing and review,
-> run the code against mlx-vlm instead:
->
+> the code examples). Ollama v0.30.8 (released June 4, 2026) includes llama.cpp commit b9509
+> fixing the n_head=0 divide-by-zero crash for multimodal models. Note: Granite Vision 4.1
+> is available on Hugging Face but not yet in Ollama's library as a pre-converted GGUF model.
+> You can use Ollama with the Hugging Face repository directly:
+> 
+> ```bash
+> ollama pull huggingface.com/ibm-granite/granite-vision-4.1-4b
+> ```
+> 
+> For testing and review, run the code against mlx-vlm instead:
+> 
 > ```bash
 > mkdir granite-vision-test && cd granite-vision-test
 > uv init --bare --python 3.12
@@ -37,14 +44,14 @@ There's a cleaner path.
 > # This is the full bfloat16 safetensors weights, not a quantized GGUF —
 > # expect roughly double the size you'd see from an Ollama pull.
 > ```
->
+> 
 > Then change the session setup in each code block from:
 > `m = start_session(model_id="granite-vision-4.1")`
 > to:
 > `m = MelleaSession(OpenAIBackend("ibm-granite/granite-vision-4.1-4b", base_url="http://localhost:8080/v1", api_key="mlx"))`
->
-> Watch the [Ollama library](https://ollama.com/library) for `granite-vision-4.1`. When it
-> lands: delete this note, verify `ollama pull granite-vision-4.1` works, publish.
+> 
+> Once granite-vision-4.1 is available in Ollama, remove the mlx-vlm instructions above and
+> verify `ollama pull huggingface.com/ibm-granite/granite-vision-4.1-4b` or `ollama pull granite-vision-4.1` works, then publish.
 
 ---
 
