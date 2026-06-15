@@ -34,9 +34,7 @@ infrastructure change.
 
 > **What you'll need:** The `granite-switch` plugin, vLLM on a GPU server with `--enable-prefix-caching`, and `pip install "mellea[switch]"` (see setup below). The client code runs on macOS or Linux. All snippets are in the mellea repo at [`docs/examples/granite-switch/`](https://github.com/generative-computing/mellea/tree/main/docs/examples/granite-switch).
 
-> **Note:** `core` is imported above but only used illustratively. In the worked examples below, only `rag` functions are called. `core`/`guardian` follow the same call shape — swap the module name, keep the same pattern.
-
-### How it works
+## How it works
 
 Granite Switch is a single Granite 4.1 base model (`ibm-granite/granite-switch-4.1-3b-preview`, also 8B and 30B) with
 a switching layer and a curated set of validation capabilities — called *adapter functions* — embedded in
@@ -97,6 +95,8 @@ Install Mellea in your **application environment**:
 ```bash
 pip install "mellea[switch]"
 ```
+
+> **Note:** `core` is imported below but only used illustratively. In the worked examples, only `rag` functions are called. `core`/`guardian` follow the same call shape — swap the module name, keep the same pattern.
 
 ## Running answerability and hallucination detection
 
@@ -160,7 +160,7 @@ for sentence in flagged:
 Output:
 
 ```text
-faithful      Purple bumble fish are yellow. 
+faithful      Purple bumble fish are yellow.
 unfaithful    Green bumble fish are also yellow.
 ```
 
