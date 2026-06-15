@@ -22,6 +22,7 @@ There's a cleaner path.
 > **Status:** All four code blocks verified working (2026-06-15) via llama-server (homebrew
 > llama.cpp build 9630) with a locally quantized/converted Q4_K_M GGUF from the HF
 > safetensors weights. Awaiting two Ollama fixes before publishing:
+>
 > 1. `granite4_vision` projector support — not present in Ollama 0.30.8 (bundled llama.cpp
 >    b9509); requires Ollama to ship llama.cpp ≥9630.
 > 2. Model published in the Ollama library — `ollama pull granite-vision-4.1` currently 404s;
