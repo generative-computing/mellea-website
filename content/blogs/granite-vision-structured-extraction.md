@@ -18,23 +18,18 @@ There's a cleaner path.
 ---
 
 > **EDITORIAL NOTE — remove before publishing**
-> 
-> **Status:** Draft — scenario is still being iterated to produce a compelling IVR repair
-> demonstration. Code structure and Mellea API usage are stable; receipt values and the exact
-> IVR check may change before publication.
-> 
+>
+> **Status:** All four code blocks verified working (2026-06-15) via llama-server (homebrew
+> llama.cpp build 9630) with a locally quantized/converted Q4_K_M GGUF from the HF
+> safetensors weights. Awaiting two Ollama fixes before publishing:
+> 1. `granite4_vision` projector support — not present in Ollama 0.30.8 (bundled llama.cpp
+>    b9509); requires Ollama to ship llama.cpp ≥9630.
+> 2. Model published in the Ollama library — `ollama pull granite-vision-4.1` currently 404s;
+>    `ollama pull huggingface.com/ibm-granite/granite-vision-4.1-4b` also blocked by (1).
+>
 > **Model availability:** This blog is written for Ollama (final published form — don't change
-> the code examples). Ollama v0.30.8 (released June 4, 2026) includes llama.cpp commit b9509
-> fixing the n_head=0 divide-by-zero crash for multimodal models. Note: Granite Vision 4.1
-> is available on Hugging Face but not yet in Ollama's library as a pre-converted GGUF model.
-> You can use Ollama with the Hugging Face repository directly:
-> 
-> ```bash
-> ollama pull huggingface.com/ibm-granite/granite-vision-4.1-4b
-> ```
-> 
-> For testing and review, run the code against mlx-vlm instead:
-> 
+> the code examples). For testing and review, run the code against mlx-vlm instead:
+>
 > ```bash
 > mkdir granite-vision-test && cd granite-vision-test
 > uv init --bare --python 3.12
@@ -44,12 +39,12 @@ There's a cleaner path.
 > # This is the full bfloat16 safetensors weights, not a quantized GGUF —
 > # expect roughly double the size you'd see from an Ollama pull.
 > ```
-> 
+>
 > Then change the session setup in each code block from:
 > `m = start_session(model_id="granite-vision-4.1")`
 > to:
 > `m = MelleaSession(OpenAIBackend("ibm-granite/granite-vision-4.1-4b", base_url="http://localhost:8080/v1", api_key="mlx"))`
-> 
+>
 > Once granite-vision-4.1 is available in Ollama, remove the mlx-vlm instructions above and
 > verify `ollama pull huggingface.com/ibm-granite/granite-vision-4.1-4b` or `ollama pull granite-vision-4.1` works, then publish.
 
