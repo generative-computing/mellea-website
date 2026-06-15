@@ -32,7 +32,7 @@
         text-anchor="middle" dominant-baseline="central"
         fill="#555555"
         font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
-        font-size="21">One checkpoint. Every intrinsic. No adapter wrangling.</text>
+        font-size="21">One checkpoint. Every adapter function. No adapter wrangling.</text>
 
   <!-- Diagram card -->
   <rect x="60" y="234" width="904" height="638" rx="20"
