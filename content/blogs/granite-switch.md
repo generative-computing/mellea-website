@@ -1,6 +1,6 @@
 ---
 title: "Granite Switch in Mellea: one checkpoint, every adapter function"
-date: "2026-06-15"
+date: "2026-06-16"
 author: "Nigel Jones"
 excerpt: "With Granite Switch, adding validation to a Mellea program — checking that an answer is grounded, that a requirement is met, that nothing in the response was hallucinated — is a single function call against the backend you're already using. One checkpoint, a dozen drop-in validations, no second pipeline to stand up."
 tags: ["granite", "adapters", "switch", "vllm"]
@@ -95,8 +95,6 @@ Install Mellea in your **application environment**:
 ```bash
 pip install "mellea[switch]"
 ```
-
-> **Note:** `core` is imported below but only used illustratively. In the worked examples, only `rag` functions are called. `core`/`guardian` follow the same call shape — swap the module name, keep the same pattern.
 
 ## Running answerability and hallucination detection
 
