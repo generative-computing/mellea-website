@@ -712,6 +712,21 @@ a {
   margin: 1.5rem auto;
 }
 
+.prose figure {
+  margin: 1.5rem 0;
+}
+
+.prose figure img {
+  margin-bottom: 0.5rem;
+}
+
+.prose figcaption {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 .prose strong {
   color: var(--text-primary);
   font-weight: 600;
