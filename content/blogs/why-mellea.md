@@ -1,6 +1,6 @@
 ---
 title: "Why Mellea?"
-date: "2026-06-22"
+date: "2026-06-19"
 author: "David Cox, Paul Schweigert"
 excerpt: "Agents are just programs, patterns of control flow around generative AI. So why the 80–90% failure rate? Because they're built out of prompts, not code. Mellea is a different approach."
 tags: ["generative-computing", "agents", "prompt-engineering", "IVR", "reliability", "control-flow"]
