@@ -1,7 +1,7 @@
 ---
 title: "See Inside Your LLM Pipeline: Mellea's New Debug Plugins"
 date: "2026-07-01"
-author: "Akihio Kuroda"
+author: "Akihiko Kuroda"
 excerpt: "Trace generation, validation, and sampling in detail. Built-in plugins reveal model calls, requirement failures, repair events, and loop iterations—all without boilerplate."
 tags: ["debugging", "plugins", "observability"]
 ---
@@ -12,13 +12,15 @@ You've built an LLM pipeline in Mellea. Requirements are passing locally, sampli
 
 Right now, you're flying blind. You add print statements. You write custom callbacks. You piece together logs from stderr, stdout, and your logger. Every pipeline needs its own debugging setup, and you end up rewriting the same introspection code across projects.
 
-The upcoming Mellea 0.7.0 includes **built-in debug plugins**—eight hooks across three categories that trace model calls, token counts, requirement validation, repair events, and sampling iterations with structured logging.
+Debug plugins differ from telemetry frameworks like OpenTelemetry. Both surface similar information—model calls, latency, validation results—but telemetry outputs to structured backends (Jaeger, Grafana) with less direct control over what you see and when. Debug plugins give you direct, immediate visibility into your pipeline via logs, letting you see exactly what you need without external infrastructure.
+
+Mellea 0.7.0 includes **built-in debug plugins**—eight hooks across three categories that trace model calls, token counts, requirement validation, repair events, and sampling iterations with structured logging.
 
 ---
 
 ## What You Can See Now
 
-Before debug plugins, understanding a failed sampling run meant reconstructing it from logs or adding custom instrumentation. Now you can trace three layers of your pipeline.
+Before debug plugins, understanding a failed sampling run meant reconstructing it from logs or adding custom instrumentation.
 
 ### Generation tracing: prompts, latency, and repair feedback
 
@@ -64,13 +66,13 @@ Before debug plugins, understanding a failed sampling run meant reconstructing i
    best_validation_score=2/3
 ```
 
-Combine all three and you get complete visibility: which requirements checked, whether repairs helped, and how the model responded to feedback.
+Combine all three and you can trace which requirements checked, whether repairs helped, and how the model responded to feedback.
 
 ---
 
 ## Using Debug Plugins
 
-The plugin API is straightforward. First, install the hooks extras with `uv add 'mellea[hooks]'` (or `pip install 'mellea[hooks]'`). Then import the hooks you need, register them, and they fire automatically:
+First, install the hooks extras with `uv add 'mellea[hooks]'` (or `pip install 'mellea[hooks]'`). Then import the hooks you need, register them, and they fire automatically:
 
 ```python
 from mellea.plugins.builtin_debug.generation import (
@@ -147,7 +149,7 @@ Mellea includes seven runnable examples showing each plugin category and common 
 | `builtin_validation_strict.py`       | Validation              | Strict requirements testing               |
 | `builtin_sampling_diagnostics.py`    | Sampling                | Strategy iterations and repair events     |
 | `builtin_full_pipeline_tracing.py`   | Generation + Sampling   | End-to-end with model visibility          |
-| `builtin_complete_diagnostics.py`    | All 3                   | Complete pipeline with validation         |
+| `builtin_complete_diagnostics.py`    | All 3                   | All three categories together             |
 
 Run any example:
 
@@ -215,7 +217,7 @@ with plugin_scope(
         print(f"\nFinal result:\n{result}")
 ```
 
-Now you see the complete end-to-end flow: what prompts the model saw, which validations failed, when repairs triggered, and the final result.
+That single block shows the end-to-end picture: what prompts the model saw, which validations failed, when repairs triggered, and the final result.
 
 ---
 
@@ -268,23 +270,15 @@ register([
 
 ## Design Choices and Trade-offs
 
-The plugins are designed with minimal overhead: registration checks happen once at startup, logging is efficient, and no overhead occurs unless plugins are explicitly enabled.
+Registration checks happen once at startup, and no overhead occurs unless plugins are explicitly enabled.
 
-Logs use structured key-value pairs (model, latency, tokens) instead of freeform strings. This makes them easier to parse programmatically—for example, `grep "FAILED:" debug.log`—and keeps the door open for future exports to Jaeger, Grafana, or other observability platforms.
+Logs use structured key-value pairs (model, latency, tokens) instead of freeform strings. This makes them easier to parse programmatically — for example, `grep "FAILED:" debug.log` — and easier to export to Jaeger, Grafana, or other observability tools later.
 
 The plugin system uses Mellea's built-in lifecycle hooks rather than agent infrastructure. This means plugins don't add dependencies and work in any context where Mellea runs.
 
 Plugins are opt-in: they don't fire unless explicitly registered. This keeps baselines fast and lets you choose which lifecycle events matter. For production, you can safely leave them registered since they only log when enabled.
 
 These plugins trace core generation, validation, and sampling. Intrinsic adapters (RAG, safety checks, calibration) will get their own plugins in the roadmap.
-
----
-
-## What's Next
-
-Debug plugins ship in Mellea 0.7.0. The plugin system is built for extension. You can build team-specific instrumentation using the same hook infrastructure, export traces to Jaeger or Grafana, add plugins for Granite intrinsics (RAG, safety, calibration), and export logs as JSON for analysis.
-
-The plugins are available now. Run the examples, enable the categories you need, and start seeing inside your pipeline.
 
 ---
 
@@ -302,4 +296,4 @@ The plugin modules are at:
 - Validation: `mellea.plugins.builtin_debug.validation`
 - Sampling: `mellea.plugins.builtin_debug.sampling`
 
-Debug plugins give you observability without instrumentation overhead. If you hit gaps or have ideas for new hooks, [open an issue](https://github.com/generative-computing/mellea/issues).
+Debug plugins give you observability without instrumentation overhead. The plugin system is built for extension — you can build team-specific instrumentation, export traces to Jaeger or Grafana, add plugins for Granite intrinsics (RAG, safety, calibration), or export logs as JSON for analysis. If you hit gaps or have ideas for new hooks, [open an issue](https://github.com/generative-computing/mellea/issues).
