@@ -20,14 +20,14 @@ The upcoming Mellea 0.7.0 includes **built-in debug plugins**—eight hooks acro
 
 Before debug plugins, understanding a failed sampling run meant reconstructing it from logs or adding custom instrumentation. Now you can trace three layers of your pipeline.
 
-#### Generation tracing: prompts, latency, and repair feedback
+### Generation tracing: prompts, latency, and repair feedback
 
 ```text
 [📤 GEN-PRE-CALL gen_id=abc123...] model=granite4.1:3b | prompt=Write a thank you note
 [📥 GEN-POST-CALL gen_id=abc123...] model=granite4.1:3b | latency=397ms | tokens=(47+19=66) | response=hello there thank you...
 ```
 
-#### Validation tracing: which requirements passed, which failed, and why
+### Validation tracing: which requirements passed, which failed, and why
 
 ```text
 [🔍 VALIDATION-PRE-CHECK] requirements=3 | target=ModelOutputThunk
@@ -39,7 +39,7 @@ Before debug plugins, understanding a failed sampling run meant reconstructing i
        └─ validated as "no"
 ```
 
-#### Sampling tracing: iterations, repairs, and feedback
+### Sampling tracing: iterations, repairs, and feedback
 
 ```text
 [🎯 SAMPLING-START] strategy=RepairTemplateStrategy | loop_budget=3 | requirements=3
