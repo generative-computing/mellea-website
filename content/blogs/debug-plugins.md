@@ -12,7 +12,7 @@ You've built an LLM pipeline in Mellea. Requirements are passing locally, sampli
 
 Right now, you're flying blind. You add print statements. You write custom callbacks. You piece together logs from stderr, stdout, and your logger. Every pipeline needs its own debugging setup, and you end up rewriting the same introspection code across projects.
 
-Mellea 0.27 includes **built-in debug plugins**—eight production-ready hooks across three categories that trace your entire LLM pipeline without writing a single line of instrumentation code. See model calls, token counts, requirement validation, repair events, and sampling iterations with structured logging designed for troubleshooting.
+Mellea 0.7.0 includes **built-in debug plugins**—eight production-ready hooks across three categories that trace your entire LLM pipeline without writing a single line of instrumentation code. See model calls, token counts, requirement validation, repair events, and sampling iterations with structured logging designed for troubleshooting.
 
 ---
 
@@ -58,6 +58,10 @@ Before debug plugins, understanding a failed sampling run meant reconstructing i
 [🎉 SAMPLING-END] SUCCESS in 2 iteration(s) using RepairTemplateStrategy
    total_attempts=2
    best_validation_score=3/3
+
+[💥 SAMPLING-END] FAILED after 3 iteration(s): budget exhausted
+   total_attempts=3
+   best_validation_score=2/3
 ```
 
 Combine all three and you see the complete flow: which requirements checked, whether repairs helped, and how the model responded to feedback.
@@ -131,9 +135,9 @@ logging.getLogger("httpx").setLevel(logging.ERROR)
 
 ---
 
-## Seven Runnable Examples
+## Runnable Examples
 
-Mellea includes runnable examples showing each plugin category and common workflows:
+Mellea includes seven runnable examples showing each plugin category and common workflows in `docs/examples/plugins/`:
 
 | Script                               | Plugins                 | Purpose                                   |
 | ------------------------------------ | ----------------------- | ----------------------------------------- |
@@ -265,7 +269,7 @@ register([
 
 ## Design Choices and Trade-offs
 
-The plugins are designed with minimal overhead: pre-hooks check if they're registered before building payloads, logging is efficient, and no plugins run in the hot path unless explicitly enabled.
+The plugins are designed with minimal overhead: registration checks happen once at startup, logging is efficient, and no overhead occurs unless plugins are explicitly enabled.
 
 Logs use structured key-value pairs (model, latency, tokens) instead of freeform strings. This makes them easier to parse programmatically—for example, `grep "FAILED:" debug.log`—and keeps the door open for future exports to Jaeger, Grafana, or other observability platforms.
 
