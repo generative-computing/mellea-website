@@ -1,7 +1,7 @@
 ---
 title: "See Inside Your LLM Pipeline: Mellea's New Debug Plugins"
-date: 2026-06-14
-author: "Mellea Contributors"
+date: "2026-07-01"
+author: "Akihio Kuroda"
 excerpt: "Trace generation, validation, and sampling in detail. Built-in plugins reveal model calls, requirement failures, repair events, and loop iterations—all without boilerplate."
 tags: ["debugging", "plugins", "observability"]
 ---
@@ -12,22 +12,22 @@ You've built an LLM pipeline in Mellea. Requirements are passing locally, sampli
 
 Right now, you're flying blind. You add print statements. You write custom callbacks. You piece together logs from stderr, stdout, and your logger. Every pipeline needs its own debugging setup, and you end up rewriting the same introspection code across projects.
 
-Mellea 0.7.0 includes **built-in debug plugins**—eight production-ready hooks across three categories that trace your entire LLM pipeline without writing a single line of instrumentation code. See model calls, token counts, requirement validation, repair events, and sampling iterations with structured logging designed for troubleshooting.
+The upcoming Mellea 0.7.0 includes **built-in debug plugins**—eight hooks across three categories that trace model calls, token counts, requirement validation, repair events, and sampling iterations with structured logging.
 
 ---
 
 ## What You Can See Now
 
-Before debug plugins, understanding a failed sampling run meant reconstructing it from logs or adding custom instrumentation. Now you get complete visibility into three layers of your pipeline:
+Before debug plugins, understanding a failed sampling run meant reconstructing it from logs or adding custom instrumentation. Now you can trace three layers of your pipeline.
 
-**Generation pipeline**: What prompt did the model see? How long did it take? How many tokens? Was repair feedback provided?
+#### Generation tracing: prompts, latency, and repair feedback
 
 ```text
 [📤 GEN-PRE-CALL gen_id=abc123...] model=granite4.1:3b | prompt=Write a thank you note
 [📥 GEN-POST-CALL gen_id=abc123...] model=granite4.1:3b | latency=397ms | tokens=(47+19=66) | response=hello there thank you...
 ```
 
-**Validation pipeline**: Which requirements passed, which failed, and why? What was the LLM's reasoning for a failure?
+#### Validation tracing: which requirements passed, which failed, and why
 
 ```text
 [🔍 VALIDATION-PRE-CHECK] requirements=3 | target=ModelOutputThunk
@@ -39,7 +39,7 @@ Before debug plugins, understanding a failed sampling run meant reconstructing i
        └─ validated as "no"
 ```
 
-**Sampling pipeline**: How many iterations? When did repairs trigger? What feedback did the model receive?
+#### Sampling tracing: iterations, repairs, and feedback
 
 ```text
 [🎯 SAMPLING-START] strategy=RepairTemplateStrategy | loop_budget=3 | requirements=3
@@ -64,13 +64,13 @@ Before debug plugins, understanding a failed sampling run meant reconstructing i
    best_validation_score=2/3
 ```
 
-Combine all three and you see the complete flow: which requirements checked, whether repairs helped, and how the model responded to feedback.
+Combine all three and you get complete visibility: which requirements checked, whether repairs helped, and how the model responded to feedback.
 
 ---
 
 ## Using Debug Plugins
 
-The plugin API is straightforward. Import the hooks you need, register them, and they fire automatically:
+The plugin API is straightforward. First, install the hooks extras with `uv add 'mellea[hooks]'` (or `pip install 'mellea[hooks]'`). Then import the hooks you need, register them, and they fire automatically:
 
 ```python
 from mellea.plugins.builtin_debug.generation import (
@@ -108,7 +108,7 @@ For scoped debugging (plugins active only for one task), use `plugin_scope`:
 ```python
 from mellea.plugins import plugin_scope
 
-with plugin_scope([log_generation_pre_call, log_generation_post_call]):
+with plugin_scope(log_generation_pre_call, log_generation_post_call):
     with mellea.start_session() as m:
         result = m.instruct(
             "Write a thank you note",
@@ -161,7 +161,6 @@ Here's `builtin_complete_diagnostics.py` in action, showing all three plugin cat
 ```python
 import logging
 import mellea
-from mellea.core import Requirement
 from mellea.plugins import plugin_scope
 from mellea.plugins.builtin_debug.generation import (
     log_generation_post_call,
@@ -197,7 +196,7 @@ requirements = [
     req("Include the phrase 'thank you'", validation_fn=simple_validate(has_thank_you)),
 ]
 
-with plugin_scope([
+with plugin_scope(
     log_generation_pre_call,
     log_generation_post_call,
     log_validation_pre_check,
@@ -206,7 +205,7 @@ with plugin_scope([
     log_sampling_iteration,
     log_sampling_repair,
     log_sampling_loop_end,
-]):
+):
     with mellea.start_session() as m:
         result = m.instruct(
             "Write a thank you note",
@@ -216,7 +215,7 @@ with plugin_scope([
         print(f"\nFinal result:\n{result}")
 ```
 
-Now you see the complete flow: what prompts the model saw, which validations failed, when repairs triggered, and the final result.
+Now you see the complete end-to-end flow: what prompts the model saw, which validations failed, when repairs triggered, and the final result.
 
 ---
 
@@ -283,7 +282,7 @@ These plugins trace core generation, validation, and sampling. Intrinsic adapter
 
 ## What's Next
 
-Debug plugins ship today in Mellea 0.27. The plugin system is built for extension. You can build team-specific instrumentation using the same hook infrastructure, export traces to Jaeger or Grafana, add plugins for Granite intrinsics (RAG, safety, calibration), and export logs as JSON for analysis.
+Debug plugins ship in Mellea 0.7.0. The plugin system is built for extension. You can build team-specific instrumentation using the same hook infrastructure, export traces to Jaeger or Grafana, add plugins for Granite intrinsics (RAG, safety, calibration), and export logs as JSON for analysis.
 
 The plugins are available now. Run the examples, enable the categories you need, and start seeing inside your pipeline.
 
