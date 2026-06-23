@@ -337,6 +337,10 @@ a {
   cursor: pointer;
 }
 
+.btn-nav-get-started img {
+  filter: invert(1);
+}
+
 @media (prefers-color-scheme: dark) {
   .btn-nav-get-started {
     background: #f4f4f4;

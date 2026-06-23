@@ -102,6 +102,13 @@ export default function Header() {
             rel="noopener noreferrer"
           >
             Get started
+            <Image
+              src={`${basePath}/images/icon-arrow-up-right.svg`}
+              alt=""
+              width={20}
+              height={20}
+              unoptimized
+            />
           </Link>
         </div>
 
