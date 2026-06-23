@@ -84,7 +84,7 @@
   --font-display: "Aileron", system-ui, sans-serif;
   --font-body: "Aileron", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --letter-spacing-body: 1px;
+  --letter-spacing-body: 0.5px;
 
   --header-height: 72px;
   --homepage-outer-padding: 46px;
@@ -158,7 +158,7 @@ body {
   letter-spacing: var(--letter-spacing-body);
   background: var(--page-bg);
   color: var(--text-primary);
-  line-height: 1.5;
+  line-height: 1.2;
   min-height: 100vh;
 }
 
