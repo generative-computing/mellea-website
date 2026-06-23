@@ -18,7 +18,7 @@ export default function Footer() {
               text={"Mellea is for developers who'd rather write code than vibes."}
               triggerOnScroll
               threshold={0.15}
-              typingSpeed={60}
+              typingSpeed={15}
             />
           </h2>
           <ScrollReveal>

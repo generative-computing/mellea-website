@@ -29,7 +29,7 @@ export default function HeroSection() {
         <h1 className="hero__title" aria-label="Control LLMs with code, not prompts">
           <TypewriterText
             text={'Control LLMs with\ncode, not prompts'}
-            typingSpeed={80}
+            typingSpeed={20}
             onComplete={() => setSubtitleVisible(true)}
           />
         </h1>

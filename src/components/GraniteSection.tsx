@@ -18,7 +18,7 @@ export default function GraniteSection() {
               text="Mellea + Granite"
               triggerOnScroll
               threshold={0.18}
-              typingSpeed={60}
+              typingSpeed={15}
             />
           </h2>
           <ScrollReveal>

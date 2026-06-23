@@ -43,7 +43,7 @@ export default function HowMelleaSection() {
                 text="Write python functions that call LLMs"
                 triggerOnScroll
                 threshold={0.18}
-                typingSpeed={48}
+                typingSpeed={12}
               />
             </h2>
             <ScrollReveal className="how-mellea__text">
