@@ -6,18 +6,24 @@ interface DotFieldProps {
   className?: string;
 }
 
-const DOT_RADIUS = 1.5;
+const DOT_RADIUS = 1.9;
 const DOT_SPACING = 17;
 const CURSOR_RADIUS = 850;
 const BULGE_STRENGTH = 137;
 const WAVE_AMPLITUDE = 3;
-const GRADIENT_FROM = [243, 198, 11];
-const GRADIENT_TO = [22, 22, 22];
+const GRADIENT_FROM = 'rgba(180, 130, 0, 0.85)';
+const GRADIENT_TO = 'rgba(100, 70, 0, 0.35)';
+
+interface Dot {
+  ax: number;
+  ay: number;
+  sx: number;
+  sy: number;
+}
 
 export default function DotField({ className = '' }: DotFieldProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
-  const mouseRef = useRef({ x: -9999, y: -9999 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -26,14 +32,36 @@ export default function DotField({ className = '' }: DotFieldProps) {
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) return;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { alpha: true });
     if (!ctx) return;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    let dots: { baseX: number; baseY: number }[] = [];
+    let dots: Dot[] = [];
     let width = 0;
     let height = 0;
-    let time = 0;
+    let frameCount = 0;
+
+    const mouse = { x: -9999, y: -9999, prevX: -9999, prevY: -9999, speed: 0 };
+    let engagement = 0;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    const buildDots = () => {
+      const step = DOT_RADIUS + DOT_SPACING;
+      const cols = Math.floor(width / step);
+      const rows = Math.floor(height / step);
+      const padX = (width % step) / 2;
+      const padY = (height % step) / 2;
+      dots = new Array(rows * cols);
+      let idx = 0;
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const ax = padX + col * step + step / 2;
+          const ay = padY + row * step + step / 2;
+          dots[idx++] = { ax, ay, sx: ax, sy: ay };
+        }
+      }
+    };
 
     const resize = () => {
       const rect = canvas.parentElement?.getBoundingClientRect();
@@ -45,88 +73,96 @@ export default function DotField({ className = '' }: DotFieldProps) {
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      buildGrid();
+      offsetX = rect.left + window.scrollX;
+      offsetY = rect.top + window.scrollY;
+      buildDots();
     };
 
-    const buildGrid = () => {
-      dots = [];
-      const cols = Math.ceil(width / DOT_SPACING) + 1;
-      const rows = Math.ceil(height / DOT_SPACING) + 1;
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          dots.push({ baseX: c * DOT_SPACING, baseY: r * DOT_SPACING });
-        }
-      }
+    const updateMouseSpeed = () => {
+      const dx = mouse.prevX - mouse.x;
+      const dy = mouse.prevY - mouse.y;
+      const dist = Math.hypot(dx, dy);
+      mouse.speed += (dist - mouse.speed) * 0.5;
+      if (mouse.speed < 0.001) mouse.speed = 0;
+      mouse.prevX = mouse.x;
+      mouse.prevY = mouse.y;
     };
 
-    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    const tick = () => {
+      frameCount++;
+      const t = frameCount * 0.02;
+      const len = dots.length;
 
-    const draw = () => {
-      time += 0.01;
+      const targetEngagement = Math.min(mouse.speed / 5, 1);
+      engagement += (targetEngagement - engagement) * 0.06;
+      if (engagement < 0.001) engagement = 0;
+      const eng = engagement;
+
       ctx.clearRect(0, 0, width, height);
 
-      const mx = mouseRef.current.x;
-      const my = mouseRef.current.y;
+      const grad = ctx.createLinearGradient(0, 0, width, height);
+      grad.addColorStop(0, GRADIENT_FROM);
+      grad.addColorStop(1, GRADIENT_TO);
+      ctx.fillStyle = grad;
 
-      for (const dot of dots) {
-        const dx = dot.baseX - mx;
-        const dy = dot.baseY - my;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+      const crSq = CURSOR_RADIUS * CURSOR_RADIUS;
 
-        let x = dot.baseX;
-        let y = dot.baseY;
+      ctx.beginPath();
 
-        // Wave
-        x += Math.sin(time + dot.baseY * 0.01) * WAVE_AMPLITUDE;
-        y += Math.cos(time + dot.baseX * 0.01) * WAVE_AMPLITUDE;
+      for (let i = 0; i < len; i++) {
+        const d = dots[i];
+        const dx = mouse.x - d.ax;
+        const dy = mouse.y - d.ay;
+        const distSq = dx * dx + dy * dy;
 
-        // Bulge
-        if (dist < CURSOR_RADIUS && dist > 0) {
+        if (distSq < crSq && eng > 0.01) {
+          const dist = Math.sqrt(distSq);
           const factor = 1 - dist / CURSOR_RADIUS;
-          const push = factor * factor * BULGE_STRENGTH;
-          x += (dx / dist) * push;
-          y += (dy / dist) * push;
+          const push = factor * factor * BULGE_STRENGTH * eng;
+          const angle = Math.atan2(dy, dx);
+          d.sx += (d.ax - Math.cos(angle) * push - d.sx) * 0.15;
+          d.sy += (d.ay - Math.sin(angle) * push - d.sy) * 0.15;
+        } else {
+          d.sx += (d.ax - d.sx) * 0.1;
+          d.sy += (d.ay - d.sy) * 0.1;
         }
 
-        // Gradient color
-        const t = Math.min(dist / CURSOR_RADIUS, 1);
-        const r = Math.round(lerp(GRADIENT_FROM[0], GRADIENT_TO[0], t));
-        const g = Math.round(lerp(GRADIENT_FROM[1], GRADIENT_TO[1], t));
-        const b = Math.round(lerp(GRADIENT_FROM[2], GRADIENT_TO[2], t));
-        const alpha = lerp(0.55, 0.12, t);
+        let drawX = d.sx;
+        let drawY = d.sy;
+        if (WAVE_AMPLITUDE > 0) {
+          drawY += Math.sin(d.ax * 0.03 + t) * WAVE_AMPLITUDE;
+          drawX += Math.cos(d.ay * 0.03 + t * 0.7) * WAVE_AMPLITUDE * 0.5;
+        }
 
-        ctx.beginPath();
-        ctx.arc(x, y, DOT_RADIUS, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
-        ctx.fill();
+        const half = DOT_RADIUS / 2;
+        ctx.rect(drawX - half, drawY - half, DOT_RADIUS, DOT_RADIUS);
       }
 
-      animRef.current = requestAnimationFrame(draw);
+      ctx.fill();
+      animRef.current = requestAnimationFrame(tick);
     };
 
     const handleMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouseRef.current = { x: e.clientX - rect.left, y: e.clientY - rect.top };
-    };
-
-    const handleMouseLeave = () => {
-      mouseRef.current = { x: -9999, y: -9999 };
+      mouse.x = e.pageX - offsetX;
+      mouse.y = e.pageY - offsetY;
     };
 
     resize();
-    animRef.current = requestAnimationFrame(draw);
+    animRef.current = requestAnimationFrame(tick);
+    const speedInterval = setInterval(updateMouseSpeed, 20);
 
     const resizeObserver = new ResizeObserver(resize);
     if (canvas.parentElement) resizeObserver.observe(canvas.parentElement);
 
-    window.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mouseleave', handleMouseLeave);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('resize', resize);
 
     return () => {
       cancelAnimationFrame(animRef.current);
+      clearInterval(speedInterval);
       resizeObserver.disconnect();
       window.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('mouseleave', handleMouseLeave);
+      window.removeEventListener('resize', resize);
     };
   }, []);
 
