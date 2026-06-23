@@ -20,7 +20,7 @@ test('404 page has link back to home', async ({ page }) => {
 test('404 back-to-home link navigates correctly', async ({ page }) => {
   await page.goto('/this-page-does-not-exist/');
   await page.getByRole('link', { name: /Back to home/i }).click();
-  await expect(page.getByRole('heading', { name: /Mellea/i, level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Control LLMs/i, level: 1 })).toBeVisible();
 });
 
 // ── Sitemap ──

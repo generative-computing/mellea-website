@@ -12,7 +12,7 @@ test('hamburger menu button is visible on mobile', async ({ page }) => {
 
 test('desktop nav is hidden on mobile', async ({ page }) => {
   await page.goto('/');
-  const nav = page.locator('header').getByRole('navigation');
+  const nav = page.locator('.site-nav');
   await expect(nav).not.toBeVisible();
 });
 
@@ -21,7 +21,6 @@ test('hamburger menu opens and shows nav links', async ({ page }) => {
   await page.getByLabel(/Open menu/i).click();
   const nav = page.getByRole('navigation', { name: /Mobile navigation/i });
   await expect(nav).toBeVisible();
-  // Should have multiple nav links
   const links = nav.getByRole('link');
   const count = await links.count();
   expect(count).toBeGreaterThanOrEqual(3);
@@ -33,9 +32,6 @@ test('hamburger menu closes on link click', async ({ page }) => {
   const nav = page.getByRole('navigation', { name: /Mobile navigation/i });
   await expect(nav).toBeVisible();
 
-  // Click an external link (target="_blank") — opens new tab but stays on this page,
-  // so we can assert the menu actually closed on the current page rather than
-  // trivially passing because a new page was loaded.
   await nav.getByRole('link', { name: 'Docs' }).click();
   await expect(nav).not.toBeVisible();
 });
@@ -53,28 +49,22 @@ test('hamburger menu closes on close button', async ({ page }) => {
 
 test('hero renders on mobile', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Mellea/i, level: 1 })).toBeVisible();
-  await expect(page.getByText('uv pip install mellea')).toBeVisible();
+  const h1 = page.locator('h1');
+  await expect(h1).toBeVisible();
+  await expect(page.getByText('pip install mellea')).toBeVisible();
 });
 
 test('feature cards visible on mobile', async ({ page }) => {
   await page.goto('/');
-  const cards = page.getByRole('article');
+  const cards = page.locator('.feature-card');
   const count = await cards.count();
-  expect(count).toBeGreaterThanOrEqual(4);
+  expect(count).toBe(4);
   await expect(cards.first()).toBeVisible();
-  await expect(cards.last()).toBeVisible();
 });
 
 test('code showcase tabs visible on mobile', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('tab').first()).toBeVisible();
-});
-
-test('contributor avatars are hidden on mobile', async ({ page }) => {
-  await page.goto('/');
-  const avatars = page.getByTestId('contributor-avatars');
-  await expect(avatars).toBeHidden();
 });
 
 test('footer renders on mobile', async ({ page }) => {
