@@ -150,6 +150,7 @@ html {
   -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--header-height) + 36px);
+  overflow-x: hidden;
 }
 
 body {
@@ -518,7 +519,7 @@ a {
   width: 100%;
   max-width: var(--homepage-max-width);
   margin: 0 auto;
-  padding: 192px var(--homepage-outer-padding) 4rem;
+  padding: 192px var(--homepage-outer-padding) 35rem;
   padding-left: var(--page-gutter-inset);
   padding-right: var(--page-gutter-inset);
   min-height: calc(100vh - var(--header-height));
@@ -1416,7 +1417,8 @@ a {
   .how-mellea__intro { grid-template-columns: 1fr; }
   .how-mellea__cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
-  .how-mellea__compare { height: auto; }
+  .hero { padding-bottom: 22rem; }
+  .how-mellea__compare { height: auto; margin-top: -20rem; }
   .how-mellea__compare-label { height: 40px; padding: 0 12px; font-size: 14px; }
   .how-mellea__compare-stage {
     margin-top: calc(var(--compare-top-pad) - 7px);
@@ -1451,14 +1453,17 @@ a {
   .site-nav { display: none !important; }
   .btn-nav-get-started { display: none !important; }
 
-  .hero { padding-top: 120px; min-height: auto; }
+  .hero { padding-top: 120px; padding-bottom: 14rem; min-height: auto; }
   .hero__title { font-size: clamp(2.5rem, 8vw, 76px); }
   .site-footer__headline { font-size: clamp(2.5rem, 8vw, 76px); }
+  .how-mellea__compare { margin-top: -10rem; }
 }
 
 @media (max-width: 640px) {
   :root { --homepage-outer-padding: 16px; }
 
+  .hero { padding-bottom: 10rem; }
+  .how-mellea__compare { margin-top: -8rem; }
   .how-mellea__cards { grid-template-columns: 1fr; }
   .how-mellea__compare-label--with { right: 8px; }
   .how-mellea__compare-label--without { left: 8px; }
