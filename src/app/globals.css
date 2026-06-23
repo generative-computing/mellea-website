@@ -227,7 +227,7 @@ a {
 
 .brand {
   display: inline-flex;
-  align-items: center;
+  align-items: baseline;
   gap: 0.45rem;
   margin-left: var(--homepage-padding-inset);
   text-decoration: none;
@@ -240,11 +240,12 @@ a {
 
 .brand__icon {
   flex-shrink: 0;
-  width: 1.87rem;
-  max-width: 1.87rem;
+  width: 20px;
+  max-width: 20px;
   height: auto;
   opacity: 1;
   overflow: hidden;
+  align-self: flex-end;
   transition: opacity 0.45s ease, max-width 0.45s ease, width 0.45s ease;
 }
 

@@ -59,8 +59,8 @@ export default function Header() {
             className="brand__icon"
             src={`${basePath}/images/mel-icon.svg`}
             alt=""
-            width={30}
-            height={25}
+            width={20}
+            height={17}
             unoptimized
           />
           <Image
