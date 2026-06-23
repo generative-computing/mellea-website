@@ -662,6 +662,7 @@ a {
   margin-right: calc(-1 * var(--page-gutter-inset));
   height: calc(var(--compare-top-pad) + var(--compare-code-height));
   margin-top: -33rem;
+  padding-top: 12rem;
 }
 
 .how-mellea__compare-inner {
