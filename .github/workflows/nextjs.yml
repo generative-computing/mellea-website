@@ -43,14 +43,14 @@ jobs:
       - uses: lycheeverse/lychee-action@v2
         with:
           # Check all markdown source files for broken links.
-          # Excludes localhost (used in docs examples) and fragments-only anchors.
+          # Exclusions live in lychee.toml — CLI --exclude flags would
+          # override (not merge with) the config list.
           args: >
             --verbose
             --no-progress
+            --config lychee.toml
             --base-url 'https://mellea.ai'
-            --exclude 'localhost'
-            --exclude 'mellea\.ai'
-            --exclude '^#'
+            --user-agent 'Mozilla/5.0 (compatible; lychee/2.0; +https://github.com/lycheeverse/lychee)'
             content/blogs/**/*.md *.md
           fail: true
 

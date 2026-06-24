@@ -1,0 +1,15 @@
+# lychee link checker configuration
+#
+# Excludes:
+# - localhost: used in docs examples (dev server URLs)
+# - mellea.ai: self-references resolved by --base-url, but anchor-only
+#   fragments to the homepage (e.g. /#section) cause false 404s
+# - ^#: bare fragment-only anchors that aren't real URLs
+# - substack.com: blocks automated crawlers with 403 even with a browser
+#   User-Agent (Cloudflare bot detection on GitHub runner IPs)
+exclude = [
+    "localhost",
+    "mellea\\.ai",
+    "^#",
+    ".*\\.substack\\.com",
+]
