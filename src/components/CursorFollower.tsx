@@ -133,7 +133,7 @@ export default function CursorFollower() {
   }, []);
 
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !enabled) return;
     const sprite = spriteRef.current;
     const trail = trailRef.current;
     const img = imageRef.current;
