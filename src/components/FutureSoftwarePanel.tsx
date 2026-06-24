@@ -171,6 +171,7 @@ export default function FutureSoftwarePanel() {
         {TABS.map((tab, i) => (
           <button
             key={tab.id}
+            id={`future-tab-${tab.id}`}
             type="button"
             className={`future-panel__tab${active === i ? ' is-active' : ''}`}
             role="tab"
