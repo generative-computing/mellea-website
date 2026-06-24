@@ -1,5 +1,5 @@
 ---
-title: "See Inside Your LLM Pipeline: Mellea's New Debug Plugins"
+title: "See Inside Your LLM Pipeline with Mellea Debug Plugins"
 date: "2026-07-01"
 author: "Akihiko Kuroda"
 excerpt: "Trace generation, validation, and sampling in detail. Built-in plugins reveal model calls, requirement failures, repair events, and loop iterations—all without boilerplate."
@@ -12,7 +12,7 @@ You've built an LLM pipeline in Mellea. Requirements are passing locally, sampli
 
 Right now, you're flying blind. You add print statements. You write custom callbacks. You piece together logs from stderr, stdout, and your logger. Every pipeline needs its own debugging setup, and you end up rewriting the same introspection code across projects.
 
-Debug plugins differ from telemetry frameworks like OpenTelemetry. Both surface similar information—model calls, latency, validation results—but telemetry outputs to structured backends (Jaeger, Grafana) with less direct control over what you see and when. Debug plugins give you direct, immediate visibility into your pipeline via logs, letting you see exactly what you need without external infrastructure.
+Debug plugins differ from telemetry frameworks like OpenTelemetry. Both surface similar information—model calls, latency, validation results—but telemetry routes information to structured backends (Jaeger, Grafana), whereas debug plugins surface it immediately via logs, letting you see exactly what you need without external infrastructure.
 
 Mellea 0.7.0 includes **built-in debug plugins**—eight hooks across three categories that trace model calls, token counts, requirement validation, repair events, and sampling iterations with structured logging.
 
@@ -66,7 +66,7 @@ Before debug plugins, understanding a failed sampling run meant reconstructing i
    best_validation_score=2/3
 ```
 
-Combine all three and you can trace which requirements checked, whether repairs helped, and how the model responded to feedback.
+Combine all three and you can trace which requirements were checked, whether repairs helped, and how the model responded to feedback.
 
 ---
 
@@ -103,7 +103,7 @@ register([
 ])
 ```
 
-Every generation, validation check, and sampling iteration now logs structured output. No callbacks, no context managers, no custom wiring. The plugins hook into Mellea's lifecycle automatically.
+Every generation, validation check, and sampling iteration now logs structured output. No callbacks, no custom wiring. The plugins hook into Mellea's lifecycle automatically.
 
 For scoped debugging (plugins active only for one task), use `plugin_scope`:
 
@@ -126,7 +126,7 @@ Control verbosity with standard Python logging:
 import logging
 
 # Show only failures and key events
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 # Show all details including passed requirements
 logging.basicConfig(level=logging.DEBUG)
@@ -158,7 +158,7 @@ uv run python docs/examples/plugins/builtin_generation_tracing.py
 uv run python docs/examples/plugins/builtin_complete_diagnostics.py
 ```
 
-Here's `builtin_complete_diagnostics.py` in action, showing all three plugin categories together:
+Here's the source for `builtin_complete_diagnostics.py`, which uses all three plugin categories together:
 
 ```python
 import logging
@@ -181,7 +181,8 @@ from mellea.plugins.builtin_debug.validation import (
 from mellea.stdlib.requirements import req, simple_validate
 from mellea.stdlib.sampling import RepairTemplateStrategy
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+logging.getLogger("httpx").setLevel(logging.ERROR)
 
 def is_lowercase_only(text: str) -> bool:
     return text == text.lower()
