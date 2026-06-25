@@ -27,8 +27,10 @@ There's a cleaner path.
 >    llama.cpp b9509); requires Ollama to ship llama.cpp ≥9630.
 > 2. Model published in the Ollama library — `ollama pull granite-vision-4.1` currently 404s.
 > 3. **Assumed model name:** The blog uses `start_session(model_id="granite-vision-4.1")`.
->    This assumes mellea adds Granite Vision 4.1 under that name. **Verify before publishing
->    and update all four `model_id=` references if the name differs.**
+>    This assumes mellea adds Granite Vision 4.1 under that name. **Verify before publishing.
+>    If the name differs, update: the `ollama pull` on the setup line (bash), and the three
+>    `start_session(model_id=...)` lines in the Python blocks. The `ibm-granite/granite-vision-4.1-4b`
+>    in the OpenAI backend block is the HF model ID and does not change.**
 >
 > **Testing workaround** — use `gguf-forge` to quantize the HF safetensors to GGUF, then
 > pull via Ollama's HuggingFace integration (no separate server needed):
@@ -195,7 +197,7 @@ def check_line_items(json_str: str) -> tuple[bool, str]:
     r = Receipt.model_validate_json(json_str)
     computed = round(sum(i.quantity * i.unit_price for i in r.items), 2)
     if abs(computed - r.subtotal) > 0.01:
-        return False, f"line items sum to {computed}, subtotal shows {r.subtotal}"
+        return False, f"line items sum to {computed:.2f}, subtotal shows {r.subtotal:.2f}"
     return True, ""
 
 
