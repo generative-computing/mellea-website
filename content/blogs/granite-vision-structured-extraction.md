@@ -32,19 +32,29 @@ There's a cleaner path.
 >    `start_session(model_id=...)` lines in the Python blocks. The `ibm-granite/granite-vision-4.1-4b`
 >    in the OpenAI backend block is the HF model ID and does not change.**
 >
-> **Testing workaround** — use `gguf-forge` to quantize the HF safetensors to a local GGUF,
-> then register it with Ollama under the name the blog uses:
+> **Testing workaround** — use `gguf-forge` (requires `brew install llama.cpp` + the tool
+> from Nigel's repo) to quantize the HF safetensors to a local GGUF, then register it with
+> Ollama under the name the blog uses:
 >
 > ```bash
-> # Quantize HF safetensors → local GGUF (internal tool — run once)
+> # Install prerequisites (once)
+> brew install llama.cpp
+> uv tool install ~/src/gguf-forge   # or wherever you cloned it
+>
+> # Quantize HF safetensors → local GGUF (run once; idempotent)
 > gguf-forge ibm-granite/granite-vision-4.1-4b
 > # Creates: ~/.cache/huggingface/hub/models--ibm-granite--granite-vision-4.1-4b/gguf/
-> #   ibm-granite--granite-vision-4.1-4b.Q4_K_M.gguf  ← use this one
-> #   ibm-granite--granite-vision-4.1-4b.f16.gguf
+> #   ibm-granite--granite-vision-4.1-4b.Q4_K_M.gguf
+> #   ibm-granite--granite-vision-4.1-4b.mmproj-f16.gguf
 >
-> # Register the Q4_K_M GGUF with Ollama
-> GGUF=$HOME/.cache/huggingface/hub/models--ibm-granite--granite-vision-4.1-4b/gguf/ibm-granite--granite-vision-4.1-4b.Q4_K_M.gguf
-> echo "FROM $GGUF" | ollama create granite-vision-4.1
+> # Register both GGUFs with Ollama (language model + visual projector)
+> GGUF_DIR=$HOME/.cache/huggingface/hub/models--ibm-granite--granite-vision-4.1-4b/gguf
+> cat > /tmp/Modelfile <<'EOF'
+> FROM GGUF_DIR_PLACEHOLDER/ibm-granite--granite-vision-4.1-4b.Q4_K_M.gguf
+> FROM GGUF_DIR_PLACEHOLDER/ibm-granite--granite-vision-4.1-4b.mmproj-f16.gguf
+> EOF
+> sed -i '' "s|GGUF_DIR_PLACEHOLDER|$GGUF_DIR|g" /tmp/Modelfile
+> ollama create granite-vision-4.1 -f /tmp/Modelfile
 >
 > uv add mellea pillow
 > ```
@@ -52,8 +62,14 @@ There's a cleaner path.
 > No code changes needed — the model registers as `granite-vision-4.1` and all code blocks
 > run as written.
 >
-> Once `granite-vision-4.1` lands in the Ollama library and mellea model name is confirmed:
-> remove this note and flip the PR to ready.
+> **To publish** (once Ollama ships `granite-vision-4.1`):
+>
+> 1. Verify `ollama pull granite-vision-4.1` succeeds.
+> 2. Confirm the model ID in mellea is `granite-vision-4.1`; if not, update the `ollama pull`
+>    on the setup line and the three `start_session(model_id=...)` calls in the Python blocks.
+> 3. Update `date:` in the frontmatter to the actual publish date.
+> 4. Delete this entire `EDITORIAL NOTE` blockquote.
+> 5. Flip the PR from draft → ready for review and ping ajbozarth.
 
 ---
 
