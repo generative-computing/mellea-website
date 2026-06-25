@@ -32,27 +32,28 @@ There's a cleaner path.
 >    `start_session(model_id=...)` lines in the Python blocks. The `ibm-granite/granite-vision-4.1-4b`
 >    in the OpenAI backend block is the HF model ID and does not change.**
 >
-> **Testing workaround** — use `gguf-forge` to quantize the HF safetensors to GGUF, then
-> pull via Ollama's HuggingFace integration (no separate server needed):
+> **Testing workaround** — use `gguf-forge` to quantize the HF safetensors to a local GGUF,
+> then register it with Ollama under the name the blog uses:
 >
 > ```bash
-> # Quantize HF safetensors → GGUF (internal tool — run once, pushes result back to HF)
+> # Quantize HF safetensors → local GGUF (internal tool — run once)
 > gguf-forge ibm-granite/granite-vision-4.1-4b
+> # Creates: ~/.cache/huggingface/hub/models--ibm-granite--granite-vision-4.1-4b/gguf/
+> #   ibm-granite--granite-vision-4.1-4b.Q4_K_M.gguf  ← use this one
+> #   ibm-granite--granite-vision-4.1-4b.f16.gguf
 >
-> # Pull the quantized GGUF via Ollama's HF integration
-> ollama pull hf.co/ibm-granite/granite-vision-4.1-4b
+> # Register the Q4_K_M GGUF with Ollama
+> GGUF=$HOME/.cache/huggingface/hub/models--ibm-granite--granite-vision-4.1-4b/gguf/ibm-granite--granite-vision-4.1-4b.Q4_K_M.gguf
+> echo "FROM $GGUF" | ollama create granite-vision-4.1
+>
 > uv add mellea pillow
 > ```
 >
-> Then in each code block replace:
-> `m = start_session(model_id="granite-vision-4.1")`
-> with:
-> `m = start_session(model_id="hf.co/ibm-granite/granite-vision-4.1-4b")`
->
-> The `instruct` call — `images=`, `format=`, `requirements=`, `strategy=` — is unchanged.
+> No code changes needed — the model registers as `granite-vision-4.1` and all code blocks
+> run as written.
 >
 > Once `granite-vision-4.1` lands in the Ollama library and mellea model name is confirmed:
-> revert the `model_id` swap above, remove this note, and flip the PR to ready.
+> remove this note and flip the PR to ready.
 
 ---
 
