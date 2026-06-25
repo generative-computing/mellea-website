@@ -20,34 +20,37 @@ There's a cleaner path.
 > **EDITORIAL NOTE — remove before publishing**
 >
 > **Status:** All four code blocks verified working (2026-06-15) via llama-server (homebrew
-> llama.cpp build 9630) with a locally quantized/converted Q4_K_M GGUF from the HF
-> safetensors weights. Awaiting two Ollama fixes before publishing:
+> llama.cpp build 9630) with a locally quantized/converted Q4_K_M GGUF. Targeting publish
+> ~2026-07-02, pending:
 >
-> 1. `granite4_vision` projector support — not present in Ollama 0.30.8 (bundled llama.cpp
->    b9509); requires Ollama to ship llama.cpp ≥9630.
-> 2. Model published in the Ollama library — `ollama pull granite-vision-4.1` currently 404s;
->    `ollama pull huggingface.com/ibm-granite/granite-vision-4.1-4b` also blocked by (1).
+> 1. `granite4_vision` projector support in Ollama — not present in Ollama 0.30.8 (bundled
+>    llama.cpp b9509); requires Ollama to ship llama.cpp ≥9630.
+> 2. Model published in the Ollama library — `ollama pull granite-vision-4.1` currently 404s.
+> 3. **Assumed model name:** The blog uses `start_session(model_id="granite-vision-4.1")`.
+>    This assumes mellea adds Granite Vision 4.1 under that name. **Verify before publishing
+>    and update all four `model_id=` references if the name differs.**
 >
-> **Model availability:** This blog is written for Ollama (final published form — don't change
-> the code examples). For testing and review, run the code against mlx-vlm instead:
+> **Testing workaround** — use `gguf-forge` to quantize the HF safetensors to GGUF, then
+> pull via Ollama's HuggingFace integration (no separate server needed):
 >
 > ```bash
-> mkdir granite-vision-test && cd granite-vision-test
-> uv init --bare --python 3.12
-> uv add mlx-vlm mellea pillow
-> uv run python -m mlx_vlm.server --model ibm-granite/granite-vision-4.1-4b
-> # Serves at http://localhost:8080/v1 — model downloads (~8 GB) on first run.
-> # This is the full bfloat16 safetensors weights, not a quantized GGUF —
-> # expect roughly double the size you'd see from an Ollama pull.
+> # Quantize HF safetensors → GGUF (internal tool — run once, pushes result back to HF)
+> gguf-forge ibm-granite/granite-vision-4.1-4b
+>
+> # Pull the quantized GGUF via Ollama's HF integration
+> ollama pull hf.co/ibm-granite/granite-vision-4.1-4b
+> uv add mellea pillow
 > ```
 >
-> Then change the session setup in each code block from:
+> Then in each code block replace:
 > `m = start_session(model_id="granite-vision-4.1")`
-> to:
-> `m = MelleaSession(OpenAIBackend("ibm-granite/granite-vision-4.1-4b", base_url="http://localhost:8080/v1", api_key="mlx"))`
+> with:
+> `m = start_session(model_id="hf.co/ibm-granite/granite-vision-4.1-4b")`
 >
-> Once granite-vision-4.1 is available in Ollama, remove the mlx-vlm instructions above and
-> verify `ollama pull huggingface.com/ibm-granite/granite-vision-4.1-4b` or `ollama pull granite-vision-4.1` works, then publish.
+> The `instruct` call — `images=`, `format=`, `requirements=`, `strategy=` — is unchanged.
+>
+> Once `granite-vision-4.1` lands in the Ollama library and mellea model name is confirmed:
+> revert the `model_id` swap above, remove this note, and flip the PR to ready.
 
 ---
 
