@@ -377,6 +377,7 @@ _documents_block = (
   "Write the response to the user's input by strictly aligning with the facts in the provided documents..."
 )
 ```
+
 The documents in the booth deployment cover each model family in the
 release (one per model) plus one describing the demo's own architecture.
 When a visitor asked about the 8B language model's training recipe, the
