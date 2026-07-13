@@ -1,0 +1,169 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="card-shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="3" stdDeviation="14" flood-color="#00000012"/>
+    </filter>
+    <filter id="hub-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="18" flood-color="#0f62fe35"/>
+    </filter>
+  </defs>
+
+  <!-- White canvas -->
+  <rect width="1024" height="1024" fill="#ffffff"/>
+
+  <!-- Dark header band -->
+  <rect x="0" y="0" width="1024" height="168" fill="#111111"/>
+
+  <!-- Title -->
+  <text x="512" y="78"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#ffffff"
+        font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="56" font-weight="700" letter-spacing="-1.5">Granite Switch</text>
+
+  <text x="512" y="128"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#F9B228"
+        font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="30" font-weight="400">in Mellea</text>
+
+  <!-- Tagline -->
+  <text x="512" y="208"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#555555"
+        font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="21">One checkpoint. Every adapter function. No adapter wrangling.</text>
+
+  <!-- Diagram card -->
+  <rect x="60" y="234" width="904" height="638" rx="20"
+        fill="#f8f8f8" filter="url(#card-shadow)"/>
+
+  <!-- ─── Connection lines (drawn first, covered by nodes) ─── -->
+  <!-- Hub center: (512, 472) -->
+
+  <!-- → answerability (512, 287) -->
+  <line x1="512" y1="472" x2="512" y2="287" stroke="#d8d8d8" stroke-width="2.5"/>
+  <!-- → hallucination (756, 380) -->
+  <line x1="512" y1="472" x2="756" y2="380" stroke="#d8d8d8" stroke-width="2.5"/>
+  <!-- → citations (625, 622) -->
+  <line x1="512" y1="472" x2="625" y2="622" stroke="#d8d8d8" stroke-width="2.5"/>
+  <!-- → req. check (399, 622) -->
+  <line x1="512" y1="472" x2="399" y2="622" stroke="#d8d8d8" stroke-width="2.5"/>
+  <!-- → guardian (268, 380) -->
+  <line x1="512" y1="472" x2="268" y2="380" stroke="#d8d8d8" stroke-width="2.5"/>
+
+  <!-- ─── Central hub ─── -->
+  <rect x="372" y="434" width="280" height="76" rx="38"
+        fill="#0f62fe" filter="url(#hub-glow)"/>
+
+  <text x="512" y="462"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#ffffff80"
+        font-family="ui-monospace,SFMono-Regular,Menlo,monospace"
+        font-size="12" letter-spacing="0.8">ibm-granite</text>
+
+  <text x="512" y="484"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#ffffff"
+        font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="21" font-weight="700">Granite Switch 4.1</text>
+
+  <!-- ─── Node 1: answerability — top, RAG (blue) ─── -->
+  <rect x="427" y="261" width="170" height="52" rx="26"
+        fill="#eef3ff" stroke="#0f62fe28" stroke-width="1.5"/>
+  <text x="512" y="287"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#0043a0"
+        font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="17" font-weight="600">answerability</text>
+  <!-- connector dot -->
+  <circle cx="512" cy="313" r="4" fill="#d0deff"/>
+  <text x="512" y="326"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#9999bb"
+        font-family="system-ui,-apple-system,sans-serif"
+        font-size="12">RAG</text>
+
+  <!-- ─── Node 2: hallucination — top-right, RAG ─── -->
+  <rect x="671" y="354" width="170" height="52" rx="26"
+        fill="#eef3ff" stroke="#0f62fe28" stroke-width="1.5"/>
+  <text x="756" y="380"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#0043a0"
+        font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="17" font-weight="600">hallucination</text>
+  <circle cx="756" cy="406" r="4" fill="#d0deff"/>
+  <text x="756" y="419"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#9999bb"
+        font-family="system-ui,-apple-system,sans-serif"
+        font-size="12">RAG</text>
+
+  <!-- ─── Node 3: citations — bottom-right, RAG ─── -->
+  <rect x="540" y="596" width="170" height="52" rx="26"
+        fill="#eef3ff" stroke="#0f62fe28" stroke-width="1.5"/>
+  <text x="625" y="622"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#0043a0"
+        font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="17" font-weight="600">citations</text>
+  <circle cx="625" cy="648" r="4" fill="#d0deff"/>
+  <text x="625" y="661"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#9999bb"
+        font-family="system-ui,-apple-system,sans-serif"
+        font-size="12">RAG</text>
+
+  <!-- ─── Node 4: requirement check — bottom-left, Core (amber) ─── -->
+  <rect x="314" y="596" width="170" height="52" rx="26"
+        fill="#fff8e8" stroke="#F9B22828" stroke-width="1.5"/>
+  <text x="399" y="622"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#7a5400"
+        font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="17" font-weight="600">req. check</text>
+  <circle cx="399" cy="648" r="4" fill="#f5d88a"/>
+  <text x="399" y="661"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#aa8830"
+        font-family="system-ui,-apple-system,sans-serif"
+        font-size="12">Core</text>
+
+  <!-- ─── Node 5: guardian — top-left, Guardian (green) ─── -->
+  <rect x="183" y="354" width="170" height="52" rx="26"
+        fill="#eef8ee" stroke="#24a14828" stroke-width="1.5"/>
+  <text x="268" y="380"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#0e5416"
+        font-family="system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+        font-size="17" font-weight="600">guardian</text>
+  <circle cx="268" cy="406" r="4" fill="#a0d8a0"/>
+  <text x="268" y="419"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#3a8a3a"
+        font-family="system-ui,-apple-system,sans-serif"
+        font-size="12">Safety</text>
+
+  <!-- ─── "and more" hint ─── -->
+  <text x="512" y="726"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#aaaaaa"
+        font-family="system-ui,-apple-system,sans-serif"
+        font-size="15">+ query rewrite · context attribution · factuality · policy guardrails · …</text>
+
+  <!-- ─── Code badge ─── -->
+  <rect x="262" y="756" width="500" height="52" rx="10" fill="#1e1e1e"/>
+  <text x="512" y="782"
+        text-anchor="middle" dominant-baseline="central"
+        fill="#F9B228"
+        font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="19" letter-spacing="0.3">load_embedded_adapters=True</text>
+
+  <!-- ─── mellea.ai branding ─── -->
+  <text x="960" y="984"
+        text-anchor="end" dominant-baseline="central"
+        fill="#cccccc"
+        font-family="system-ui,-apple-system,sans-serif"
+        font-size="15">mellea.ai</text>
+
+</svg>
