@@ -1,6 +1,6 @@
 ---
 title: "See Inside Your LLM Pipeline with Mellea Debug Plugins"
-date: "2026-07-01"
+date: "2026-07-13"
 author: "Akihiko Kuroda"
 excerpt: "Trace generation, validation, and sampling in detail. Built-in plugins reveal model calls, requirement failures, repair events, and loop iterations—all without boilerplate."
 tags: ["debugging", "plugins", "observability"]
