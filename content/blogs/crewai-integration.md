@@ -409,4 +409,4 @@ Mellea is built for batch processing, multi-agent workflows, and quality-critica
 
 If one bad agent silently breaks your pipeline, validated crews are a drop-in fix. Start with the "Your First Validated Crew" example above.
 
-For more details, see the [Mellea docs](https://docs.mellea.ai/), [CrewAI integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/crewai_backend/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord). This integration lives in [mellea-contribs](https://github.com/generative-computing/mellea-contribs).
+For more details, see the [Mellea docs](https://docs.mellea.ai/), [CrewAI integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/crewai/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord). This integration lives in [mellea-contribs](https://github.com/generative-computing/mellea-contribs).

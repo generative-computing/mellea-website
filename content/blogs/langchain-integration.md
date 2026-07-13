@@ -371,6 +371,6 @@ LLM-based validation requires extra API calls, so the accuracy of your requireme
 
 Copy the "Your First Validated Chain" example at the top, save it as `validated_chain.py`, and run it.
 
-For more, see the [Mellea docs](https://docs.mellea.ai/), [LangChain integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/langchain_backend/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord).
+For more, see the [Mellea docs](https://docs.mellea.ai/), [LangChain integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/langchain/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord).
 
 This integration lives in [mellea-contribs](https://github.com/generative-computing/mellea-contribs).

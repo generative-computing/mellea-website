@@ -416,6 +416,6 @@ Mellea extends DSPy rather than replacing it. You keep all of DSPy's features (s
 
 Copy the "Your First Validated DSPy Program" example at the top, save it as `validated_program.py`, and run it.
 
-For more, see the [Mellea docs](https://docs.mellea.ai/), [DSPy integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/mellea_contribs/dspy_backend/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord).
+For more, see the [Mellea docs](https://docs.mellea.ai/), [DSPy integration examples](https://github.com/generative-computing/mellea-contribs/tree/main/dspy/examples), and the [Mellea Discord](https://ibm.biz/mellea-discord).
 
 This integration lives in [mellea-contribs](https://github.com/generative-computing/mellea-contribs).
