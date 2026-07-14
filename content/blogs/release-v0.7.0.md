@@ -221,6 +221,11 @@ you turn on a plugin instead of adding print statements.
   inspecting what happened. ([#1307](https://github.com/generative-computing/mellea/pull/1307))
 - **`do_sample=True` when a seed is set** on HF backends, so seeding behaves as
   expected. ([#1149](https://github.com/generative-computing/mellea/pull/1149))
+- **AWS Bedrock via the standard credentials chain**: the Bedrock backend now
+  authenticates through IAM roles, `~/.aws/credentials`, or environment
+  variables (through LiteLLM), alongside a bearer-token path for Bedrock
+  Mantle — no proxy or manual request signing.
+  ([#578](https://github.com/generative-computing/mellea/pull/578))
 
 ### Intrinsics / adapters (Epic #929)
 
@@ -261,6 +266,6 @@ for the complete changelog.
 Drafted from: generative-computing/mellea v0.7.0 (https://github.com/generative-computing/mellea/releases/tag/v0.7.0)
 Rubric: prefix (Conventional Commits)
 Highlight PRs: #1107, #996, #1181, #773, #1208, #1190, #1171, #1184, #1260, #1175, #1251, #1265, #1270, #1128, #1243 (score >= 50)
-Mention PRs: #1112, #1077, #1261, #1307, #1149, #1158, #1269, #1321, #1323, #1157, #1100, #1102, #1174, #935, #1254, #1289, #1361, #1271, #1372, #1265 (score 10-49)
-Skipped PRs: chore/ci/test/most fix: PRs and dep bumps (score < 10) — e.g. #1129, #1133, #1131, #1113, #418, #578, and the bulk of the Bug Fixes / Other Changes sections
+Mention PRs: #1112, #1077, #1261, #1307, #1149, #578, #1158, #1269, #1321, #1323, #1157, #1100, #1102, #1174, #935, #1254, #1289, #1361, #1271, #1372, #1265 (score 10-49; #578 added manually — bedrock IAM access, editorially significant for AWS users despite being a fix:)
+Skipped PRs: chore/ci/test/most fix: PRs and dep bumps (score < 10) — e.g. #1129, #1133, #1131, #1113, #418, and the bulk of the Bug Fixes / Other Changes sections
 -->
