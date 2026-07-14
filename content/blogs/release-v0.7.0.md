@@ -1,8 +1,8 @@
 ---
 title: "Tools your agents can actually run: Mellea v0.7.0"
-date: "2026-07-13"
+date: "2026-07-14"
 author: "Mellea Contributors"
-excerpt: "Mellea v0.7.0 ships a sandboxed code interpreter, a shell tool, and a library of executable requirements — plus context compaction and plugin-based telemetry — so agents can do real work and stay grounded."
+excerpt: "Mellea v0.7.0 ships a sandboxed code interpreter, a shell tool, and a library of executable requirements, plus context compaction and plugin-based telemetry, so agents can run code and stay grounded."
 tags: ["release", "v0.7"]
 ---
 
@@ -20,7 +20,7 @@ long agent runs healthy: context compaction for the ReACT loop, model-aware
 sliding-window contexts, and a plugin-based telemetry stack you can extend.
 Roughly 120 PRs went into it.
 
-## ⚠️ Breaking Changes
+## Breaking Changes
 
 One breaking change lands in the telemetry surface ([#1181](https://github.com/generative-computing/mellea/pull/1181)). Tracing was still pre-1.0, so it ships without a deprecation shim.
 
@@ -252,7 +252,7 @@ pip install --upgrade mellea
 
 If you use tracing, rename your `MELLEA_TRACE_*` environment variables to
 `MELLEA_TRACES_*` and switch trace consumers from `gen_ai.system` to
-`gen_ai.provider.name`. See [Breaking Changes](#️-breaking-changes) above.
+`gen_ai.provider.name`. See [Breaking Changes](#breaking-changes) above.
 
 See the [full release notes](https://github.com/generative-computing/mellea/releases/tag/v0.7.0)
 for the complete changelog.
