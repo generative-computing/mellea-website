@@ -1,6 +1,6 @@
 ---
 title: "Getting Structured Data Out of Images with Granite Vision 4.1"
-date: "2026-06-03"
+date: "2026-07-28"
 author: "Nigel Jones"
 excerpt: "Vision models return prose. This post shows how to get a typed Python object back instead, using Mellea's format= parameter and ImageBlock."
 tags: ["vision", "structured-output", "granite", "IVR", "image-extraction"]
@@ -17,69 +17,13 @@ There's a cleaner path.
 
 ---
 
-> **EDITORIAL NOTE — remove before publishing**
->
-> **Status:** All four code blocks verified working (2026-06-15) via llama-server (homebrew
-> llama.cpp build 9630) with a locally quantized/converted Q4_K_M GGUF. Targeting publish
-> ~2026-07-02, pending:
->
-> 1. `granite4_vision` projector support in Ollama — not present in Ollama 0.30.8 (bundled
->    llama.cpp b9509); requires Ollama to ship llama.cpp ≥9630.
-> 2. Model published in the Ollama library — `ollama pull granite-vision-4.1` currently 404s.
-> 3. **Assumed model name:** The blog uses `start_session(model_id="granite-vision-4.1")`.
->    This assumes mellea adds Granite Vision 4.1 under that name. **Verify before publishing.
->    If the name differs, update: the `ollama pull` on the setup line (bash), and the three
->    `start_session(model_id=...)` lines in the Python blocks. The `ibm-granite/granite-vision-4.1-4b`
->    in the OpenAI backend block is the HF model ID and does not change.**
->
-> **Testing workaround** — use `gguf-forge` (requires `brew install llama.cpp` + the tool
-> from Nigel's repo) to quantize the HF safetensors to a local GGUF, then register it with
-> Ollama under the name the blog uses:
->
-> ```bash
-> # Install prerequisites (once)
-> brew install llama.cpp
-> uv tool install ~/src/gguf-forge   # or wherever you cloned it
->
-> # Quantize HF safetensors → local GGUF (run once; idempotent)
-> gguf-forge ibm-granite/granite-vision-4.1-4b
-> # Creates: ~/.cache/huggingface/hub/models--ibm-granite--granite-vision-4.1-4b/gguf/
-> #   ibm-granite--granite-vision-4.1-4b.Q4_K_M.gguf
-> #   ibm-granite--granite-vision-4.1-4b.mmproj-f16.gguf
->
-> # Register both GGUFs with Ollama (language model + visual projector)
-> GGUF_DIR=$HOME/.cache/huggingface/hub/models--ibm-granite--granite-vision-4.1-4b/gguf
-> cat > /tmp/Modelfile <<'EOF'
-> FROM GGUF_DIR_PLACEHOLDER/ibm-granite--granite-vision-4.1-4b.Q4_K_M.gguf
-> FROM GGUF_DIR_PLACEHOLDER/ibm-granite--granite-vision-4.1-4b.mmproj-f16.gguf
-> EOF
-> sed -i '' "s|GGUF_DIR_PLACEHOLDER|$GGUF_DIR|g" /tmp/Modelfile
-> ollama create granite-vision-4.1 -f /tmp/Modelfile
->
-> uv add mellea pillow
-> ```
->
-> No code changes needed — the model registers as `granite-vision-4.1` and all code blocks
-> run as written.
->
-> **To publish** (once Ollama ships `granite-vision-4.1`):
->
-> 1. Verify `ollama pull granite-vision-4.1` succeeds.
-> 2. Confirm the model ID in mellea is `granite-vision-4.1`; if not, update the `ollama pull`
->    on the setup line and the three `start_session(model_id=...)` calls in the Python blocks.
-> 3. Update `date:` in the frontmatter to the actual publish date.
-> 4. Delete this entire `EDITORIAL NOTE` blockquote.
-> 5. Flip the PR from draft → ready for review and ping ajbozarth.
-
----
-
 ## Running locally
 
 [Granite Vision 4.1](https://huggingface.co/ibm-granite/granite-vision-4.1-4b) runs locally
 on Ollama. No API key, no cloud bill:
 
 ```bash
-ollama pull granite-vision-4.1
+ollama pull hf.co/ibm-granite/granite-vision-4.1-4b-GGUF:Q4_K_M
 uv add mellea pillow
 ```
 
@@ -97,7 +41,7 @@ from mellea import start_session
 from mellea.core import ImageBlock
 from PIL import Image
 
-m = start_session(model_id="granite-vision-4.1")
+m = start_session(model_id="hf.co/ibm-granite/granite-vision-4.1-4b-GGUF:Q4_K_M")
 img = ImageBlock.from_pil_image(Image.open("receipt.jpg"))
 
 result = m.instruct("What's on this receipt?", images=[img])
@@ -128,6 +72,7 @@ errors to catch.
 from pydantic import BaseModel
 from mellea import start_session
 from mellea.core import ImageBlock
+from mellea.backends.model_options import ModelOption
 from PIL import Image
 
 
@@ -146,7 +91,10 @@ class Receipt(BaseModel):
     total: float
 
 
-m = start_session(model_id="granite-vision-4.1")
+m = start_session(
+    model_id="hf.co/ibm-granite/granite-vision-4.1-4b-GGUF:Q4_K_M",
+    model_options={ModelOption.CONTEXT_WINDOW: 4096},
+)
 img = ImageBlock.from_pil_image(Image.open("receipt.jpg"))
 
 result = m.instruct("Extract the receipt data.", images=[img], format=Receipt)
@@ -160,6 +108,12 @@ print(receipt.items[0].quantity) # 3
 `ImageBlock.from_pil_image()` converts any PIL image to the base64 PNG the backends expect.
 `format=Receipt` switches the model into constrained decoding. `model_validate_json` gives you
 a fully typed Python object with IDE autocomplete on every field.
+
+`model_options={ModelOption.CONTEXT_WINDOW: 4096}` is worth setting explicitly. Ollama
+otherwise defaults to this model's full 131072-token context window, which pulls close to
+9 GB of memory for a job that only needs a few thousand tokens — one image, a short
+instruction, a small JSON object back. Capping it at 4096 drops that to about 2.5 GB with
+no change in output quality.
 
 ## When the type isn't enough
 
@@ -195,7 +149,8 @@ you need an external check.
 
 ## When to reach for IVR
 
-If you have a concrete verifiable property — something independent of the image — wire it as a
+IVR — Instruct, Validate, Repair — is Mellea's loop for catching and fixing semantic
+mistakes that constrained decoding alone can't. If you have a concrete verifiable property — something independent of the image — wire it as a
 `validation_fn`. Mellea runs it on each attempt and feeds the failure reason back into the
 repair prompt if it fails.
 
@@ -214,7 +169,7 @@ def check_line_items(json_str: str) -> tuple[bool, str]:
     r = Receipt.model_validate_json(json_str)
     computed = round(sum(i.quantity * i.unit_price for i in r.items), 2)
     if abs(computed - r.subtotal) > 0.01:
-        return False, f"line items sum to {computed:.2f}, subtotal shows {r.subtotal:.2f}"
+        return False, f"line items sum to {computed}, subtotal shows {r.subtotal}"
     return True, ""
 
 
@@ -242,14 +197,18 @@ in post-processing anyway — it belongs in the prompt loop, not after it.
 
 ## Swapping backends
 
-`ImageBlock` is backend-agnostic. The only thing that changes is the session setup:
+`ImageBlock` is backend-agnostic. This post uses Ollama throughout; the only thing that
+changes for another backend is the session setup:
 
 ```python
 # Ollama (this post)
 from mellea import start_session
-m = start_session(model_id="granite-vision-4.1")
+m = start_session(
+    model_id="hf.co/ibm-granite/granite-vision-4.1-4b-GGUF:Q4_K_M",
+    model_options={ModelOption.CONTEXT_WINDOW: 4096},
+)
 
-# Any OpenAI-compatible endpoint (vLLM, mlx-vlm, cloud)
+# Any OpenAI-compatible endpoint (vLLM, cloud)
 from mellea import MelleaSession
 from mellea.backends.openai import OpenAIBackend
 m = MelleaSession(OpenAIBackend("ibm-granite/granite-vision-4.1-4b",
