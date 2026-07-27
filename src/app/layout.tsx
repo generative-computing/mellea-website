@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import Header from '@/components/Header';
@@ -82,6 +83,8 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/* IBM Analytics — self-hosted script, guards against localhost internally. See public/analytics.js */}
+        <Script src="/analytics.js" strategy="afterInteractive" />
         <a href="#main-content" className="skip-link">Skip to content</a>
         <Header />
         <main id="main-content">{children}</main>
