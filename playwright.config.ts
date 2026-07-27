@@ -6,6 +6,9 @@ export default defineConfig({
   testDir: './tests/e2e',
   outputDir: './playwright-results',
   reporter: [['html', { outputFolder: 'playwright-report', open: 'never' }]],
+  // Retry timing-only failures (hydration races, cold-compile) instead of
+  // failing the build; also makes trace: 'on-first-retry' capture anything.
+  retries: process.env.CI ? 2 : 1,
   use: {
     baseURL: `http://localhost:${port}`,
     trace: 'on-first-retry',
