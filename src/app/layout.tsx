@@ -6,6 +6,8 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { siteConfig } from '@/config/site';
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+
 const plex = IBM_Plex_Sans({
   subsets: ['latin'],
   weight: ['300', '400', '600', '700'],
@@ -84,7 +86,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {/* IBM Analytics — self-hosted script, guards against localhost internally. See public/analytics.js */}
-        <Script src="/analytics.js" strategy="afterInteractive" />
+        <Script src={`${basePath}/analytics.js`} strategy="afterInteractive" />
         <a href="#main-content" className="skip-link">Skip to content</a>
         <Header />
         <main id="main-content">{children}</main>
