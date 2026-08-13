@@ -10,12 +10,10 @@ test('blogs page renders heading', async ({ page }) => {
 
 test('blog index lists posts with metadata', async ({ page }) => {
   await page.goto('/blogs/');
-  // Scope to main to exclude header nav; exclude the /blogs/ index link itself
   const cards = page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])');
   const count = await cards.count();
   expect(count).toBeGreaterThanOrEqual(2);
 
-  // Each card should have a year (date metadata) and link to a blog post
   for (const card of await cards.all()) {
     await expect(card).toContainText(/\d{4}/);
     await expect(card).toHaveAttribute('href', /\/blogs\//);
@@ -26,54 +24,44 @@ test('blog index lists posts with metadata', async ({ page }) => {
 
 test('clicking a post navigates to post page', async ({ page }) => {
   await page.goto('/blogs/');
-  // Click the first blog card
   await page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])').first().click();
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByText('← Back to all posts')).toBeVisible();
+  await expect(page.getByText('Back to all posts')).toBeVisible();
 });
 
 test('back link navigates to blog index', async ({ page }) => {
-  // Navigate to any post, then back
   await page.goto('/blogs/');
   await page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])').first().click();
-  await page.getByRole('link', { name: '← Back to all posts' }).click();
-  // Wait for the blog index to fully render
+  await page.getByRole('link', { name: 'Back to all posts' }).click();
   await expect(page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])').first()).toBeVisible();
 });
 
 // ── Blog Post Structure ──
 
 test('blog post has heading, metadata, and prose content', async ({ page }) => {
-  // Navigate to first available post via the index
   await page.goto('/blogs/');
   const firstCard = page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])').first();
   const href = await firstCard.getAttribute('href');
   await page.goto(href!);
 
-  // Heading
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 
-  // Metadata eyebrow (author · date) — scoped to article
-  const article = page.getByRole('article');
-  await expect(article).toContainText(/\d{4}/); // has a year
-
-  // Prose body is non-empty
+  const article = page.locator('.blog-post-page__article');
+  await expect(article).toContainText(/\d{4}/);
   await expect(article.locator('.prose')).not.toBeEmpty();
 });
 
-test('blog post tags render correctly when present', async ({ page }) => {
+test('blog post tags render correctly', async ({ page }) => {
   await page.goto('/blogs/');
   const firstCard = page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])').first();
   const href = await firstCard.getAttribute('href');
   await page.goto(href!);
 
-  // If the tags section is rendered, each tag must be a non-empty visible span
-  const tagsDiv = page.getByLabel('Tags');
-  if (await tagsDiv.count() > 0) {
-    const tags = tagsDiv.locator('span');
-    await expect(tags.first()).toBeVisible();
-    await expect(tags.first()).not.toBeEmpty();
-  }
+  // All posts carry tags by convention, so assert the list renders rather than
+  // guarding on its presence.
+  const tags = page.getByLabel('Tags').locator('li');
+  await expect(tags.first()).toBeVisible();
+  await expect(tags.first()).not.toBeEmpty();
 });
 
 test('blog post has discussion link', async ({ page }) => {
@@ -100,7 +88,6 @@ test('all blog posts from index are reachable', async ({ page }) => {
   }
   expect(hrefs.length).toBeGreaterThanOrEqual(2);
 
-  // Each post should load and have an h1
   for (const href of hrefs) {
     await page.goto(href);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
