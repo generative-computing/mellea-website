@@ -19,11 +19,18 @@ of the launch there were open-weight alternatives —
 [Laya](https://huggingface.co/convaiinnovations/laya-typed-decisions), and
 [Von](https://huggingface.co/wfzyx/von-1.0) — running the same primitives locally.
 
-The [Hacker News thread](https://news.ycombinator.com/item?id=49717558) is worth reading —
-several people asked what genuinely separates this from encoder classifiers and constrained
-decoding. Honestly, not much structurally: a typed decision model is a classifier that returns
-a calibrated probability instead of a label. That framing is more useful than the name. The core
-premise holds regardless: a validator doesn't need to be able to write.
+The [Hacker News thread](https://news.ycombinator.com/item?id=49717558) is worth reading — several
+people asked what genuinely separates this from encoder classifiers and constrained decoding.
+Structurally, not much: a typed decision model is a classifier that returns a calibrated
+probability instead of a label. And if your label set is fixed — toxicity, fraud, intent — a
+trained encoder is cheaper, and you should just use one.
+
+What's new isn't the primitive. Classifiers and calibration are decades old. It's that
+classification now ships on the same surface as everything else in the stack: open weights,
+natural-language input, new requirements at runtime, no task-specific head to retrain. The decision
+is the product rather than something you parse back out of prose. That's what puts these between an
+encoder and a generative judge — and the core premise holds either way: a validator doesn't need to
+be able to write.
 
 ---
 
@@ -110,7 +117,9 @@ loop; calibrated confidence across many predictions isn't what the repair loop n
 doesn't produce it. Where the job is triaging at volume against a threshold you have to defend, a
 typed decision model wins outright, and putting a repair loop around it adds nothing. That's the
 design difference: one approach optimizes for knowing how often you'll be wrong at scale, the other
-for fixing what's wrong right now.
+for fixing what's wrong right now. They're different optimization problems, not rival answers to
+one: routing minimizes what you spend under uncertainty, repair maximizes correctness on the task
+in front of you.
 
 Where Mellea goes further than a bare score is what happens after a check fails. The IVR loop feeds
 the reason into the next generation attempt, and the model sees what it got wrong and tries again.
@@ -121,6 +130,15 @@ fire at every lifecycle point so you can see which requirements failed, when rep
 whether the feedback actually helped.
 
 ---
+
+| Situation                | Better fit           |
+| ------------------------ | -------------------- |
+| High-volume routing      | Typed decision model |
+| Automated triage         | Typed decision model |
+| Guardrail checks         | Either               |
+| Repair loops             | Mellea               |
+| Self-correction          | Mellea               |
+| Multi-attempt generation | Mellea               |
 
 The two approaches aren't mutually exclusive, and the reason is structural: a typed decision model
 is a validator, and Mellea is what you put validators inside. A typed decision model is well-suited
