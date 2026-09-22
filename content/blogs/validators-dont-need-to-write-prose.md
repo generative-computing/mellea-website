@@ -106,7 +106,9 @@ adapter functions — but the design is oriented around repair rather than routi
 advantage narrows here too: activated LoRA means chaining adapters reuses the base model's KV
 cache, so three checks don't pay for the context three times. A failing check returns a reason, and
 that reason is what the next attempt acts on. The score drives a pass/fail decision that feeds the
-loop; calibrated confidence across many predictions isn't what the repair loop needs. That's the
+loop; calibrated confidence across many predictions isn't what the repair loop needs — and Mellea
+doesn't produce it. Where the job is triaging at volume against a threshold you have to defend, a
+typed decision model wins outright, and putting a repair loop around it adds nothing. That's the
 design difference: one approach optimizes for knowing how often you'll be wrong at scale, the other
 for fixing what's wrong right now.
 
