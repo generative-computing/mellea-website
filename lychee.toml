@@ -7,9 +7,12 @@
 # - ^#: bare fragment-only anchors that aren't real URLs
 # - substack.com: blocks automated crawlers with 403 even with a browser
 #   User-Agent (Cloudflare bot detection on GitHub runner IPs)
+# - forbes.com: same Cloudflare-on-runner-IP 403; the link in
+#   why-mellea.md is fine for real readers
 exclude = [
     "localhost",
     "mellea\\.ai",
     "^#",
     ".*\\.substack\\.com",
+    ".*\\.forbes\\.com",
 ]
