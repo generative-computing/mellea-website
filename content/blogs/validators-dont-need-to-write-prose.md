@@ -87,7 +87,7 @@ Granite 4.1 3B gets 51%.
 the validator's failure reason to repair, and escalates only when feedback stops helping.
 
 The first three work against any backend Mellea supports (Ollama, vLLM, Hugging Face, OpenAI,
-Watsonx). The adapter functions are the exception: that catalogue is Granite, it needs vLLM on a
+Watsonx). The adapter functions are the exception: that catalog is Granite, it needs vLLM on a
 GPU, and the model IDs are still marked `-preview`. Without it you drop to a general model as judge
 on that one rung, which costs you some accuracy there and nothing else.
 
