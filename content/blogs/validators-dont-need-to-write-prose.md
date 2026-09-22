@@ -89,43 +89,47 @@ honest, you can set a threshold and predict, across many decisions, roughly how 
 wrong. That's what makes it work for routing and automated triage — you can reason about error
 rates, not just pass/fail.
 
-That puts it on a tier below a model that can generate repair explanations. A classifier can
-identify which categories failed — the output struct can be as rich as you design it. What it
-can't produce is a novel, task-specific explanation: "paragraph 3 contradicts the claim that
-Acme acquired Beta in 2021" requires composing tokens from the specific input, not selecting
-from a fixed vocabulary. The two tiers are complementary: use the classifier at the gate to
-decide whether to proceed, use the generative model when you need that instance-specific
-repair reason.
+What it gives up is narrower than "it can't say why". A classifier can identify which categories
+failed, and the output struct can be as rich as you design it — down to which span failed. What it
+can't produce is a novel explanation: "paragraph 3 contradicts the claim that Acme acquired Beta in
+2021" means composing tokens from the specific input, not selecting from a fixed vocabulary.
+Selecting is cheaper, and at the gate it's enough. That puts a typed decision model in the same
+category as Switch's adapter functions — a specialized check that doesn't generate. The difference
+is delivery: a hosted typed API you call against anything, versus adapters inside a checkpoint you
+already serve, sharing its KV cache. Save the generative model for the point where the answer has
+to be written rather than chosen.
 
 ---
 
 Mellea covers the same checks — `requirement_check` and `policy_guardrails` are both there as
-adapter functions — but the design is oriented around repair rather than routing. A failing check
-returns a reason, and that reason is what the next attempt acts on. The score drives a pass/fail
-decision that feeds the loop; calibrated confidence across many predictions isn't what the repair
-loop needs. That's the design difference: one approach optimizes for knowing how often you'll be
-wrong at scale, the other for fixing what's wrong right now.
+adapter functions — but the design is oriented around repair rather than routing. The one-call
+advantage narrows here too: activated LoRA means chaining adapters reuses the base model's KV
+cache, so three checks don't pay for the context three times. A failing check returns a reason, and
+that reason is what the next attempt acts on. The score drives a pass/fail decision that feeds the
+loop; calibrated confidence across many predictions isn't what the repair loop needs. That's the
+design difference: one approach optimizes for knowing how often you'll be wrong at scale, the other
+for fixing what's wrong right now.
 
-Where Mellea goes further is when the check needs to do more than report a result. A typed
-decision model produces structured failure categories, not task-specific repair explanations —
-it can tell you grounding failed, but not how this output failed this requirement in this context.
-Mellea's IVR loop takes that failure reason and feeds it back into the next generation attempt;
-the model sees what it got wrong and tries again. SOFAI extends that: if repair stalls, it
-escalates to a more capable model automatically — based on whether the output is actually
-improving, not on which model is configured next in a fallback list. And the whole loop is
-observable: hooks fire at every lifecycle point so you can see which requirements failed, when
-repairs triggered, and whether the feedback actually helped.
+Where Mellea goes further than a bare score is what happens after a check fails. The IVR loop feeds
+the reason into the next generation attempt, and the model sees what it got wrong and tries again.
+SOFAI extends that: if repair stalls, it escalates to a more capable model automatically — based on
+whether the output is actually improving, not on which model is configured next in a fallback list.
+And where a hosted score tells you nothing about the loop it sits in, this one is observable: hooks
+fire at every lifecycle point so you can see which requirements failed, when repairs triggered, and
+whether the feedback actually helped.
 
 ---
 
-The two approaches aren't mutually exclusive. A typed decision model is well-suited to the
-*gate* question — is this output good enough to proceed, with a confidence score you can reason
-about? Mellea is well-suited to the *generation loop* — keep trying until it is. You could wire
-a typed decision model as the validator inside a Mellea `Requirement`: it scores the output and
-Mellea drives the retry. The structured failure categories feed into the repair prompt alongside
-the requirement text — you get more signal than a bare pass/fail, just not the instance-specific
-explanation a generative validator would produce. The combination is worth it when calibrated
-confidence at the gate matters and the failure categories are specific enough to guide repair.
+The two approaches aren't mutually exclusive, and the reason is structural: a typed decision model
+is a validator, and Mellea is what you put validators inside. A typed decision model is well-suited
+to the *gate* question — is this output good enough to proceed, with a confidence score you can
+reason about? Mellea is well-suited to the *generation loop* — keep trying until it is. And the
+slot for it already exists: `validation_fn` takes plain Python, so a call to a typed decision model
+drops in exactly where the receipt arithmetic went. It scores the output, Mellea drives the retry.
+The failure categories go into the repair prompt alongside the requirement text — more signal than
+a bare pass/fail, less than a written explanation. Wire it that way when a threshold you can reason
+about at the gate is worth more than the sharpest possible repair prompt; keep a generative
+validator when the loop has to converge in as few attempts as it can.
 
 ---
 
