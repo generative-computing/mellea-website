@@ -87,14 +87,14 @@ on that one rung, which costs you some accuracy there and nothing else.
 
 ---
 
-Both approaches cover similar ground (scoring, guardrail checks, requirement validation) but they
-wire it differently.
+Both approaches cover the same ground: scoring, guardrail checks, requirement validation. The
+wiring is where they part company.
 
 A typed decision model is a good fit when you need many checks in one call and want to branch on
 the result directly in code without parsing anything. The calibrated confidence is the useful part:
 if the probabilities are honest you can set a threshold and predict, across many decisions, roughly
-how often you'll be wrong. That's what makes it work for routing and automated triage, because you
-get error rates you can reason about, which a bare pass or fail won't give you.
+how often you'll be wrong. That's what makes it work for routing and automated triage. You get
+error rates you can reason about. A bare pass or fail gives you nothing to threshold on.
 
 What it gives up is narrower than "it can't say why". A classifier can identify which categories
 failed, and the output struct can be as rich as you design it, down to which span failed. What it
@@ -102,9 +102,9 @@ can't produce is a novel explanation. Something like "paragraph 3 contradicts th
 acquired Beta in 2021" has to compose tokens from the specific input, and selecting from a fixed
 vocabulary won't get you there. Selecting is cheaper though, and at the gate it's enough. That puts
 a typed decision model in the same category as Switch's adapter functions, a specialized check that
-doesn't generate, and the difference is really one of delivery: a hosted typed API you call against
-anything, versus adapters inside a checkpoint you already serve, sharing its KV cache. Save the
-generative model for the point where the answer has to be written rather than chosen.
+doesn't generate. The difference is one of delivery: a hosted typed API you call against anything,
+versus adapters inside a checkpoint you already serve, sharing its KV cache. Save the generative
+model for the point where the answer has to be written rather than chosen.
 
 ---
 
@@ -113,13 +113,12 @@ adapter functions) but the design is oriented around repair rather than routing.
 advantage narrows here too, because activated LoRA means chaining adapters reuses the base model's
 KV cache, so three checks don't pay for the context three times. A failing check returns a reason,
 and that reason is what the next attempt acts on. The score drives a pass/fail decision that feeds
-the loop, and calibrated confidence across many predictions isn't what the repair loop needs.
-Mellea doesn't produce it either. Where the job is triaging at volume against a threshold you have
-to defend, a typed decision model wins outright, and putting a repair loop around it adds nothing.
-That's the design difference: one approach optimizes for knowing how often you'll be wrong at
-scale, the other for fixing what's wrong right now. They're solving two different optimization
-problems: routing minimizes what you spend under uncertainty, while repair maximizes correctness on
-the task in front of you.
+the loop. Mellea doesn't produce calibrated confidence across many predictions, and the repair loop
+doesn't need it. **If you're triaging at volume against a threshold you have to defend, a typed
+decision model wins and Mellea has nothing to add.**
+
+Two different optimization problems. Routing minimizes what you spend under uncertainty. Repair
+maximizes correctness on the task in front of you.
 
 Where Mellea goes further than a bare score is what happens after a check fails. The IVR loop feeds
 the reason into the next generation attempt, so the model sees what it got wrong and tries again.
@@ -141,15 +140,15 @@ feedback actually helped.
 | Multi-attempt generation | Mellea               |
 
 The two approaches aren't mutually exclusive, and the reason is structural: a typed decision model
-is a validator, and Mellea is what you put validators inside. A typed decision model suits the
+is a validator, and **Mellea is what you put validators inside**. A typed decision model suits the
 *gate* question (is this output good enough to proceed, with a confidence score you can reason
 about?) while Mellea suits the *generation loop*, which is keep trying until it is. The slot for it
 already exists, because `validation_fn` takes plain Python, so a call to a typed decision model
 drops in exactly where the receipt arithmetic went: it scores the output and Mellea drives the
 retry. The failure categories go into the repair prompt alongside the requirement text, which gives
-you more signal than a bare pass/fail but less than a written explanation. Wire it that way when a
-threshold you can reason about at the gate is worth more than the sharpest possible repair prompt,
-and keep a generative validator when the loop has to converge in as few attempts as it can.
+you more signal than a bare pass/fail but less than a written explanation. Wire it that way when
+the threshold matters more than the repair prompt. Keep a generative validator when the loop has to
+converge fast.
 
 ---
 
