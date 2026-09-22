@@ -90,13 +90,12 @@ Both approaches cover similar ground — scoring, guardrail checks, requirement 
 they wire it differently.
 
 A typed decision model is a good fit when you need many checks in one call and want to branch on
-the result directly in code with no parsing. At its core it's a classifier — it returns a
-probability, not prose. The calibrated confidence is the useful part: if the probabilities are
-honest, you can set a threshold and predict, across many decisions, roughly how often you'll be
-wrong. That's what makes it work for routing and automated triage — you can reason about error
-rates, not just pass/fail.
+the result directly in code with no parsing. The calibrated confidence is the useful part: if the
+probabilities are honest, you can set a threshold and predict, across many decisions, roughly how
+often you'll be wrong. That's what makes it work for routing and automated triage — you can reason
+about error rates, not just pass/fail.
 
-What it gives up is narrower than "it can't say why". A classifier can identify which categories
+What it gives up is narrower than "it can't say why." A classifier can identify which categories
 failed, and the output struct can be as rich as you design it — down to which span failed. What it
 can't produce is a novel explanation: "paragraph 3 contradicts the claim that Acme acquired Beta in
 2021" means composing tokens from the specific input, not selecting from a fixed vocabulary.
