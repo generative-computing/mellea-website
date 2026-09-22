@@ -1,6 +1,6 @@
 ---
 title: "A Validator Doesn't Need to Write Prose"
-date: "2026-09-21"
+date: "2026-09-22"
 author: "Nigel Jones"
 excerpt: "TypeSafe's Jev answers typed questions with probabilities instead of generating text. Mellea has been going at validation from the same direction — the cheapest check that will do the job."
 tags: ["validation", "requirements", "IVR", "granite", "switch", "loop-engineering"]
