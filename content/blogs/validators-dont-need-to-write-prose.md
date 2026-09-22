@@ -61,9 +61,10 @@ loop took functional correctness from 27.8% to 50.3% on the Qiskit Human Eval be
 same model and the same loop but a [different gate](/blogs/qiskit-ivr-functional-validation).
 
 **Constrained decoding.** Pass `format=` a Pydantic model and tokens that would break the schema
-are never available to pick, so the constraint is enforced at the token level, so there is nothing
+are never available to pick, so the constraint is enforced at the token level and there is nothing
 to catch afterwards. `@generative` gives you the same guarantee from a typed function signature,
-with no extra call and no second model.
+with no extra call and no second model. You still pay for generation though: the schema shapes the
+tokens, but they come out one at a time. That is the part a typed decision model skips.
 
 **A general model as judge.** For semantic checks that aren't computable, `requirements=` takes
 plain-English constraints, and a failing check feeds its reason into the next attempt.
@@ -71,11 +72,11 @@ plain-English constraints, and a failing check feeds its reason into the next at
 **A specialized validator.** [Granite Switch](/blogs/granite-switch) is a single Granite 4.1
 checkpoint with validation adapter functions built into the weights, covering answerability,
 hallucination detection, requirement checking and citations. A validator becomes a function call
-against the backend you already have, and because it uses activated LoRA the base-model KV cache
-survives each call, so chaining validators doesn't recompute the context three times. On IFEval the
-embedded adapter [reaches 84% balanced
-accuracy](https://research.ibm.com/blog/granite-libraries-project-switch) where prompting base
-Granite 4.1 3B gets 51%.
+against the backend you already have. Activated LoRA is why that's cheap: the adapter runs over the
+base model's existing KV cache instead of needing one of its own, so chaining three validators
+reads the context once rather than three times. On IFEval the embedded adapter [reaches 84%
+balanced accuracy](https://research.ibm.com/blog/granite-libraries-project-switch) where prompting
+base Granite 4.1 3B gets 51%.
 
 **Routing between them.** [SOFAI](/blogs/cut-llm-costs-with-sofai) tries a fast model first, uses
 the validator's failure reason to repair, and escalates only when feedback stops helping.
@@ -114,7 +115,9 @@ advantage narrows here too, because activated LoRA means chaining adapters reuse
 KV cache, so three checks don't pay for the context three times. A failing check returns a reason,
 and that reason is what the next attempt acts on. The score drives a pass/fail decision that feeds
 the loop. Mellea doesn't produce calibrated confidence across many predictions, and the repair loop
-doesn't need it. **If you're triaging at volume against a threshold you have to defend, a typed
+doesn't need it. But a pass/fail verdict gives you nothing to set a risk bound on. If you want to
+auto-approve your top slice of outputs and send the rest to a human, you need a score you can trust
+at a threshold. **If you're triaging at volume against a threshold you have to defend, a typed
 decision model wins and Mellea has nothing to add.**
 
 Two different optimization problems. Routing minimizes what you spend under uncertainty. Repair
