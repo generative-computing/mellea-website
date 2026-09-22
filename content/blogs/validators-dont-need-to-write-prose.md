@@ -6,9 +6,9 @@ excerpt: "TypeSafe's Jev answers typed questions with probabilities instead of g
 tags: ["validation", "requirements", "IVR", "granite", "switch", "loop-engineering"]
 ---
 
-[Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), released last week by
-[TypeSafe](https://typesafe.ai), doesn't write text. You pass in state and get back a typed answer
-with a calibrated probability: Choice, Score, or Noul (a yes/no question answered with the
+[Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), released in September 2026
+by [TypeSafe](https://typesafe.ai), doesn't write text. You pass in state and get back a typed
+answer with a calibrated probability: Choice, Score, or Noul (a yes/no question answered with the
 probability that it's yes). All the questions get answered in parallel, in one pass.
 
 TypeSafe calls this a System One model, though you'll also see it called a typed decision model or
@@ -26,11 +26,13 @@ a calibrated probability where an encoder returns a label, and if your label set
 (toxicity, fraud, intent) a trained encoder is cheaper and you should just use one.
 
 Classifiers and calibration have been around for decades, so the primitive isn't the new part.
-What's changed is that classification now ships on the same surface as everything else in the
-stack, so you get open weights, natural-language input, new requirements evaluated at runtime, and
-no task-specific head to retrain. You also get the decision itself, and you don't have to parse it
-back out of a sentence. That's roughly where these sit between an encoder and a generative judge,
-and either way the core premise holds: a validator doesn't need to be able to write.
+What's changed is where it runs. Classification now ships on the same surface as everything else in
+the stack: open weights, natural-language input, new requirements evaluated at runtime, and no
+task-specific head to retrain.
+
+You also get the decision itself, and you don't have to parse it back out of a sentence. That's
+roughly where these sit between an encoder and a generative judge, and either way the core premise
+holds: a validator doesn't need to be able to write.
 
 ---
 
@@ -42,9 +44,9 @@ human checking every output before it can be trusted. [The argument here in
 June](/blogs/loops-need-a-gate) was that the gate, rather than the loop around it, is the hard part
 of agent design.
 
-Look at what those checks actually ask. Is this total a positive number? Do the line items sum to
-the subtotal? Is this answer grounded in the document that was retrieved? Does the output meet the
-requirement that was set?
+Look at what those checks actually ask. Is this total a positive number? Do the line items add up
+to the subtotal? Is this answer grounded in the document that was retrieved? Does the output meet
+the requirement that was set?
 
 Every one of those is a yes/no, a label from a small set, or a number. None of them needs a
 paragraph.
@@ -72,11 +74,14 @@ plain-English constraints, and a failing check feeds its reason into the next at
 **A specialized validator.** [Granite Switch](/blogs/granite-switch) is a single Granite 4.1
 checkpoint with validation adapter functions built into the weights, covering answerability,
 hallucination detection, requirement checking and citations. A validator becomes a function call
-against the backend you already have. Activated LoRA is why that's cheap: the adapter runs over the
-base model's existing KV cache instead of needing one of its own, so chaining three validators
-reads the context once rather than three times. On IFEval the embedded adapter [reaches 84%
-balanced accuracy](https://research.ibm.com/blog/granite-libraries-project-switch) where prompting
-base Granite 4.1 3B gets 51%.
+against the backend you already have.
+
+Activated LoRA is why that's cheap. Hot-swapping an ordinary LoRA clears the KV cache every time
+you switch, whereas an aLoRA adapter only activates from a control token onward, so the cached
+prefix stays valid and chaining three validators reads the context once rather than three times. On
+IFEval the embedded adapter [reaches 84% balanced
+accuracy](https://research.ibm.com/blog/granite-libraries-project-switch) where prompting base
+Granite 4.1 3B gets 51%.
 
 **Routing between them.** [SOFAI](/blogs/cut-llm-costs-with-sofai) tries a fast model first, uses
 the validator's failure reason to repair, and escalates only when feedback stops helping.
@@ -117,8 +122,8 @@ and that reason is what the next attempt acts on. The score drives a pass/fail d
 the loop. Mellea doesn't produce calibrated confidence across many predictions, and the repair loop
 doesn't need it. But a pass/fail verdict gives you nothing to set a risk bound on. If you want to
 auto-approve your top slice of outputs and send the rest to a human, you need a score you can trust
-at a threshold. **If you're triaging at volume against a threshold you have to defend, a typed
-decision model wins and Mellea has nothing to add.**
+at a threshold. **If you're triaging at volume against a threshold you have to defend, use a typed
+decision model on its own. A repair loop adds nothing there.**
 
 Two different optimization problems. Routing minimizes what you spend under uncertainty. Repair
 maximizes correctness on the task in front of you.
@@ -132,6 +137,8 @@ lifecycle point so you can see which requirements failed, when repairs triggered
 feedback actually helped.
 
 ---
+
+Where each one fits:
 
 | Situation                | Better fit           |
 | ------------------------ | -------------------- |
