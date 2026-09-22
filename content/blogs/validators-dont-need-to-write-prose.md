@@ -21,7 +21,9 @@ of the launch there were open-weight alternatives —
 
 The [Hacker News thread](https://news.ycombinator.com/item?id=49717558) is worth reading —
 several people asked what genuinely separates this from encoder classifiers and constrained
-decoding. The core premise holds regardless: a validator doesn't need to be able to write.
+decoding. Honestly, not much structurally: a typed decision model is a classifier that returns
+a calibrated probability instead of a label. That framing is more useful than the name. The core
+premise holds regardless: a validator doesn't need to be able to write.
 
 ---
 
@@ -81,10 +83,15 @@ Both approaches cover similar ground — scoring, guardrail checks, requirement 
 they wire it differently.
 
 A typed decision model is a good fit when you need many checks in one call and want to branch on
-the result directly in code with no parsing. The calibrated confidence is the useful part: if the
-probabilities are honest, you can set a threshold and predict, across many decisions, roughly how
-often you'll be wrong. That's what makes it work for routing and automated triage — you can
-reason about error rates, not just pass/fail.
+the result directly in code with no parsing. At its core it's a classifier — it returns a
+probability, not prose. The calibrated confidence is the useful part: if the probabilities are
+honest, you can set a threshold and predict, across many decisions, roughly how often you'll be
+wrong. That's what makes it work for routing and automated triage — you can reason about error
+rates, not just pass/fail.
+
+That puts it on a tier below a model that can explain what failed. A classifier can score;
+it can't say why. The two tiers are complementary: use the classifier at the gate to decide
+whether to proceed, use the generative model downstream when you need a repair reason.
 
 ---
 
