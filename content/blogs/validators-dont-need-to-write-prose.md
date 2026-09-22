@@ -89,9 +89,13 @@ honest, you can set a threshold and predict, across many decisions, roughly how 
 wrong. That's what makes it work for routing and automated triage — you can reason about error
 rates, not just pass/fail.
 
-That puts it on a tier below a model that can explain what failed. A classifier can score;
-it can't say why. The two tiers are complementary: use the classifier at the gate to decide
-whether to proceed, use the generative model downstream when you need a repair reason.
+That puts it on a tier below a model that can generate repair explanations. A classifier can
+identify which categories failed — the output struct can be as rich as you design it. What it
+can't produce is a novel, task-specific explanation: "paragraph 3 contradicts the claim that
+Acme acquired Beta in 2021" requires composing tokens from the specific input, not selecting
+from a fixed vocabulary. The two tiers are complementary: use the classifier at the gate to
+decide whether to proceed, use the generative model when you need that instance-specific
+repair reason.
 
 ---
 
@@ -103,13 +107,14 @@ loop needs. That's the design difference: one approach optimizes for knowing how
 wrong at scale, the other for fixing what's wrong right now.
 
 Where Mellea goes further is when the check needs to do more than report a result. A typed
-decision model has no generation capability — it scores, it doesn't fix. Mellea's IVR loop takes
-the failure reason and feeds it back into the next generation attempt; the model sees what it got
-wrong and tries again. SOFAI extends that: if repair stalls, it escalates to a more capable model
-automatically — based on whether the output is actually improving, not on which model is
-configured next in a fallback list. And the whole loop is observable: hooks fire at every
-lifecycle point so you can see which requirements failed, when repairs triggered, and whether the
-feedback actually helped.
+decision model produces structured failure categories, not task-specific repair explanations —
+it can tell you grounding failed, but not how this output failed this requirement in this context.
+Mellea's IVR loop takes that failure reason and feeds it back into the next generation attempt;
+the model sees what it got wrong and tries again. SOFAI extends that: if repair stalls, it
+escalates to a more capable model automatically — based on whether the output is actually
+improving, not on which model is configured next in a fallback list. And the whole loop is
+observable: hooks fire at every lifecycle point so you can see which requirements failed, when
+repairs triggered, and whether the feedback actually helped.
 
 ---
 
@@ -117,11 +122,10 @@ The two approaches aren't mutually exclusive. A typed decision model is well-sui
 *gate* question — is this output good enough to proceed, with a confidence score you can reason
 about? Mellea is well-suited to the *generation loop* — keep trying until it is. You could wire
 a typed decision model as the validator inside a Mellea `Requirement`: it scores the output and
-Mellea drives the retry. The catch is that the model can't say why it failed, so the repair
-prompt falls back to the requirement text, which makes the retry less targeted than a reason
-would. Each
-does what it's built for; the combination is worth it when calibrated confidence at the gate
-matters more than rich repair signal.
+Mellea drives the retry. The structured failure categories feed into the repair prompt alongside
+the requirement text — you get more signal than a bare pass/fail, just not the instance-specific
+explanation a generative validator would produce. The combination is worth it when calibrated
+confidence at the gate matters and the failure categories are specific enough to guide repair.
 
 ---
 
