@@ -15,9 +15,11 @@ That's the pattern TypeSafe calls a System One model — or a typed decision mod
 classifier, depending on who you ask. The name matters less than the shape: unstructured input,
 typed probabilistic output, nothing to parse. Jev is TypeSafe's hosted implementation; within days
 of the launch there were open-weight alternatives —
-[decider-2b](https://huggingface.co/Mapika/decider-2b),
-[Laya](https://huggingface.co/convaiinnovations/laya-typed-decisions),
-[Von](https://huggingface.co/wfzyx/von-1.0) — running the same primitives locally.
+[decider-2b](https://huggingface.co/Mapika/decider-2b) and
+[Laya](https://huggingface.co/convaiinnovations/laya-typed-decisions) — running the same
+primitives locally. [Von](https://huggingface.co/wfzyx/von-1.0) is worth noting separately:
+it appeared in early 2025, well before Jev, and implements the same non-autoregressive pattern
+independently — prior art that reinforces the HN thread's point about encoder classifiers.
 
 The [Hacker News thread](https://news.ycombinator.com/item?id=49717558) is worth reading —
 several people asked what genuinely separates this from encoder classifiers and constrained
