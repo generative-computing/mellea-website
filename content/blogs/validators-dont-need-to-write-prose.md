@@ -8,18 +8,16 @@ tags: ["validation", "requirements", "IVR", "granite", "switch", "loop-engineeri
 
 [Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev), released last week by
 [TypeSafe](https://typesafe.ai), doesn't write text. State in, typed answer with a calibrated
-probability out — Choice, Score, or Noul (yes/no). All questions answered in parallel, in one
-pass.
+probability out — Choice, Score, or Noul (a yes/no question answered with the probability it's
+yes). All questions answered in parallel, in one pass.
 
 That's the pattern TypeSafe calls a System One model — or a typed decision model, or a structured
 classifier, depending on who you ask. The name matters less than the shape: unstructured input,
 typed probabilistic output, nothing to parse. Jev is TypeSafe's hosted implementation; within days
 of the launch there were open-weight alternatives —
-[decider-2b](https://huggingface.co/Mapika/decider-2b) and
-[Laya](https://huggingface.co/convaiinnovations/laya-typed-decisions) — running the same
-primitives locally. [Von](https://huggingface.co/wfzyx/von-1.0) is worth noting separately:
-it appeared in early 2025, well before Jev, and implements the same non-autoregressive pattern
-independently — prior art that reinforces the HN thread's point about encoder classifiers.
+[decider-2b](https://huggingface.co/Mapika/decider-2b),
+[Laya](https://huggingface.co/convaiinnovations/laya-typed-decisions), and
+[Von](https://huggingface.co/wfzyx/von-1.0) — running the same primitives locally.
 
 The [Hacker News thread](https://news.ycombinator.com/item?id=49717558) is worth reading —
 several people asked what genuinely separates this from encoder classifiers and constrained
@@ -72,6 +70,11 @@ where prompting base Granite 4.1 3B gets 51%.
 **Routing between them.** [SOFAI](/blogs/cut-llm-costs-with-sofai) tries a fast model first, uses
 the validator's failure reason to repair, and escalates only when feedback stops helping.
 
+The first three rungs work against any backend Mellea supports — Ollama, vLLM, Hugging Face,
+OpenAI, Watsonx. The adapter functions are the exception: that catalog is Granite, needs vLLM on
+a GPU, and the model IDs are still marked `-preview`. Without it you drop to a general model as
+judge on that rung — which costs some accuracy there, and nothing else.
+
 ---
 
 Both approaches cover similar ground — scoring, guardrail checks, requirement validation — and
@@ -108,7 +111,8 @@ The two approaches aren't mutually exclusive. A typed decision model is well-sui
 about? Mellea is well-suited to the *generation loop* — keep trying until it is. You could wire
 a typed decision model as the validator inside a Mellea `Requirement`: it scores the output and
 Mellea drives the retry. The catch is that the model can't say why it failed, so the repair
-prompt falls back to the requirement text — the least instructive feedback you can give. Each
+prompt falls back to the requirement text, which makes the retry less targeted than a reason
+would. Each
 does what it's built for; the combination is worth it when calibrated confidence at the gate
 matters more than rich repair signal.
 
