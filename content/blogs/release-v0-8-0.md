@@ -7,11 +7,17 @@ tags: ["release", "v0.8"]
 ---
 
 Mellea v0.8.0 was released on 23 September 2026. Most of it makes things you
-already do easier. You hand a model a recording the same way you already hand it
-an image. Files your generated code produced come back on the result instead of
-staying in the container. An adapter you trained yourself registers directly.
-Granite 4.2 is the default local model, so a fresh install pulls a current one.
-And the `m` CLI starts roughly thirty times faster.
+already do easier:
+
+- **Audio input.** Hand a model a recording the same way you already hand it an
+  image.
+- **Files out of the sandbox.** What your generated code produced comes back on
+  the result, instead of staying in the container.
+- **Streaming you drive yourself.** A plain async iterator, with no background
+  task to remember.
+- **Your own adapters.** A LoRA or aLoRA you trained registers directly.
+- **Granite 4.2 by default.** A fresh install pulls a current local model.
+- **A much faster `m`.** Startup down from 3.2s to 0.1s.
 
 There are some breaking changes too. If you use streaming, telemetry
 dashboards, tool calls, requirements alongside a sampling strategy, or you call
