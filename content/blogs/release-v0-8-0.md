@@ -1,8 +1,8 @@
 ---
 title: "Audio in, files out, and a much faster CLI: Mellea v0.8.0"
-date: "2026-09-29"
+date: "2026-09-24"
 author: "Mellea Contributors"
-excerpt: "Mellea v0.8.0 adds audio as an input modality, lets you retrieve the files your sandboxed code produced, cuts `m` CLI startup from 3.2s to 0.1s, and rebuilds streaming as a plain async iterator. There are breaking changes to review if you use streaming or telemetry."
+excerpt: "Mellea v0.8.0 adds audio as an input modality, lets you retrieve the files your sandboxed code produced, cuts m CLI startup from 3.2s to 0.1s, and rebuilds streaming as a plain async iterator. There are breaking changes to review if you use streaming or telemetry."
 tags: ["release", "v0.8"]
 ---
 
@@ -28,7 +28,10 @@ from mellea import start_session
 from mellea.core import AudioBlock
 
 with start_session(
-    "openai", model_id="my-audio-model", base_url="http://localhost:8088/v1"
+    "openai",
+    model_id="my-audio-model",
+    base_url="http://localhost:8088/v1",
+    api_key="default",  # local servers ignore it, but one is required
 ) as session:
     result = session.instruct(
         "Explain what is in this recording using bullet points",
@@ -63,11 +66,14 @@ v0.7.0 gave agents a sandboxed Python interpreter, which was useful right up to
 the moment the generated code produced a file. Plots, CSVs, trained models: all
 of it stayed in the container, and retrieving it was your problem.
 
-Those files now arrive on the result, as `ExecutionResult.artifacts`
-([#1384](https://github.com/generative-computing/mellea/pull/1384)). An agent
-that plots something can hand you the plot.
+A successful local-tier run now returns files from the tool's working directory
+on the result, as `ExecutionResult.artifacts`
+([#1384](https://github.com/generative-computing/mellea/pull/1384)). Docker-backed
+tools can export container paths the same way, for the paths you list in
+`CapabilityPolicy.artifact_export_paths`, and only when the environment is used
+as a context manager rather than one-shot.
 
-## A CLI that starts immediately
+## A much faster CLI
 
 Top-level imports had leaked into the `m` entry point, so every invocation paid
 to load the whole library. With them removed, `m --help` goes from 3.170s to
@@ -147,14 +153,15 @@ backend.add_adapter(
             name="custom-failure-check",
             adapter_type=AdapterType.ALORA,
             repo_id="your-org/my-adapter",
-            revision="main",
+            revision="a1b2c3d",  # a commit SHA, not "main"
         ),
     )
 )
 ```
 
-Two things to get right: pin `revision`, because a custom name has no catalog
-entry to fall back on, and match the base `model_id` to whatever your adapter was
+Two things to get right: set `revision` explicitly, because a custom name has no
+catalog entry to fall back on, and prefer a commit SHA over `"main"`, which opts
+into tracking latest. Also match the base `model_id` to whatever your adapter was
 trained against. Granite 4.1 is the current base for adapter work, since the
 public catalogs have no 4.2 weights yet. Note also that `Identity` takes
 `adapter_type` as a plain string while the binding takes the `AdapterType` enum.
@@ -198,8 +205,9 @@ time-to-first-chunk reflects the provider rather than Mellea's own overhead.
 
 ## Also worth knowing
 
-`m serve` now honors the model name your OpenAI client sends instead of
-overriding it, so standard model routing works against a Mellea program
+`m serve` can now use the model name your OpenAI client sends rather than
+overriding it, if your served function declares a `client_options` parameter to
+receive it; routing on that value is up to your code
 ([#1512](https://github.com/generative-computing/mellea/pull/1512)). `call_tools`
 is public, so you can drive a tool loop yourself
 ([#1544](https://github.com/generative-computing/mellea/pull/1544)). Tool calls
@@ -218,17 +226,24 @@ rewritten aLoRA example on the intrinsics API.
 
 ## Breaking changes
 
-Seven changes, and most people will hit one or two at most.
+These are the ones most people hit, usually one or two of them.
 
 | What changed | Who is affected | What to do | PR |
 | --- | --- | --- | --- |
 | `stream_with_chunking()` becomes `stream()`, consumed with `async for` on your own task. `chunking` defaults to `None`, not `"sentence"`. Strategy classes renamed `...Chunker` to `...Chunking`, now in `mellea.core.chunking`. | Streaming with validation | Follow the [migration guide](https://github.com/generative-computing/mellea/blob/v0.8.0/docs/dev/migrate-streaming-v0.8.md) | [#1543](https://github.com/generative-computing/mellea/pull/1543) |
 | Span attributes and client metrics renamed to the OpenTelemetry GenAI conventions. Old names removed, no dual-emit. | Every dashboard, alert and query | Rebuild queries from the [observability docs](https://github.com/generative-computing/mellea/tree/v0.8.0/docs/docs/observability) | [#1551](https://github.com/generative-computing/mellea/pull/1551) |
 | `ModelOutputThunk.tool_calls` is a list, not a dict keyed by tool name. The dict silently dropped parallel calls to one tool. | Anyone reading `tool_calls` by key | Iterate it. Repeat calls are now visible | [#1435](https://github.com/generative-computing/mellea/pull/1435) |
-| `requirements=` with `strategy=None` raises `ValueError`. Those checks never ran. | Callers passing both | Add a strategy, or attach the requirements to the action | [#1468](https://github.com/generative-computing/mellea/pull/1468) |
+| Direct `act()`/`aact()` calls with `requirements=` and `strategy=None` raise `ValueError`. Those checks never ran. `instruct()` forwards them only when a strategy exists, so it is unaffected. | Direct `act()`/`aact()` callers | Add a strategy, or attach the requirements to the action | [#1468](https://github.com/generative-computing/mellea/pull/1468) |
 | On `LocalHFBackend`, `load_adapter()` and `unload_adapter()` are now `load_peft_adapter()` and `unload_peft_adapter()`. `list_adapters()` returns registered, not loaded, adapters. | Direct callers of adapter verbs | Rename both. For Granite Switch use `EmbeddedBinding.apply_activation()` | [#1422](https://github.com/generative-computing/mellea/pull/1422) |
 | `m fix async` is gone. `m fix genslots` is unaffected. | Scripts or CI calling it | Drop it, or run it from v0.7.0 first | [#1537](https://github.com/generative-computing/mellea/pull/1537) |
 | Per-chunk streaming telemetry moved onto the backend span, and is opt-in. | Consumers of streaming telemetry | Set `MELLEA_GENERATION_CHUNK_EVENTS=true` | [#1496](https://github.com/generative-computing/mellea/pull/1496) |
+
+Smaller breaks, if you subclass or instrument Mellea: `Requirement.stream_validate()`
+is now `@final`, so a custom requirement overrides `_stream_validate()` instead
+([#1543](https://github.com/generative-computing/mellea/pull/1543)); `QuickCheckEvent.results` holds `PartialValidationSummary`
+rather than `PartialValidationResult` (same PR); the public `record_*` telemetry
+helpers take a required `operation` argument ([#1551](https://github.com/generative-computing/mellea/pull/1551)); and the deprecated
+`rag.check_context_relevance()` is removed ([#1579](https://github.com/generative-computing/mellea/pull/1579)).
 
 Telemetry has now been renamed two releases running, after v0.7.0's
 `MELLEA_TRACE_*` to `MELLEA_TRACES_*` change. Tracing is pre-1.0 and moving
