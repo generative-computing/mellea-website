@@ -100,6 +100,8 @@ generation on every exit path, including an early `break`
 [#1567](https://github.com/generative-computing/mellea/pull/1567)):
 
 ```python
+from mellea.stdlib.streaming import stream
+
 async with await stream(
     action, backend, ctx, requirements=[req], chunking="sentence"
 ) as streamer:
@@ -121,6 +123,10 @@ Each `Requirement` can now declare its own
 ([#1630](https://github.com/generative-computing/mellea/pull/1630)):
 
 ```python
+from mellea.core.backend import Backend
+from mellea.core.base import Context
+from mellea.core.requirement import PartialValidationResult, Requirement
+
 class MaxWordsPerSentence(Requirement):
     def __init__(self, limit: int = 12) -> None:
         super().__init__(description="keep sentences short", chunking="sentence")
