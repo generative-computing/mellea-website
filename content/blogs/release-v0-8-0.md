@@ -160,15 +160,15 @@ backend.add_adapter(
             name="custom-failure-check",
             adapter_type=AdapterType.ALORA,
             repo_id="your-org/my-adapter",
-            revision="a1b2c3d",  # a commit SHA, not "main"
+            revision="main",  # or a commit SHA to fix it to one version
         ),
     )
 )
 ```
 
-Two things to get right: set `revision` explicitly, because a custom name has no
-catalog entry to fall back on, and prefer a commit SHA over `"main"`, which opts
-into tracking latest. Also match the base `model_id` to whatever your adapter was
+Two things to get right. `revision` has to be set, because a custom name has no
+catalog entry to fall back on; `"main"` follows the latest commit, and a full
+commit SHA fixes it to one version. And match the base `model_id` to whatever your adapter was
 trained against. Granite 4.1 is the current base for adapter work, since the
 public catalogs have no 4.2 weights yet. Note also that `Identity` takes
 `adapter_type` as a plain string while the binding takes the `AdapterType` enum.
