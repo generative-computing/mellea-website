@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { retryUntilTabSelected } from './helpers';
 
 // ── Meta & SEO ──
 
@@ -23,7 +24,7 @@ test('homepage has canonical URL', async ({ page }) => {
 
 test('header logo links to homepage', async ({ page }) => {
   await page.goto('/');
-  const logo = page.getByRole('banner').getByRole('link', { name: /Mellea/i });
+  const logo = page.getByRole('banner').getByRole('link', { name: /Mellea home/i });
   await expect(logo).toBeVisible();
   await expect(logo).toHaveAttribute('href', '/');
 });
@@ -33,118 +34,101 @@ test('nav links are present', async ({ page }) => {
   const header = page.getByRole('banner');
   await expect(header.getByRole('link', { name: 'Docs' })).toBeVisible();
   await expect(header.getByRole('link', { name: 'Blog' })).toBeVisible();
-  await expect(header.getByRole('link', { name: 'GitHub' })).toBeVisible();
-  await expect(header.getByRole('link', { name: /Get Started/ })).toBeVisible();
+  await expect(header.getByRole('link', { name: 'Community' })).toBeVisible();
+  await expect(header.getByRole('link', { name: /Get started/i })).toBeVisible();
 });
 
 test('external nav links open in new tab', async ({ page }) => {
   await page.goto('/');
   const header = page.getByRole('banner');
-  for (const name of ['Docs', 'GitHub']) {
+  for (const name of ['Docs', 'Community']) {
     const link = header.getByRole('link', { name });
     await expect(link).toHaveAttribute('target', '_blank');
     await expect(link).toHaveAttribute('rel', /noopener/);
   }
 });
 
+test('GitHub button links externally', async ({ page }) => {
+  await page.goto('/');
+  const github = page.getByRole('banner').getByRole('link', { name: /GitHub/i });
+  await expect(github).toHaveAttribute('target', '_blank');
+  await expect(github).toHaveAttribute('href', /github\.com/);
+});
+
 // ── Hero Section ──
 
 test('hero heading is visible', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /Mellea/i, level: 1 })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /Control LLMs with code, not prompts/i, level: 1 }),
+  ).toBeVisible();
 });
 
 test('install command is visible with copy button', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByText('uv pip install mellea')).toBeVisible();
-  await expect(page.getByLabel('Copy install command')).toBeVisible();
+  await expect(page.getByText('pip install mellea')).toBeVisible();
+  await expect(page.getByLabel('Copy pip install mellea to clipboard')).toBeVisible();
 });
 
 test('hero has Get Started CTA', async ({ page }) => {
   await page.goto('/');
-  const hero = page.getByRole('region', { name: /Hero/i });
-  await expect(hero.getByRole('link', { name: /Get Started/ })).toBeVisible();
+  const hero = page.locator('main.hero');
+  await expect(hero.getByRole('link', { name: /Get started/i })).toBeVisible();
 });
 
-test('GitHub stats section renders', async ({ page }) => {
+// ── How Mellea Section ──
+
+test('how mellea section renders with heading', async ({ page }) => {
   await page.goto('/');
-  // Stats are rendered inside the hero — verify the key labels are visible
-  const hero = page.getByRole('region', { name: /Hero/i });
-  await expect(hero.getByText('Stars')).toBeVisible();
-  await expect(hero.getByText('Forks')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: /Write python functions that call LLMs/i }),
+  ).toBeVisible();
 });
 
-// ── News Highlights ──
-
-test('news section renders with cards linking externally', async ({ page }) => {
+test('feature cards are visible', async ({ page }) => {
   await page.goto('/');
-  const hero = page.getByRole('region', { name: /Hero/i });
-  await expect(hero.getByText('Latest News')).toBeVisible();
-
-  const cards = hero.locator('.news-card');
-  const count = await cards.count();
-  expect(count).toBeGreaterThanOrEqual(1);
-
-  for (const card of await cards.all()) {
-    await expect(card).toHaveAttribute('target', '_blank');
-    await expect(card).toHaveAttribute('href', /^https?:\/\//);
-  }
-});
-
-// ── How It Works Section ──
-
-test('how it works section renders with heading', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: /How it works/i })).toBeVisible();
-});
-
-test('feature cards are visible with learn more links', async ({ page }) => {
-  await page.goto('/');
-  const cards = page.getByRole('article');
+  const section = page.locator('#how-mellea-section');
+  const cards = section.getByRole('article');
   const count = await cards.count();
   expect(count).toBeGreaterThanOrEqual(4);
-
-  // Each card has a heading and a learn-more link
-  for (const card of await cards.all()) {
-    await expect(card.getByRole('heading')).toBeVisible();
-    const link = card.getByRole('link', { name: /Learn more/ });
-    await expect(link).toHaveAttribute('target', '_blank');
-  }
+  await expect(cards.first()).toBeVisible();
 });
 
-// ── Code Showcase ──
+test('compare slider handle is visible', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('slider', { name: /Compare code without and with Mellea/i })).toBeVisible();
+});
 
-test('code showcase renders with tabs', async ({ page }) => {
+// ── Future Software Panel ──
+
+test('future software panel renders with tabs', async ({ page }) => {
   await page.goto('/');
   const tabs = page.locator('[role="tab"]');
   const count = await tabs.count();
-  expect(count).toBeGreaterThanOrEqual(2);
+  expect(count).toBeGreaterThanOrEqual(3);
 });
 
-test('code showcase tab switching changes code panel', async ({ page }) => {
+test('future panel tab switching changes code panel', async ({ page }) => {
   await page.goto('/');
-  const panel = page.locator('[role="tabpanel"]');
+  const panel = page.locator('.future-panel__code.is-active');
   const tabs = page.locator('[role="tab"]');
 
-  // Get initial panel text
   const firstContent = await panel.textContent();
-
-  // Click second tab — panel content should change
-  await tabs.nth(1).click();
+  await retryUntilTabSelected(page, () => tabs.nth(1).click(), 1);
   const secondContent = await panel.textContent();
   expect(secondContent).not.toBe(firstContent);
 });
 
-test('code showcase has copy button', async ({ page }) => {
+test('future panel has copy button', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByLabel('Copy code')).toBeVisible();
+  await expect(page.getByLabel('Copy code to clipboard')).toBeVisible();
 });
 
 test('active tab shows description and learn more link', async ({ page }) => {
   await page.goto('/');
   const activeTab = page.locator('[role="tab"][aria-selected="true"]');
-  await expect(activeTab.locator('p')).toBeVisible();
-  await expect(activeTab.getByRole('link', { name: /Learn more/ })).toBeVisible();
+  await expect(activeTab.locator('.future-panel__tab-desc')).toBeVisible();
+  await expect(activeTab.getByRole('link', { name: /Learn more/i })).toBeVisible();
 });
 
 // ── Recent Blog Posts ──
@@ -152,38 +136,28 @@ test('active tab shows description and learn more link', async ({ page }) => {
 test('recent blog posts section has heading and cards', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('From the blog')).toBeVisible();
-  // Scope to main and exclude the /blogs/ index link to count actual post cards
-  const cards = page.getByRole('main').locator('a[href^="/blogs/"]:not([href="/blogs/"])');
+  const cards = page.locator('#blog-section a[href^="/blogs/"]');
   const count = await cards.count();
   expect(count).toBeGreaterThanOrEqual(1);
 });
 
-// ── Vision / CTA Section ──
+// ── Footer CTA Section ──
 
-test('vision section has closing CTAs', async ({ page }) => {
+test('footer has closing CTAs', async ({ page }) => {
   await page.goto('/');
-  const vision = page.getByRole('region', { name: /Vision/i });
-  await expect(vision).toBeVisible();
-  await expect(vision.getByRole('link', { name: /Get Started/ })).toBeVisible();
-  await expect(vision.getByRole('link', { name: /GitHub/ })).toBeVisible();
+  const footer = page.getByRole('contentinfo');
+  await expect(footer).toBeVisible();
+  await expect(footer.getByRole('link', { name: /Get started/i })).toBeVisible();
+  await expect(footer.getByRole('link', { name: /Github/i })).toBeVisible();
 });
 
-// ── Footer ──
+// ── Footer Legal ──
 
 test('footer is visible with copyright and links', async ({ page }) => {
   await page.goto('/');
   const footer = page.getByRole('contentinfo');
   await expect(footer).toBeVisible();
   await expect(footer).toContainText(/© \d{4}/);
-  await expect(footer.getByRole('link', { name: 'Blog' })).toBeVisible();
-  await expect(footer.getByRole('link', { name: 'Docs' })).toBeVisible();
-  await expect(footer.getByRole('link', { name: 'GitHub' })).toBeVisible();
-});
-
-// ── Skip Link (Accessibility) ──
-
-test('skip-to-content link exists', async ({ page }) => {
-  await page.goto('/');
-  const skip = page.locator('[href="#main-content"]');
-  await expect(skip).toHaveCount(1);
+  await expect(footer.getByRole('link', { name: /Apache 2.0 License/i })).toBeVisible();
+  await expect(footer.getByRole('link', { name: /Contributing Guide/i })).toBeVisible();
 });

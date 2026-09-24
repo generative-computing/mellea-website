@@ -1,8 +1,8 @@
 # Mellea Website
 
-Landing page and developer blog for **[Mellea](https://github.com/generative-computing/mellea)** — a composable, multi-agent framework for building reliable AI agents at production scale.
+Landing page and developer blog for **[Mellea](https://github.com/generative-computing/mellea)** — a Python library for writing generative programs: control LLMs with code, not prompts.
 
-Built with Next.js 15, statically exported, and deployed to GitHub Pages at [mellea.ai](https://mellea.ai).
+Built with Next.js, statically exported to GitHub Pages at [mellea.ai](https://mellea.ai).
 
 ---
 
@@ -18,30 +18,13 @@ Built with Next.js 15, statically exported, and deployed to GitHub Pages at [mel
 
 ## Contributing
 
-There are two distinct ways to contribute — pick the one that applies:
+Two ways to contribute — both covered in full by [CONTRIBUTING.md](CONTRIBUTING.md):
 
-### Writing a blog post
-
-No development environment needed. Copy [`templates/blog-post.md`](templates/blog-post.md) to
-`content/blogs/your-slug.md`, fill in the front matter, and open a PR against `main`. A maintainer
-will review and merge it — the post goes live automatically on merge.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full submission steps and front matter reference.
-
-### Changing the site (UI, CI, dependencies)
-
-```bash
-npm install
-npm run dev   # http://localhost:4000
-```
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development guide — commands, testing, and CI pipeline.
+- **Writing a blog post** — no dev environment needed; add a Markdown file and open a PR. → [Adding a blog post](CONTRIBUTING.md#adding-a-blog-post)
+- **Changing the site** (UI, CI, dependencies) — `npm install && npm run dev`. → [Development setup](CONTRIBUTING.md#development-setup)
 
 ---
 
-## Tech Stack
+## License
 
-- [Next.js 15](https://nextjs.org/) — App Router, static export (`output: 'export'`)
-- [react-markdown](https://github.com/remarkjs/react-markdown) — Markdown rendering
-- [gray-matter](https://github.com/jonschlinkert/gray-matter) — Frontmatter parsing
-- IBM Plex Sans & IBM Plex Mono — typography
+[Apache License 2.0](LICENSE)

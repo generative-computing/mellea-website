@@ -10,8 +10,6 @@ This is the **Next.js website** for Mellea — the landing page and developer bl
 
 **Adding or editing a blog post** → go to [§ Adding Blog Posts](#8-adding-blog-posts). No dev environment, no code changes needed.
 
-**Adding a news highlight** → go to [§ Adding News Items](#9-adding-news-items). No dev environment, no code changes needed.
-
 **Changing the site** (UI, components, CI, dependencies) → read everything below.
 
 ---
@@ -40,8 +38,9 @@ npm run build         # Static export to ./out/
 | `src/lib/` | Server-side utilities (blog parsing, etc.) |
 | `src/config/` | Site-wide configuration (`site.ts`) |
 | `content/blogs/` | Markdown blog posts with YAML front matter |
-| `content/news/` | Markdown news/highlights items with YAML front matter |
-| `public/` | Static assets (images, CNAME) |
+| `public/css/` | Global stylesheets |
+| `public/js/` | Vanilla ES-module landing-page interactions |
+| `public/` | Static assets (fonts, images, CNAME) |
 | `tests/unit/` | Vitest unit tests |
 | `tests/e2e/` | Playwright E2E tests |
 | `.github/workflows/` | CI pipeline |
@@ -51,19 +50,32 @@ npm run build         # Static export to ./out/
 - TypeScript throughout — no `any` without a comment explaining why
 - Server Components by default; add `'use client'` only when needed
 - `src/lib/blogs.ts` uses Node.js `fs` — never import it in Client Components
-- `params` in Next.js 15 page components is a `Promise` — always `await params`
-- No CSS modules, no Tailwind — all styles in `src/app/globals.css`
+- `params` in page components is a `Promise` — always `await params`
+- Plain CSS only — no CSS modules, no Tailwind; global styles live in `public/css/`
 - `src/config/site.ts` is the single source of truth for URLs and repo slug
 
-## 4. Attribution
+## 4. AI Coding Assistants
 
-Do **not** add AI assistant attribution to commits, PRs, code, or documentation unless explicitly asked. No `Co-Authored-By` lines, no AI-generated footers.
+AI-assisted development is welcome. You are responsible for reviewing and understanding every change before submitting.
+
+AI coding assistants following project guidelines add an `Assisted-by:` trailer to commit messages by default, identifying which tool was used:
+
+```text
+Assisted-by: Claude Code
+Assisted-by: IBM Bob
+```
+
+Add one line per tool used, using its common name (GitHub Copilot, Cursor, etc.). Do not add `Co-Authored-By` lines for AI tools.
 
 ## 5. Commits
 
-Plain descriptive messages: `fix: nav link selector in E2E tests`, `feat: add tags filter to blog listing`, `docs: update CONTRIBUTING.md`.
+Follow [Angular commit format](https://github.com/angular/angular/blob/main/CONTRIBUTING.md#commit), matching the [mellea repo](https://github.com/generative-computing/mellea): `<type>: <subject>`, with an optional body and footer.
 
-No Angular-style mandatory types required, but keep messages short and imperative.
+**Types:** `feat`, `fix`, `docs`, `test`, `refactor`, `ci`, `chore`, `release`.
+
+Examples: `fix: nav link selector in E2E tests`, `feat: add tags filter to blog listing`, `docs: update CONTRIBUTING.md`.
+
+**Sign off every commit** with `git commit -s` (DCO is enforced in CI).
 
 ## 6. Pre-commit Checklist (mandatory — do not skip)
 
@@ -88,27 +100,32 @@ If you rename or remove a CSS class, check `tests/e2e/` for selectors that refer
 
 ## 7. Architecture
 
-**Next.js 15 App Router, fully static** (`output: 'export'`). Nothing runs at request time — all pages are pre-rendered at build time or handled client-side.
+**Next.js App Router, fully static** (`output: 'export'`). Nothing runs at request time — all pages are pre-rendered at build time or handled client-side.
 
 ### Key constraints
 
 - No `next/headers`, no route handlers, no server actions
 - `Image` component uses `unoptimized: true` (required for static export)
 - `trailingSlash: true` is set in `next.config.mjs`
-- `params` in page components is a `Promise` in Next.js 15 — always `await params`
+- `params` in page components is a `Promise` — always `await params`
 - `src/lib/blogs.ts` uses Node.js `fs` — **Server Components only**, never import in Client Components
 
 ### Data flow
 
-- **Build-time** (Server Components): `getAllBlogs()` → landing page + blog listing; `getAllBlogSlugs()` + `getBlog(slug)` → individual post pages; `getAllNews()` → landing page news highlights
-- **Client-side** (Client Components): GitHub API stats via `useGitHubStats` hook on mount; image compare slider via `react-compare-slider`
+- **Build-time** (Server Components): `getAllBlogs()` → landing page + blog listing; `getAllBlogSlugs()` + `getBlog(slug)` → individual post pages
+- **Client-side**: GitHub star count via the `GitHubStarsInit` component on mount; landing-page interactions (cursor, hero, compare slider, code panel) via vanilla ES modules in `public/js/`
 
 ### Styling
 
-- Single global CSS file: `src/app/globals.css`
-- IBM Plex Sans + IBM Plex Mono (Google Fonts)
-- Dark/light theme via CSS custom properties + `@media (prefers-color-scheme: light)`
-- No CSS modules, no Tailwind
+- Global stylesheets in `public/css/`: `styles.css` (site) + `code-theme.css` (syntax highlighting), linked from `layout.tsx`
+- Self-hosted **Aileron** (sans) + **JetBrains Mono** via `public/assets/fonts.css`
+- Light theme via CSS custom properties on `:root`
+- Landing-page interactions (cursor, hero, compare slider, code panel) are vanilla ES modules in `public/js/`
+- Plain CSS only — no CSS modules, no Tailwind
+
+### Landing-page JS (`public/js/`)
+
+These are plain browser ES modules — served statically and loaded via a `<script type="module">` tag, not bundled or transpiled. They are JavaScript, not TypeScript, and are intentionally outside `tsconfig`, so `npm run typecheck` does not cover them. The JSDoc `@param`/`@returns` annotations are for editor hints and readability only; they are **not** enforced by `tsc`, so do not assume these files are type-checked because they carry JSDoc. ESLint is the quality gate here — the flat config lints `public/js/**/*.js` with `eslint:recommended` plus `no-unused-vars`/`no-undef` and browser globals.
 
 ### Deployment
 
@@ -158,41 +175,11 @@ A workflow runs daily at ~9am Eastern and posts a reminder comment on the PR onc
 
 Verify with `npm run build` — no config changes or code edits needed.
 
-## 9. Adding News Items
-
-Drop a `.md` file in `content/news/`. News items appear in the "Latest News" highlights strip on the landing page hero section, sorted by date descending. Unlike blog posts, news items link to an external URL (opened in a new tab) — they do not have their own page on the site.
-
-Required front matter:
-
-```md
----
-title: "Short Headline"
-date: "YYYY-MM-DD"
-category: "Release"
-excerpt: "One sentence description shown on the card."
-url: "https://example.com/full-link"
-source: "GitHub"
----
-```
-
-| Field      | Required | Notes                                                                        |
-| ---------- | -------- | ---------------------------------------------------------------------------- |
-| `title`    | Yes      | Short headline for the card                                                  |
-| `date`     | Yes      | `YYYY-MM-DD`, used for sorting                                               |
-| `category` | Yes      | One of: `Release`, `Event`, `Integration`, `Community`, `Feature`            |
-| `excerpt`  | Yes      | One sentence shown on the card                                               |
-| `url`      | Yes      | External link (must be a full URL)                                           |
-| `source`   | No       | Display label for the link (e.g. "GitHub", "PyCon"); defaults to "Read more" |
-
-The `category` field controls the visual styling — each category gets a distinct accent color on the card's left border and category badge. No markdown body content is needed (only frontmatter is used).
-
-Verify with `npm run build` — no config changes or code edits needed.
-
-## 10. Common Issues
+## 9. Common Issues
 
 | Problem | Fix |
 | --- | --- |
-| `params` type error in page component | `params` is `Promise<{slug: string}>` in Next.js 15 — use `await params` |
+| `params` type error in page component | `params` is `Promise<{slug: string}>` — use `await params` |
 | E2E test strict mode violation | Scope selector (e.g. `page.getByRole('banner').getByRole('link', ...)`) |
 | `fs` import error in client bundle | Move the import to a Server Component; never import `src/lib/blogs.ts` client-side |
 | ESLint config error | Uses ESLint 9 flat config (`eslint.config.mjs`) — no legacy `.eslintrc` |
