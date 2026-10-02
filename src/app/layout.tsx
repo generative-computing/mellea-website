@@ -1,40 +1,20 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
-import './globals.css';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 import { siteConfig } from '@/config/site';
+import { assetUrl } from '@/lib/assetUrl';
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-
-const plex = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['300', '400', '600', '700'],
-  style: ['normal', 'italic'],
-  variable: '--font-sans',
-  display: 'swap',
-});
-
-const plexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '600'],
-  variable: '--font-mono',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'Mellea — Reliable, Testable LLM Output for Python',
+    default: 'Mellea - Control LLMs with code',
     template: '%s | Mellea',
   },
   description: siteConfig.description,
   icons: {
-    icon: [
-      { url: '/images/mellea-logo.svg', type: 'image/svg+xml' },
-    ],
-    apple: '/images/mellea-logo.svg',
+    icon: [{ url: assetUrl('/assets/favicon.svg'), type: 'image/svg+xml' }],
+    apple: assetUrl('/assets/favicon.svg'),
   },
   alternates: {
     canonical: '/',
@@ -42,16 +22,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     siteName: siteConfig.name,
-    title: 'Mellea — Reliable, Testable LLM Output for Python',
+    title: 'Mellea - Control LLMs with code',
     description: siteConfig.description,
     url: siteConfig.url,
-    images: [{ url: '/images/mellea-logo.svg', width: 2064, height: 1104 }],
+    images: [{ url: siteConfig.ogImage }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Mellea — Reliable, Testable LLM Output for Python',
+    title: 'Mellea - Control LLMs with code',
     description: siteConfig.description,
-    images: ['/images/mellea-logo.svg'],
+    images: [siteConfig.ogImage],
   },
 };
 
@@ -79,18 +59,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${plex.variable} ${plexMono.variable}`}>
+    <html lang="en" data-asset-base={basePath} data-scroll-behavior="smooth">
+      <head>
+        <link rel="stylesheet" href={assetUrl('/assets/fonts.css')} />
+        <link rel="stylesheet" href={assetUrl('/css/styles.css')} />
+        <link rel="stylesheet" href={assetUrl('/css/code-theme.css')} />
+      </head>
       <body>
+        <a href="#main-content" className="skip-link">Skip to content</a>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         {/* IBM Analytics — self-hosted script, guards against localhost internally. See public/analytics.js */}
-        <Script src={`${basePath}/analytics.js`} strategy="afterInteractive" />
-        <a href="#main-content" className="skip-link">Skip to content</a>
-        <Header />
-        <main id="main-content">{children}</main>
-        <Footer />
+        <Script src={assetUrl('/analytics.js')} strategy="afterInteractive" />
+        {children}
       </body>
     </html>
   );

@@ -1,13 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { defaultUrlTransform } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeSlug from 'rehype-slug';
 import rehypeHighlight from 'rehype-highlight';
 import { getBlog, getAllBlogSlugs } from '@/lib/blogs';
 import { siteConfig } from '@/config/site';
+import { formatBlogDate } from '@/lib/formatDate';
+import { assetUrl } from '@/lib/assetUrl';
+import PageShell from '@/components/PageShell';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -37,13 +40,6 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-function formatDate(dateStr: string) {
-  if (!dateStr) return '';
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const d = new Date(year, month - 1, day);
-  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-}
-
 export async function generateStaticParams() {
   const slugs = getAllBlogSlugs();
   return slugs.map((slug) => ({ slug }));
@@ -55,50 +51,58 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!blog) notFound();
 
   return (
-    <div className="container">
-      <Link href="/blogs" className="back-link">
-        ← Back to all posts
-      </Link>
-
-      <article className="blog-post">
-        <header className="blog-post-header">
-          <div className="blog-post-eyebrow">
-            <span>{formatDate(blog.date)}</span>
-            <span>·</span>
-            <span>{blog.author}</span>
-          </div>
-
-          <h1 className="blog-post-title">{blog.title}</h1>
-
-          {blog.tags.length > 0 && (
-            <div className="blog-post-tags" aria-label="Tags">
-              {blog.tags.map((tag) => (
-                <span key={tag} className="tag">{tag}</span>
-              ))}
-            </div>
-          )}
-        </header>
-
-        <div className="prose">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw, rehypeSlug, [rehypeHighlight, { ignoreMissing: true }]]}
-          >
-            {blog.content}
-          </ReactMarkdown>
-        </div>
-
-        <footer className="blog-post-footer">
-          <Link
-            href={siteConfig.discussionsUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="blog-discuss-link"
-          >
-            Discuss this post on GitHub →
+    <PageShell>
+      <article className="blog-post-page">
+        <div className="blog-post-page__inner">
+          <Link href="/blogs/" className="blog-section__all-posts blog-post-page__back">
+            <img src={assetUrl('/assets/icon-arrow-right.svg')} alt="" width={20} height={20} />
+            <span>Back to all posts</span>
           </Link>
-        </footer>
+
+          <div className="blog-post-page__article">
+            <header className="blog-post-page__header">
+              <div className="blog-post-page__meta">
+                <time dateTime={blog.date}>{formatBlogDate(blog.date)}</time>
+                <span aria-hidden="true">·</span>
+                <span>{blog.author}</span>
+              </div>
+              <h1 className="blog-post-page__title">{blog.title}</h1>
+              {blog.tags.length > 0 && (
+                <ul className="blog-card__tags" aria-label="Tags">
+                  {blog.tags.map((tag) => (
+                    <li key={tag} className="blog-card__tag">{tag}</li>
+                  ))}
+                </ul>
+              )}
+            </header>
+
+            <div className="blog-post-page__prose prose">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw, rehypeSlug, [rehypeHighlight, { ignoreMissing: true }]]}
+                urlTransform={(url) => {
+                  const safe = defaultUrlTransform(url);
+                  return safe.startsWith('/') ? assetUrl(safe) : safe;
+                }}
+              >
+                {blog.content}
+              </ReactMarkdown>
+            </div>
+
+            <footer className="blog-post-page__footer">
+              <Link
+                href={siteConfig.discussionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="blog-section__all-posts"
+              >
+                <span>Discuss this post on GitHub</span>
+                <img src={assetUrl('/assets/icon-arrow-up-right.svg')} alt="" width={20} height={20} />
+              </Link>
+            </footer>
+          </div>
+        </div>
       </article>
-    </div>
+    </PageShell>
   );
 }

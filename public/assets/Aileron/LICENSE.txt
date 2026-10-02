@@ -1,0 +1,15 @@
+Aileron
+Designed by Sora Sagano (http://www.dotcolon.net)
+
+License: CC0 1.0 Universal (Public Domain Dedication)
+
+The Aileron font is released into the public domain. The embedded font
+metadata states "No Rights Reserved." No copyright is claimed and no
+attribution is required. The designer credit above is included as a
+courtesy.
+
+The full CC0 1.0 legal text is available at:
+https://creativecommons.org/publicdomain/zero/1.0/legalcode
+
+To the extent possible under law, the author has waived all copyright and
+related or neighboring rights to this font.

@@ -1,9 +1,8 @@
 # Contributing
 
-There are three ways to contribute:
+There are two ways to contribute:
 
 - **Writing a blog post** — add a Markdown file and verify it renders. [Jump to that section.](#adding-a-blog-post)
-- **Adding a news highlight** — add a short Markdown file to surface events, releases, or features. [Jump to that section.](#adding-a-news-item)
 - **Changing the site** — UI, CI, or dependencies. Requires a full dev setup. [Jump to that section.](#development-setup)
 
 All contributions must be signed off under the [Developer Certificate of Origin](#developer-certificate-of-origin-dco) — use `git commit -s` on every commit.
@@ -80,74 +79,9 @@ No config changes or code edits are needed — just the Markdown file and any im
 
 ---
 
-## Adding a news item
-
-News items are short highlights that appear on the landing page to draw attention to things that matter to users — upcoming events (conferences, meetups, webinars), new releases, notable integrations or features, community milestones, or any other timely announcement. Unlike blog posts, news items link out to an external URL and do not have their own page on the site.
-
-### Steps
-
-1. Fork the repository.
-
-2. Create a new file in `content/news/news-n.md`.
-   The filename is internal only (not a public URL), to make it easier and only update the frontmatter content, keep the name pattern to `news-n.md`.
-
-3. Fill in the YAML front matter:
-
-   ```md
-   ---
-   title: "Short Headline"
-   date: "YYYY-MM-DD"
-   category: "Release"
-   excerpt: "One sentence description shown on the card."
-   url: "https://example.com/full-link"
-   source: "GitHub"
-   ---
-   ```
-
-   No markdown body content is needed — only the front matter is used.
-
-4. Verify locally:
-
-   ```bash
-   npm install
-   npm run build   # must succeed with no errors
-   npm run dev     # check the landing page at http://localhost:4000
-   ```
-
-5. Open a PR against `main`. A member of the **mellea-maintainers** team must approve before merge.
-
-6. Once merged, the news item will appear in the "Latest News" section on the landing page within a few minutes.
-
-### News front matter fields
-
-| Field      | Required | Description                                                                  |
-| ---------- | -------- | ---------------------------------------------------------------------------- |
-| `title`    | Yes      | Short headline for the card                                                  |
-| `date`     | Yes      | Date (`YYYY-MM-DD`), used for sort order                                     |
-| `category` | Yes      | One of: `Release`, `Event`, `Integration`, `Community`, `Feature`            |
-| `excerpt`  | Yes      | One sentence shown on the card                                               |
-| `url`      | Yes      | External link target (must be a full URL starting with `https://`)           |
-| `source`   | No       | Label shown on the link (e.g. "GitHub", "PyCon"); defaults to "Read more"    |
-
-### Categories
-
-Each category gets a distinct accent color on the card to help users scan at a glance:
-
-| Category      | Color  | Use for                                        |
-| ------------- | ------ | ---------------------------------------------- |
-| `Release`     | Blue   | New versions, changelogs                       |
-| `Event`       | Green  | Conferences, meetups, webinars                 |
-| `Integration` | Purple | New framework or tool integrations             |
-| `Community`   | Cyan   | Community milestones, spotlights               |
-| `Feature`     | Blue   | Notable new capabilities                       |
-
-No config changes or code edits are needed — just the Markdown file.
-
----
-
 ## Developer Certificate of Origin (DCO)
 
-All contributions to this repository — blog posts, news items, and code changes —
+All contributions to this repository — blog posts and code changes —
 must be signed off under the [Developer Certificate of Origin](https://developercertificate.org/),
 which certifies that you have the right to submit your work under the project's
 license. By signing off on a commit, you are agreeing to the terms of the DCO
@@ -311,7 +245,7 @@ On E2E failure, a `playwright-report` artifact is uploaded to the GitHub Actions
 ### Key constraints
 
 - No `next/headers`, no route handlers, no server actions
-- `Image` component uses `unoptimized: true` (required for static export)
+- `images.unoptimized: true` is set in `next.config.mjs` (required for static export); components use plain `<img>` rather than `next/image`
 - `trailingSlash: true` is set in `next.config.mjs`
 - Blog data fetching uses Node.js `fs` inside Server Components only — `src/lib/blogs.ts` is **not** safe to import in Client Components
 
@@ -321,4 +255,4 @@ On E2E failure, a `playwright-report` artifact is uploaded to the GitHub Actions
 
 ### Styling
 
-Single global CSS file: `src/app/globals.css`. IBM Plex fonts via Google Fonts. Dark/light theme via CSS custom properties and `@media (prefers-color-scheme: light)`. No CSS modules, no Tailwind.
+Stylesheets under `public/css/` (`styles.css` plus `code-theme.css` for syntax highlighting), linked from `src/app/layout.tsx`. Self-hosted fonts (Aileron + JetBrains Mono) via `public/assets/fonts.css`. Light theme only (no dark mode / `prefers-color-scheme`). No CSS modules, no Tailwind. Landing-page interactions are plain ES modules in `public/js/`.

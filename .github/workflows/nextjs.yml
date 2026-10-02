@@ -2,7 +2,7 @@ name: CI / Deploy
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "redesign"] # TEMP(redesign): "redesign" is fork-preview only — revert to ["main"] before upstream merge
   pull_request:
     branches: ["main"]
   workflow_dispatch:
@@ -82,6 +82,11 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
       - run: npm ci
       - run: npm run build
+        # TEMP(redesign): basePath for fork Pages preview at /mellea-website.
+        # On main this resolves to empty, so it is a no-op there. Remove this
+        # env block before upstream merge.
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ github.ref == 'refs/heads/redesign' && '/mellea-website' || '' }}
       - uses: actions/upload-artifact@v7
         with:
           name: website
@@ -113,12 +118,17 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+  # TEMP(redesign): preview deploy for the fork. Gated on build only —
+  # test-e2e and link-check still run and report status on the PR, but they
+  # assume root-path serving / a live URL and so don't fit an in-progress
+  # basePath preview. Before upstream merge, revert BOTH lines below to:
+  #   needs: [test-unit, test-e2e, link-check]
+  #   if: |
+  #     github.ref == 'refs/heads/main' &&
+  #     (needs.link-check.result == 'success' || needs.link-check.result == 'skipped')
   deploy:
-    needs: [test-unit, test-e2e, link-check]
-    # Allow deploy when link-check was skipped via the override mechanisms above.
-    if: |
-      github.ref == 'refs/heads/main' &&
-      (needs.link-check.result == 'success' || needs.link-check.result == 'skipped')
+    needs: [test-unit, build]
+    if: github.ref == 'refs/heads/redesign'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
