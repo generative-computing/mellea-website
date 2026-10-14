@@ -15,7 +15,7 @@ problem's `check()` test in the loop, so the model could see when its code
 ran but gave the wrong answer.
 
 This post covers a third gap: code that uses the right APIs, passes its
-tests, and is still containing code smells that might silently impact the
+tests, and still contains code smells that might silently impact the
 program execution.
 
 ## Code smells that tests don't see
