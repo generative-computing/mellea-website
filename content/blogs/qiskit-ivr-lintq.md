@@ -232,6 +232,6 @@ of the LintQ repository:
    export LINTQ_DIR="$(pwd)/LintQ"
    ```
 
-This blog post is built as an extension of the example present in the
-[Mellea repo](https://github.com/generative-computing/mellea/tree/main/docs/examples/instruct_validate_repair/qiskit_code_validation).
+This blog post is built as an extension of the [Mellea IVR example](https://github.com/generative-computing/mellea/tree/main/docs/examples/instruct_validate_repair/qiskit_code_validation).
+The full reproduction code, including the LintQ validator, will be released in the IBM open-source project [CodeHelm](https://github.com/IBM/codehelm).
 Adding LintQ to it means adding one more validation function with the code shown above.
