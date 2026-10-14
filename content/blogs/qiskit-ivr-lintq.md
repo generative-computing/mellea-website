@@ -30,7 +30,7 @@ allocated and never used, etc.
 [LintQ](https://github.com/sola-st/LintQ) is a static analyzer for Qiskit
 built on [CodeQL](https://codeql.github.com/). It models circuits,
 registers, and gates as CodeQL abstractions and ships queries for ten
-quantum-specific smells, including:
+quantum-specific smells described in the [LintQ paper](https://doi.org/10.1145/3660802), including:
 
 | LintQ rule | What it flags |
 | --- | --- |
