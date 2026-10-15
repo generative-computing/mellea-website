@@ -22,11 +22,11 @@ program execution.
 
 A *code smell* is code that runs without error but is likely to cause
 incorrect or unexpected behavior. Python developers have a mature linting
-culture for these, however, quantum programs have their own class of smells, which
 culture for these. However, quantum programs have their own class of smells, which
+classical linters and unit tests are not able to catch: a
 gate applied after a qubit has already been measured, a register that is
-allocated and never used, etc..
 allocated and never used, etc.
+
 [LintQ](https://github.com/sola-st/LintQ) is a static analyzer for Qiskit
 built on [CodeQL](https://codeql.github.com/). It models circuits,
 registers, and gates as CodeQL abstractions and ships queries for ten
