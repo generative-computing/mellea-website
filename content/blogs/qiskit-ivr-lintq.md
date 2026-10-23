@@ -1,6 +1,6 @@
 ---
 title: "Tests Pass, Smells Stay: Adding a Quantum Linter to Qiskit IVR"
-date: "2026-10-19"
+date: "2026-10-23"
 author: "Greta Dolcetti"
 excerpt: "Quantum programs can pass every test and still carry quantum-specific code smells. We wired LintQ into Mellea's Instruct-Validate-Repair loop next to the test suite and roughly tripled the share of generations that are both correct and smell-free."
 tags: ["qiskit", "IVR", "validation", "static-analysis", "LLM", "quantum", "code-generation"]
