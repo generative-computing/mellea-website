@@ -53,7 +53,9 @@ requirement's validation function now runs two checks in sequence:
 
 ```python
 from mellea.stdlib.requirements import req, simple_validate
-from validation_helpers import extract_code_from_markdown, validate_correctness, validate_lintq
+from validation_helpers import extract_code_from_markdown, validate_correctness
+
+# validate_lintq() is defined in the next snippet
 
 
 def tests_and_lintq(problem: dict):
