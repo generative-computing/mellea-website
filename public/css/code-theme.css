@@ -1,0 +1,123 @@
+/*
+ * Mellea code syntax theme for highlight.js / lowlight (`.hljs-*` classes).
+ * Self-contained: light theme is active; `.hljs--on-dark` is an unused opt-in
+ * variant for code on a dark surface (not tied to prefers-color-scheme).
+ */
+
+:root {
+  /* Light syntax palette (active) */
+  --code-plain: #171717;
+  --code-operator: #787777;
+  --code-comment: #878684;
+  --code-keyword: #9a5804;
+  --code-function: #d32608;
+  --code-string: #005eed;
+  --code-type: #6b2f66;
+  --code-decorator: #6b2f66;
+
+  /* Dark-surface syntax palette (used only by .hljs--on-dark) */
+  --code-plain-dark: #ede9e4;
+  --code-operator-dark: #8c8785;
+  --code-comment-dark: #8a8480;
+  --code-keyword-dark: #ffa715;
+  --code-function-dark: #ff6b4a;
+  --code-string-dark: #85aaff;
+  --code-type-dark: #d4a0cf;
+  --code-decorator-dark: #d4a0cf;
+}
+
+.hljs {
+  color: var(--code-plain);
+  background: transparent;
+}
+
+.hljs-keyword,
+.hljs-literal,
+.hljs-selector-tag {
+  color: var(--code-keyword);
+}
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-section {
+  color: var(--code-function);
+}
+
+.hljs-type,
+.hljs-title.class_,
+.hljs-built_in,
+.hljs-class .hljs-title {
+  color: var(--code-type);
+}
+
+.hljs-string,
+.hljs-meta .hljs-string,
+.hljs-regexp,
+.hljs-number {
+  color: var(--code-string);
+}
+
+.hljs-meta {
+  color: var(--code-decorator);
+  font-style: italic;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--code-comment);
+  font-style: italic;
+}
+
+.hljs-operator,
+.hljs-punctuation {
+  color: var(--code-operator);
+}
+
+.hljs-params,
+.hljs-attr,
+.hljs-variable {
+  color: var(--code-plain);
+}
+
+/* Opt-in variant for code on a dark surface (unused; add .hljs--on-dark). */
+.hljs--on-dark {
+  color: var(--code-plain-dark);
+}
+.hljs--on-dark .hljs-keyword,
+.hljs--on-dark .hljs-literal,
+.hljs--on-dark .hljs-selector-tag {
+  color: var(--code-keyword-dark);
+}
+.hljs--on-dark .hljs-title,
+.hljs--on-dark .hljs-title.function_,
+.hljs--on-dark .hljs-section {
+  color: var(--code-function-dark);
+}
+.hljs--on-dark .hljs-type,
+.hljs--on-dark .hljs-title.class_,
+.hljs--on-dark .hljs-built_in,
+.hljs--on-dark .hljs-class .hljs-title {
+  color: var(--code-type-dark);
+}
+.hljs--on-dark .hljs-string,
+.hljs--on-dark .hljs-meta .hljs-string,
+.hljs--on-dark .hljs-regexp,
+.hljs--on-dark .hljs-number {
+  color: var(--code-string-dark);
+}
+.hljs--on-dark .hljs-meta {
+  color: var(--code-decorator-dark);
+}
+.hljs--on-dark .hljs-comment,
+.hljs--on-dark .hljs-quote {
+  color: var(--code-comment-dark);
+}
+.hljs--on-dark .hljs-operator,
+.hljs--on-dark .hljs-punctuation {
+  color: var(--code-operator-dark);
+}
+.hljs--on-dark .hljs-params,
+.hljs--on-dark .hljs-attr,
+.hljs--on-dark .hljs-variable {
+  color: var(--code-plain-dark);
+}
