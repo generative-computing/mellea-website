@@ -49,8 +49,8 @@ print(thunk.value)
 
 ### What the model receives
 
-The formatter sends each part of a Mellea component in the message fields the
-model's chat template turns into LLMON. In the example above, the instruction
+The formatter sends each part of a Mellea component in the message fields that
+the model's chat template turns into LLMON. In the example above, the instruction
 becomes an `instr` block and the feedback becomes a `data` block labeled
 `feedback`. Requirements become `req` blocks, and documents attached to a
 message become `doc` blocks. Content passing through the formatter is
@@ -63,7 +63,7 @@ work as usual.
 
 ### Current limitations
 
-Like the models, Mellea's LLMON support is a preview, with a few limitations:
+Like the Granite models, Mellea's LLMON support is a preview, with a few limitations:
 
 - **`LocalHFBackend` only.** Other backends, including vLLM and Ollama, rebuild
   each message from its standard keys and drop the fields LLMON needs. They
