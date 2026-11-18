@@ -2,14 +2,14 @@
 title: "LLMON support comes to Mellea v0.9.0"
 date: "2026-11-19"
 author: "Mellea Contributors"
-excerpt: "Mellea v0.9.0 adds support for LLMON, an experimental markup that lets trained models tell your instructions apart from the data they read. The release also brings reliability fixes for validation, aLoRA adapters, and tool calling."
+excerpt: "Mellea v0.9.0 adds support for LLMON, an experimental markup language that lets trained models tell your instructions apart from the data they read. The release also brings reliability fixes for validation, aLoRA adapters, and tool calling."
 tags: ["release", "v0.9", "llmon"]
 ---
 
 Mellea v0.9.0, released on November 12, 2026, adds support for LLMON (LLM
 Object Notation), which
 [launched the same day](https://huggingface.co/blog/ibm-granite/llmon-an-llm-native-markup-language-now-in-granite)
-as an experimental preview. LLMON is a markup that models are trained on to
+as an experimental preview. LLMON is a markup language that models are trained on to
 keep instructions, data, and requirements in separate, labeled blocks, which
 reduces the risk of prompt injection. Mellea already knows which part of a
 component is which, so with an LLMON model it passes that structure through
@@ -61,9 +61,9 @@ comes back as plain text, with no markup to strip.
 Structured output with `format=`, tool calling, and requirement validation all
 work as usual.
 
-### Current limits
+### Current limitations
 
-Like the models, Mellea's LLMON support is a preview, with a few limits:
+Like the models, Mellea's LLMON support is a preview, with a few limitations:
 
 - **`LocalHFBackend` only.** Other backends, including vLLM and Ollama, rebuild
   each message from its standard keys and drop the fields LLMON needs. They
@@ -120,14 +120,6 @@ We'll take a closer look at LLMON with Mellea in a follow-up post.
 
 ## Other improvements
 
-- **llama.cpp launcher.** A new script in the repo,
-  [`scripts/start_llamacpp.sh`](https://github.com/generative-computing/mellea/blob/v0.9.0/scripts/start_llamacpp.sh),
-  starts `llama-server` with Granite 4.2 3B under the name `IBM_GRANITE_4_2_3B`
-  resolves to, so you can connect through the `openai` backend with a
-  `base_url`. It isn't part of the pip package; see
-  [`llamacpp_session.py`](https://github.com/generative-computing/mellea/blob/v0.9.0/docs/examples/llamacpp_session.py)
-  for a session that uses it
-  ([#1656](https://github.com/generative-computing/mellea/pull/1656)).
 - **Prompt templates in traces.** Chat generations emit the OpenInference
   `llm.prompt_template.template` attribute, plus `llm.prompt_template.variables`
   when `MELLEA_TRACES_CONTENT=true`, so a trace shows the template separately
@@ -156,7 +148,13 @@ We'll take a closer look at LLMON with Mellea in a follow-up post.
 - **One `extra_body` merge.** All three merge paths now share the public
   `ModelOption.merge_extra_body`
   ([#1695](https://github.com/generative-computing/mellea/pull/1695)).
-- **Docs and examples.** Example READMEs link their files
+- **Docs and examples.** A new example,
+  [`llamacpp_session.py`](https://github.com/generative-computing/mellea/blob/v0.9.0/docs/examples/llamacpp_session.py),
+  runs Mellea against a local llama.cpp server, with a
+  [helper script](https://github.com/generative-computing/mellea/blob/v0.9.0/scripts/start_llamacpp.sh)
+  to start one
+  ([#1656](https://github.com/generative-computing/mellea/pull/1656)). Example
+  READMEs link their files
   ([#1711](https://github.com/generative-computing/mellea/pull/1711)), the
   vision and Ollama examples run reliably in nightly CI
   ([#1671](https://github.com/generative-computing/mellea/pull/1671)), and the
