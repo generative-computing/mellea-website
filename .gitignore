@@ -16,5 +16,6 @@ playwright-results/
 test-results/
 
 # Local
+scratchpad/
 TODO.md
 tsconfig.tsbuildinfo
