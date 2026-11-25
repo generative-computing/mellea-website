@@ -1,7 +1,7 @@
 ---
 title: "LLMON in Mellea: Separating Instructions from Data"
 date: "2026-12-01"
-author: "Mellea Contributors"
+author: "Angelo Danducci"
 excerpt: "LLMON is an experimental markup language that lets Granite models tell instructions apart from the data they read. This post introduces it and walks through a support-ticket triage example that runs on the Granite-4.1-3B-LLMON-preview model with Mellea 0.9.0."
 tags: ["llmon", "granite", "tutorial", "v0.9"]
 ---
@@ -13,7 +13,7 @@ but nothing in a plain-text prompt marks it as data. If that material contains
 not obey it.
 
 [LLMON](https://github.com/generative-computing/llmon) (LLM Object Notation) is an
-attempt to make that boundary explicit. Mellea 0.9.0 adds support for LLMON. This
+attempt to make that boundary explicit. [Mellea 0.9.0](https://github.com/generative-computing/mellea/releases/tag/v0.9.0) adds support for LLMON. This
 post covers LLMON basics, how Mellea uses it, and a short example you can run on the
 3B preview model.
 
@@ -71,7 +71,7 @@ Both are Apache 2.0 licensed and fine-tuned from Granite 4.1 base checkpoints. T
 The models are trained on a privilege rule: instructions in the `instruction` and `system` blocks are authoritative, and everything reached through `input` (data, documents, tool schemas, and tool results) is read, not followed, regardless of how it is phrased. The privilege rule is a learned behavior, not an enforced guarantee. It substantially reduces, but does not eliminate, the chance that an instruction embedded in data, a document, or a tool result is followed. Do not treat it as a sole defense for an agent with access to sensitive systems.
 
 According to the [launch post](https://huggingface.co/blog/ibm-granite/llmon-an-llm-native-markup-language-now-in-granite), when looking at the OPI prompt-injection benchmark LLMON
-practically eliminates the problem. Other benchmarks for static injections show imilar trends are seen on ASB and StruQ. Adaptive, multi-turn attacks are
+practically eliminates the problem. Other benchmarks for static injections show similar trends are seen on ASB and StruQ. Adaptive, multi-turn attacks are
 still being worked on, so treat these results as a starting point, not a promise.
 
 ## Mellea and LLMON
